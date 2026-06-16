@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0e4d6e,100:030712&height=200&section=header&text=ChronoCloud&fontColor=06b6d4&fontSize=70&desc=Relativistic%20computing%20%26%20time%20dilation&descAlignY=68&descSize=18" alt="ChronoCloud" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&amp;color=0:0e4d6e,100:030712&amp;height=200&amp;section=header&amp;text=ChronoCloud&amp;fontColor=06b6d4&amp;fontSize=70&amp;desc=Relativistic%20computing%20%26%20time%20dilation&amp;descAlignY=68&amp;descSize=18" alt="ChronoCloud" width="100%" />
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
@@ -9,7 +9,7 @@
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)
+[![Tests](https://github.com/tottenjordan/chronocloud/actions/workflows/tests.yml/badge.svg)](https://github.com/tottenjordan/chronocloud/actions/workflows/tests.yml)
 
 <img src="docs/images/galaxy-orbit.gif" width="640" alt="ChronoCloud galaxy map orbiting Earth and a void server while the light-speed signal pulses back and forth" />
 
