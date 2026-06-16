@@ -1,14 +1,14 @@
 # ChronoCloud
 
+An interactive educational web application demonstrating the effects of relativistic computing and time dilation.
+
 <div align="center">
 
-<img src="docs/images/galaxy-zoom.gif" width="640" alt="ChronoCloud galaxy map: zooming from the full star field in to Earth and a void server while the light-speed signal pulses back and forth" />
+<img src="docs/images/galaxy-orbit.gif" width="640" alt="ChronoCloud galaxy map orbiting Earth and a void server while the light-speed signal pulses back and forth" />
 
-<sub><i>Deep-Space mode — zooming through 8,920 catalog stars to a server placed in a cosmic void, where weaker gravity speeds its clock; the red pulse is a message crossing the light-speed gap to Earth and back.</i></sub>
+<sub><i>Deep-Space mode — orbiting Earth (green) and a server placed in a cosmic void (cyan), where weaker gravity speeds its clock; the red pulse is a message crossing the light-speed gap to Earth and back, through 8,920 catalog stars.</i></sub>
 
 </div>
-
-An interactive educational web application demonstrating the effects of relativistic computing and time dilation.
 
 ## Simulation Modes
 
