@@ -121,6 +121,101 @@ Open http://localhost:5173
 
 **Try this:** Start with the slider at 0% and press Play. Watch the drift counter climb as Mars transactions arrive out of order. Pause, drag the slider to 100%, and replay — the conflicts disappear. Now try 50% — partial compensation reduces but doesn't eliminate drift. This is the core tradeoff real mission planners face.
 
+## Physics & Assumptions
+
+All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below.
+
+### Constants
+
+| Symbol | Value | Meaning |
+|--------|-------|---------|
+| $c$ | $299{,}792.458\ \text{km/s}$ | Speed of light |
+| $G$ | $6.674 \times 10^{-11}\ \text{m}^3\,\text{kg}^{-1}\,\text{s}^{-2}$ | Gravitational constant |
+| $M_\odot$ | $1.989 \times 10^{30}\ \text{kg}$ | Solar mass |
+| $1\ \text{pc}$ | $3.086 \times 10^{13}\ \text{km}$ | Parsec |
+
+### 1. Galactic → Cartesian conversion
+
+Converts a server's galactic coordinates — distance $d$ (parsecs), longitude $l$, latitude $b$ — into Cartesian coordinates for 3D rendering. This is the standard spherical-to-Cartesian transformation, where $b$ is the elevation above the galactic plane and $l$ is the azimuth:
+
+$$
+x = d \cos(b)\cos(l), \qquad
+y = d \cos(b)\sin(l), \qquad
+z = d \sin(b)
+$$
+
+### 2. Light-speed latency
+
+Round-trip communication time from Earth at the origin to a server at $(x, y, z)$, in parsecs. The factor of 2 accounts for the round trip (dispatch the task, receive the result):
+
+$$
+t_\text{latency} = \frac{2 \, d}{c}, \qquad d = \sqrt{x^2 + y^2 + z^2}\ \ (\text{converted to km})
+$$
+
+*Verification:* a server 1 pc away yields a 6.52-year round trip, consistent with 1 pc ≈ 3.26 light-years one way.
+
+### 3. Gravitational time dilation (Schwarzschild metric)
+
+For a static clock at radius $r$ from a spherical mass $M$, the Schwarzschild metric gives the clock's tick rate relative to a clock at infinity (flat spacetime):
+
+$$
+\frac{d\tau}{dt} = \sqrt{1 - \frac{r_s}{r}}, \qquad r_s = \frac{2GM}{c^2}
+$$
+
+where $r_s$ is the **Schwarzschild radius**. In the void scenario, this factor describes **Earth's** clock — Earth sits deep in a gravitational well, so its clock runs *slow* (factor < 1). The void server sits in near-flat spacetime (factor ≈ 1), so it runs *faster* than Earth by $1 / \text{factor}$.
+
+*Verification:* the code computes $r_s = 2954\ \text{m}$ for the Sun, matching the textbook value of ~2953 m.
+
+### 4. Computation efficiency
+
+Given a task requiring `task_seconds` of compute (in the local clock of whichever machine runs it), the model compares running it locally on Earth versus offloading to the void server:
+
+$$
+t_\text{compute} = t_\text{task} \cdot f_\text{earth}
+$$
+
+$$
+t_\text{wait} = t_\text{compute} + t_\text{latency}
+$$
+
+$$
+\text{net gain} = t_\text{task} - t_\text{wait}
+$$
+
+where $f_\text{earth}$ is Earth's dilation factor from §3, $t_\text{compute}$ is the Earth time elapsed during the offloaded computation, and $t_\text{wait}$ is the total Earth time from dispatch to receiving the result. The void server burns $t_\text{task}$ of its own (≈coordinate) time, during which Earth ages only $t_\text{task} \cdot f_\text{earth}$ — but you must wait $t_\text{latency}$ for the round trip. A **positive net gain** means offloading beats local execution.
+
+### 5. Lorentz factor (special relativity)
+
+Provided for velocity-based time dilation, where $v$ is in km/s:
+
+$$
+\gamma = \frac{1}{\sqrt{1 - (v/c)^2}}
+$$
+
+### 6. Interplanetary light delay (Near-Future mode)
+
+Earth–Mars one-way signal delay is pure light-travel time (no relativity involved):
+
+$$
+t_\text{delay} = \frac{d_\text{Earth–Mars}}{c}
+$$
+
+With $d_\text{Earth–Mars} = 2.25 \times 10^8\ \text{km}$ (a realistic mid-range distance; the true range is 55–401 million km), this gives **750 s ≈ 12.5 min**. A Mars transaction at timestamp $t$ appears on Earth at $t + t_\text{delay}(1 - \text{syncOffset})$, where the sync slider applies compensation from 0 (none) to 1 (full).
+
+### Assumptions & Caveats
+
+These are intentional simplifications. They keep the simulation legible, but a physicist should know where it departs from reality:
+
+1. **The gravitational dilation is fictional in scale.** The default places Earth at $r = 3 \times 10^4\ \text{m}$ (30 km) from a solar mass — *inside* the real Sun, so it only makes sense as a compact object (black hole / neutron star). This yields a ~5.3% effect. Real Sun–Earth dilation is ~1 part in $10^8$ — invisible on a dashboard. The exaggeration is deliberate and flagged in code.
+
+2. **Net gain is hard to reach at interstellar distances.** With a ~5% clock advantage, a positive net gain requires $t_\text{task}(1 - f) > 2d/c$. Even a $10^6$-second task breaks even only within ~$2.45 \times 10^{-4}$ pc of Earth. This is physically *true* — light latency dominates at interstellar scale — but it means most server placements show a net loss. To make "wins" common, lower `radius_m` (stronger dilation) or scale distances down.
+
+3. **Two coordinate systems share one 3D scene.** Catalog stars are placed from equatorial coordinates (RA/Dec), while servers use galactic longitude/latitude. Both produce valid Cartesian points, but their axes are not physically aligned, so a server's position does not correspond to the true galactic-frame location of nearby stars. This is cosmetic.
+
+4. **"Relativistic Sync Protocol" is loosely named.** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
+
+5. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
+
 ## Project Structure
 
 ```
