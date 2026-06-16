@@ -45,7 +45,7 @@ function MetricCard({ label, value, color, tooltip, arrow, sub }) {
         <p className="text-2xl font-mono font-bold">{value}</p>
         {arrow && <span className="text-lg">{arrow}</span>}
       </div>
-      {sub && <p className="text-[11px] font-mono text-gray-500 mt-1">{sub}</p>}
+      {sub && <div className="text-[11px] font-mono text-gray-500 mt-1 leading-tight">{sub}</div>}
     </div>
   )
 }
@@ -53,11 +53,31 @@ function MetricCard({ label, value, color, tooltip, arrow, sub }) {
 const LY_PER_PC = 3.26156
 const MILES_PER_PC = 1.917e13
 
-function formatDistanceSub(pc) {
+const MILE_SCALES = [
+  { v: 1e18, w: 'quintillion' },
+  { v: 1e15, w: 'quadrillion' },
+  { v: 1e12, w: 'trillion' },
+  { v: 1e9, w: 'billion' },
+  { v: 1e6, w: 'million' },
+]
+
+function milesInWords(miles) {
+  for (const s of MILE_SCALES) {
+    if (miles >= s.v) return `${(miles / s.v).toFixed(1)} ${s.w} miles`
+  }
+  return `${Math.round(miles).toLocaleString()} miles`
+}
+
+function DistanceSub({ pc }) {
   const ly = pc * LY_PER_PC
   const miles = pc * MILES_PER_PC
   const lyStr = ly < 10000 ? ly.toFixed(2) : ly.toExponential(2)
-  return `${lyStr} ly · ${miles.toExponential(2)} mi`
+  return (
+    <>
+      <span className="block">{lyStr} ly · {miles.toExponential(2)} mi</span>
+      <span className="block text-gray-600">≈ {milesInWords(miles)}</span>
+    </>
+  )
 }
 
 export default function MetricsDash({ distancePc, earthComputeTime, earthWaitTime, netGain }) {
@@ -77,7 +97,7 @@ export default function MetricsDash({ distancePc, earthComputeTime, earthWaitTim
       <MetricCard
         label="Distance from Earth"
         value={`${animDistance.toFixed(2)} pc`}
-        sub={formatDistanceSub(animDistance)}
+        sub={<DistanceSub pc={animDistance} />}
         color="text-violet-300 hover:shadow-violet-500/10"
         tooltip="Straight-line distance from Earth to the void server. Shown in parsecs, light-years, and miles (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi). This sets the round-trip communication latency."
       />

@@ -88,7 +88,7 @@ Open http://localhost:5173
 - **Distance Dimension Line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), with the straight-line Earth↔server distance in parsecs at its midpoint.
 - **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, void server, orbit marker, comm link, signal pulse, distance).
 - **Metrics Dashboard** — Four cards update in real time with animated value transitions:
-  - *Distance from Earth* — straight-line distance to the server, shown in parsecs with light-years and miles beneath (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi)
+  - *Distance from Earth* — straight-line distance to the server in parsecs, with light-years and miles beneath (both scientific notation and a plain-language "≈ N trillion miles" phrasing); 1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi
   - *Earth Compute Time* — how much Earth time passes while the void server completes the task (less than the raw task duration, because the server's clock is faster)
   - *Earth Wait Time* — compute time + round-trip light delay
   - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost
