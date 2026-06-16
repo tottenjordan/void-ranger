@@ -1,5 +1,13 @@
 # ChronoCloud
 
+<div align="center">
+
+<img src="docs/images/galaxy-zoom.gif" width="640" alt="ChronoCloud galaxy map: zooming from the full star field in to Earth and a void server while the light-speed signal pulses back and forth" />
+
+<sub><i>Deep-Space mode — zooming through 8,920 catalog stars to a server placed in a cosmic void, where weaker gravity speeds its clock; the red pulse is a message crossing the light-speed gap to Earth and back.</i></sub>
+
+</div>
+
 An interactive educational web application demonstrating the effects of relativistic computing and time dilation.
 
 ## Simulation Modes
@@ -153,10 +161,6 @@ So there is a **break-even task size**: below it, the fixed communication overhe
 ### Deep-Space Cloud Compute
 
 ![Deep-Space Cloud Compute mode showing a void server deployed in the star field](docs/images/far-future.png)
-
-The galaxy map is fully interactive — here it starts zoomed out on the full star field, then zooms in to frame Earth (green) and the deployed server (cyan) while the **red signal pulse** travels the communication line back and forth:
-
-![Zooming into the galaxy map with the signal pulse traveling Earth↔server](docs/images/galaxy-zoom.gif)
 
 This capture shows a server deployed at **400 pc** (a deep void) with a **10¹³ second** workload (set via the *Task (s)* field in the header). Reading the screen:
 
