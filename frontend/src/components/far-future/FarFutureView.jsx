@@ -9,6 +9,49 @@ import MetricsDash from './MetricsDash'
 const DEFAULT_MASS_KG = 1.989e30   // solar mass
 const DEFAULT_RADIUS_M = 3e4       // 30 km — near neutron-star surface
 
+const LEGEND_ITEMS = [
+  { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in a gravitational well — its clock runs slow.' },
+  { swatch: 'ring', color: '#f59e0b', label: 'Gravity well', desc: "Shells around Earth showing the field that slows its clock." },
+  { swatch: 'dot', color: '#06b6d4', label: 'Void server', desc: 'In weak gravity — its clock runs fast (the time advantage).' },
+  { swatch: 'ring', color: '#06b6d4', label: 'Orbit marker', desc: 'Ring + sparkles marking the deployed server.' },
+  { swatch: 'line', color: '#06b6d4', label: 'Comm link', desc: 'Light-speed channel between Earth and the server.' },
+  { swatch: 'dot', color: '#ef4444', label: 'Signal pulse', desc: 'A message traveling the round trip at light speed.' },
+]
+
+function Swatch({ type, color }) {
+  if (type === 'ring') {
+    return <span className="inline-block w-3 h-3 rounded-full border-2 flex-shrink-0" style={{ borderColor: color }} />
+  }
+  if (type === 'line') {
+    return <span className="inline-block w-3 h-0.5 flex-shrink-0" style={{ backgroundColor: color }} />
+  }
+  return <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+}
+
+function MapLegend() {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Map Key</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2">
+        {LEGEND_ITEMS.map(item => (
+          <div key={item.label} className="flex items-start gap-2">
+            <span className="mt-1"><Swatch type={item.swatch} color={item.color} /></span>
+            <p className="text-xs text-gray-400 leading-tight">
+              <span className="text-gray-200 font-medium">{item.label}</span> — {item.desc}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-gray-600 mt-3 leading-relaxed">
+        Time dilation comes from the <span className="text-amber-400">difference</span> between
+        Earth's slow clock (deep in the gravity well) and the server's fast clock (in the void).
+        Placing the server farther away increases that round-trip light delay — the tradeoff the
+        metrics above quantify.
+      </p>
+    </div>
+  )
+}
+
 export default function FarFutureView({ taskSeconds }) {
   const [stars, setStars] = useState([])
   const [serverPosition, setServerPosition] = useState(null)
@@ -76,6 +119,7 @@ export default function FarFutureView({ taskSeconds }) {
           netGain={metrics.net_gain}
         />
       )}
+      <MapLegend />
     </div>
   )
 }

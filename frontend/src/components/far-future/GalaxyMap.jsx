@@ -123,29 +123,28 @@ function CommLine({ serverPosition }) {
   )
 }
 
-const GRAVITY_RINGS = [
-  { inner: 4, outer: 4.5, opacity: 0.25, speed: 0.2 },
-  { inner: 7, outer: 7.4, opacity: 0.15, speed: -0.15 },
-  { inner: 11, outer: 11.3, opacity: 0.08, speed: 0.1 },
-  { inner: 16, outer: 16.2, opacity: 0.04, speed: -0.08 },
+// Concentric shells around Earth representing the gravitational well it sits
+// in. Tighter near Earth, fading outward — Earth's clock runs slow here, which
+// is exactly what gives a distant void server its relative time advantage.
+const GRAVITY_WELL_RINGS = [
+  { inner: 4, outer: 4.5, opacity: 0.30, speed: 0.2 },
+  { inner: 7, outer: 7.4, opacity: 0.18, speed: -0.15 },
+  { inner: 11, outer: 11.3, opacity: 0.10, speed: 0.1 },
+  { inner: 16, outer: 16.2, opacity: 0.05, speed: -0.08 },
 ]
 
-function GravityRings({ position }) {
+function GravityWell() {
   const ringsRef = useRef([])
 
   useFrame((_, delta) => {
     ringsRef.current.forEach((mesh, i) => {
-      if (mesh) mesh.rotation.z += delta * GRAVITY_RINGS[i].speed
+      if (mesh) mesh.rotation.z += delta * GRAVITY_WELL_RINGS[i].speed
     })
   })
 
-  if (!position) return null
-
-  const rings = GRAVITY_RINGS
-
   return (
-    <group position={[position.x, position.y, position.z]}>
-      {rings.map((r, i) => (
+    <group position={[0, 0, 0]}>
+      {GRAVITY_WELL_RINGS.map((r, i) => (
         <mesh
           key={i}
           ref={el => ringsRef.current[i] = el}
@@ -153,7 +152,7 @@ function GravityRings({ position }) {
         >
           <ringGeometry args={[r.inner, r.outer, 64]} />
           <meshBasicMaterial
-            color="#06b6d4"
+            color="#f59e0b"
             transparent
             opacity={r.opacity}
             side={THREE.DoubleSide}
@@ -297,9 +296,9 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
         <pointLight position={[0, 100, 0]} intensity={0.2} color="#1e3a5f" />
         <Stars radius={800} depth={200} count={3000} factor={2} fade speed={0.3} saturation={0.1} />
         <StarField stars={stars} />
+        <GravityWell />
         <EarthMarker />
         <CommLine serverPosition={serverPosition} />
-        <GravityRings position={serverPosition} />
         <ServerMarker position={serverPosition} />
         <Grid
           cellSize={50}

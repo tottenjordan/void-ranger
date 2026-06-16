@@ -82,8 +82,10 @@ Open http://localhost:5173
 
 **Features:**
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore. Background stars twinkle; data stars are color-coded by luminosity (brighter stars appear warmer).
-- **Server Placement** — Click anywhere on the map or enter galactic coordinates (distance, longitude, latitude) to deploy a void server. The server appears as a floating, glowing sphere surrounded by gravitational field rings and sparkles.
-- **Light-Speed Communication Line** — A dashed line connects Earth (green marker at origin) to your server, with an animated signal pulse traveling back and forth. The label shows distance in parsecs and round-trip travel time.
+- **Server Placement** — Click anywhere on the map or enter galactic coordinates (distance, longitude, latitude) to deploy a void server. The server appears as a floating, glowing cyan sphere with an orbit-ring marker and sparkles.
+- **Earth's Gravity Well** — Amber concentric shells surround the green Earth marker, representing the gravitational well that slows Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the void server's fast one — so the well is drawn at Earth, where it physically belongs, not at the server.
+- **Light-Speed Communication Line** — A dashed cyan line connects Earth to your server, with an animated **red signal pulse** traveling the round trip. The label shows distance in parsecs and round-trip travel time.
+- **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, void server, orbit marker, comm link, signal pulse).
 - **Metrics Dashboard** — Three cards update in real time with animated value transitions:
   - *Earth Compute Time* — how much Earth time passes while the void server completes the task (less than the raw task duration, because the server's clock is faster)
   - *Earth Wait Time* — compute time + round-trip light delay
@@ -148,7 +150,7 @@ So there is a **break-even task size**: below it, the fixed communication overhe
 
 This capture shows a void server deployed at **20 pc** with a **10¹² second** workload (set via the *Task (s)* field in the header). Reading the screen:
 
-- The **green marker** at the center is Earth; the **cyan sphere** with an orbit ring and gravitational field rings is the deployed server. A dashed **communication line** connects them, with an animated signal pulse traveling the round trip.
+- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed void server. A dashed **communication line** connects them, with a **red signal pulse** traveling the round trip. A **Map Key** below the metrics labels every element.
 - The **metrics row** shows the result: *Earth Compute Time* ≈ 30,108 yr (less than the 31,700 yr the task would take locally, because the server's clock runs faster), *Earth Wait Time* ≈ 30,238 yr (compute + round-trip light delay), and a **positive Net Gain of ~1,471 yr** (green) — offloading wins here.
 - Try dragging the server farther out: the light-delay term grows until the Net Gain flips negative (red), demonstrating the latency/dilation tradeoff.
 
