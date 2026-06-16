@@ -32,9 +32,8 @@ React Frontend (Vite + Tailwind + Three.js + Chart.js)
 
 ```bash
 cd backend
-uv venv
+uv sync --all-extras
 source .venv/bin/activate
-uv pip install -r requirements.txt
 ```
 
 ### Process Star Data (one-time)
@@ -66,8 +65,7 @@ Start the backend and frontend in separate terminals:
 ```bash
 # Terminal 1 — Backend
 cd backend
-source .venv/bin/activate
-uvicorn app.main:app --reload --port 8000
+uv run uvicorn app.main:app --reload --port 8000
 
 # Terminal 2 — Frontend
 cd frontend
@@ -116,6 +114,5 @@ chronocloud/
 
 ```bash
 cd backend
-source .venv/bin/activate
-python -m pytest tests/ -v
+uv run pytest tests/ -v
 ```
