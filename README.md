@@ -100,6 +100,25 @@ Open http://localhost:5173
 
 **Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances even though the server's clock advantage is constant. Now increase the task duration to 1,000,000 seconds — at what distance does the dilation benefit finally overcome the latency cost?
 
+#### Understanding the Task Workload Size
+
+The **Task (s)** input in the header is the *size of the computational job*, expressed as a duration: how many seconds of compute the job requires on whatever machine runs it. (It only affects this Deep-Space mode; the Interplanetary ledger mode ignores it.)
+
+**What it represents:** Think of it as "this job needs *N* seconds of CPU time to finish." A small value like `3600` (1 hour) is a quick job; a large value like `1e12` (≈31,700 years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same number of compute-seconds on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth.
+
+**Why it's the key lever:** Task size determines whether offloading to a void server actually pays off. From the efficiency formula:
+
+$$
+\text{net gain} = \underbrace{t_\text{task} \cdot (1 - f_\text{earth})}_{\text{dilation benefit (scales with size)}} - \underbrace{t_\text{latency}}_{\text{fixed cost}}
+$$
+
+- The **dilation benefit** grows linearly with task size. A faster-ticking void server saves a *percentage* of the runtime (~5% with the default well), so the bigger the job, the more absolute time saved.
+- The **latency cost** is fixed — it depends only on distance, not job size. You pay the same round-trip light delay whether the job is tiny or enormous.
+
+So there is a **break-even task size**: below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. This is why the walkthrough screenshot needs a $10^{12}$ s task to show a positive net gain at 20 pc — a 1-hour job at that distance would be a massive net loss.
+
+**Real-world analogy:** It is the same calculus as deciding whether to ship a job to a distant data center. The network round-trip is a fixed tax, so it is only worth paying if the job is big enough that the remote machine's advantage (here, a faster clock; in reality, cheaper or faster hardware) outweighs the transit cost. Small jobs stay local; large jobs justify the trip.
+
 ---
 
 ### Interplanetary DevOps (Near-Future Mode)
