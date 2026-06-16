@@ -47,9 +47,35 @@ const lightDelayZonePlugin = {
   },
 }
 
-ChartJS.register(lightDelayZonePlugin)
+const conflictMarkersPlugin = {
+  id: 'conflictMarkers',
+  afterDraw(chart) {
+    const conflicts = chart.options.plugins.conflictMarkers?.conflicts
+    if (!conflicts?.length) return
 
-export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
+    const { ctx, chartArea, scales } = chart
+    ctx.save()
+
+    conflicts.forEach(c => {
+      const px = scales.x.getPixelForValue(c.x)
+      if (px < chartArea.left || px > chartArea.right) return
+
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.15)'
+      ctx.fillRect(px - 2, chartArea.top, 4, chartArea.bottom - chartArea.top)
+
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.8)'
+      ctx.beginPath()
+      ctx.arc(px, chartArea.top + 8, 3, 0, Math.PI * 2)
+      ctx.fill()
+    })
+
+    ctx.restore()
+  },
+}
+
+ChartJS.register(lightDelayZonePlugin, conflictMarkersPlugin)
+
+export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset, conflicts = [] }) {
   const data = useMemo(() => {
     const correction = LIGHT_DELAY * syncOffset
 
@@ -129,6 +155,7 @@ export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
         bodyColor: '#d1d5db',
       },
       lightDelayZone: { syncOffset },
+      conflictMarkers: { conflicts },
     },
   }
 
