@@ -116,7 +116,43 @@ function CommLine({ serverPosition }) {
         style={{ pointerEvents: 'none' }}
       >
         <span className="text-[10px] font-mono text-cyan-400 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
-          {distPc.toFixed(1)} pc | RTT {formatLatency(roundTripSeconds)}
+          RTT {formatLatency(roundTripSeconds)}
+        </span>
+      </Html>
+    </group>
+  )
+}
+
+// A dimension line (architectural style) showing the straight-line Earth↔server
+// distance. Drawn parallel to and offset above the comm line so the two never
+// overlap, with the distance label at its midpoint.
+function DistanceLine({ serverPosition }) {
+  const { points, mid, offset } = useMemo(() => {
+    const sx = serverPosition?.x ?? 0
+    const sy = serverPosition?.y ?? 0
+    const sz = serverPosition?.z ?? 0
+    const dist = Math.sqrt(sx * sx + sy * sy + sz * sz)
+    const off = Math.max(dist * 0.18, 4)
+    const p = [new THREE.Vector3(0, off, 0), new THREE.Vector3(sx, sy + off, sz)]
+    return { points: p, mid: [sx / 2, sy / 2 + off, sz / 2], offset: off }
+  }, [serverPosition])
+
+  if (!serverPosition) return null
+
+  const distPc = Math.sqrt(serverPosition.x ** 2 + serverPosition.y ** 2 + serverPosition.z ** 2)
+
+  return (
+    <group>
+      <Line points={points} color="#a78bfa" lineWidth={1} dashed dashSize={2} gapSize={1.5} opacity={0.55} transparent />
+      {/* short ticks linking the dimension line back to Earth and the server */}
+      <Line points={[[0, 0, 0], [0, offset, 0]]} color="#a78bfa" lineWidth={1} opacity={0.25} transparent />
+      <Line
+        points={[[serverPosition.x, serverPosition.y, serverPosition.z], [serverPosition.x, serverPosition.y + offset, serverPosition.z]]}
+        color="#a78bfa" lineWidth={1} opacity={0.25} transparent
+      />
+      <Html position={mid} center style={{ pointerEvents: 'none' }}>
+        <span className="text-[10px] font-mono text-violet-300 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
+          {distPc.toFixed(1)} pc
         </span>
       </Html>
     </group>
@@ -299,6 +335,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
         <GravityWell />
         <EarthMarker />
         <CommLine serverPosition={serverPosition} />
+        <DistanceLine serverPosition={serverPosition} />
         <ServerMarker position={serverPosition} />
         <Grid
           cellSize={50}

@@ -84,9 +84,11 @@ Open http://localhost:5173
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore. Background stars twinkle; data stars are color-coded by luminosity (brighter stars appear warmer).
 - **Server Placement** — Click anywhere on the map or enter galactic coordinates (distance, longitude, latitude) to deploy a void server. The server appears as a floating, glowing cyan sphere with an orbit-ring marker and sparkles.
 - **Earth's Gravity Well** — Amber concentric shells surround the green Earth marker, representing the gravitational well that slows Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the void server's fast one — so the well is drawn at Earth, where it physically belongs, not at the server.
-- **Light-Speed Communication Line** — A dashed cyan line connects Earth to your server, with an animated **red signal pulse** traveling the round trip. The label shows distance in parsecs and round-trip travel time.
-- **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, void server, orbit marker, comm link, signal pulse).
-- **Metrics Dashboard** — Three cards update in real time with animated value transitions:
+- **Light-Speed Communication Line** — A dashed cyan line connects Earth to your server, carrying an animated **red signal pulse** on the round trip. Its label shows the round-trip travel time (RTT).
+- **Distance Dimension Line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), with the straight-line Earth↔server distance in parsecs at its midpoint.
+- **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, void server, orbit marker, comm link, signal pulse, distance).
+- **Metrics Dashboard** — Four cards update in real time with animated value transitions:
+  - *Distance from Earth* — straight-line distance to the server, shown in parsecs with light-years and miles beneath (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi)
   - *Earth Compute Time* — how much Earth time passes while the void server completes the task (less than the raw task duration, because the server's clock is faster)
   - *Earth Wait Time* — compute time + round-trip light delay
   - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost

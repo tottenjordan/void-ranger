@@ -34,7 +34,7 @@ function formatTime(seconds) {
   return `${(abs / 31536000).toFixed(2)} yr`
 }
 
-function MetricCard({ label, value, color, tooltip, arrow }) {
+function MetricCard({ label, value, color, tooltip, arrow, sub }) {
   return (
     <div
       className={`bg-gray-900 border border-gray-800 rounded-xl p-4 hover:shadow-lg transition-shadow ${color}`}
@@ -45,13 +45,25 @@ function MetricCard({ label, value, color, tooltip, arrow }) {
         <p className="text-2xl font-mono font-bold">{value}</p>
         {arrow && <span className="text-lg">{arrow}</span>}
       </div>
+      {sub && <p className="text-[11px] font-mono text-gray-500 mt-1">{sub}</p>}
     </div>
   )
 }
 
-export default function MetricsDash({ earthComputeTime, earthWaitTime, netGain }) {
+const LY_PER_PC = 3.26156
+const MILES_PER_PC = 1.917e13
+
+function formatDistanceSub(pc) {
+  const ly = pc * LY_PER_PC
+  const miles = pc * MILES_PER_PC
+  const lyStr = ly < 10000 ? ly.toFixed(2) : ly.toExponential(2)
+  return `${lyStr} ly · ${miles.toExponential(2)} mi`
+}
+
+export default function MetricsDash({ distancePc, earthComputeTime, earthWaitTime, netGain }) {
   if (earthComputeTime == null) return null
 
+  const animDistance = useAnimatedValue(distancePc ?? 0)
   const animCompute = useAnimatedValue(earthComputeTime)
   const animWait = useAnimatedValue(earthWaitTime)
   const animGain = useAnimatedValue(netGain)
@@ -61,7 +73,14 @@ export default function MetricsDash({ earthComputeTime, earthWaitTime, netGain }
   useEffect(() => { prevGain.current = netGain }, [netGain])
 
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <MetricCard
+        label="Distance from Earth"
+        value={`${animDistance.toFixed(2)} pc`}
+        sub={formatDistanceSub(animDistance)}
+        color="text-violet-300 hover:shadow-violet-500/10"
+        tooltip="Straight-line distance from Earth to the void server. Shown in parsecs, light-years, and miles (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi). This sets the round-trip communication latency."
+      />
       <MetricCard
         label="Earth Compute Time"
         value={formatTime(animCompute)}

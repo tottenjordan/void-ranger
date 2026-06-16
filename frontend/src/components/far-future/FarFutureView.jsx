@@ -14,8 +14,9 @@ const LEGEND_ITEMS = [
   { swatch: 'ring', color: '#f59e0b', label: 'Gravity well', desc: "Shells around Earth showing the field that slows its clock." },
   { swatch: 'dot', color: '#06b6d4', label: 'Void server', desc: 'In weak gravity — its clock runs fast (the time advantage).' },
   { swatch: 'ring', color: '#06b6d4', label: 'Orbit marker', desc: 'Ring + sparkles marking the deployed server.' },
-  { swatch: 'line', color: '#06b6d4', label: 'Comm link', desc: 'Light-speed channel between Earth and the server.' },
+  { swatch: 'line', color: '#06b6d4', label: 'Comm link', desc: 'Light-speed channel between Earth and the server (shows round-trip time).' },
   { swatch: 'dot', color: '#ef4444', label: 'Signal pulse', desc: 'A message traveling the round trip at light speed.' },
+  { swatch: 'line', color: '#a78bfa', label: 'Distance', desc: 'Straight-line Earth↔server distance in parsecs.' },
 ]
 
 function Swatch({ type, color }) {
@@ -114,6 +115,9 @@ export default function FarFutureView({ taskSeconds }) {
       </div>
       {metrics && (
         <MetricsDash
+          distancePc={serverPosition
+            ? Math.sqrt(serverPosition.x ** 2 + serverPosition.y ** 2 + serverPosition.z ** 2)
+            : 0}
           earthComputeTime={metrics.earth_compute_time}
           earthWaitTime={metrics.earth_wait_time}
           netGain={metrics.net_gain}
