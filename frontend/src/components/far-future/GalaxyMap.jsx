@@ -106,10 +106,16 @@ function CommLine({ serverPosition }) {
         opacity={0.4}
         transparent
       />
-      <mesh ref={pulseRef}>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshBasicMaterial color="#ef4444" />
-      </mesh>
+      <group ref={pulseRef}>
+        <mesh>
+          <sphereGeometry args={[1.6, 12, 12]} />
+          <meshBasicMaterial color="#ef4444" />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[3.4, 12, 12]} />
+          <meshBasicMaterial color="#ef4444" transparent opacity={0.25} depthWrite={false} />
+        </mesh>
+      </group>
       <Html
         position={[serverPosition.x, serverPosition.y + 5, serverPosition.z]}
         center
