@@ -17,5 +17,9 @@ dev = [
     "httpx>=0.28.0",
 ]
 
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
