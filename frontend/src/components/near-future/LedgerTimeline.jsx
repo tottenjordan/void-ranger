@@ -2,21 +2,56 @@ import { useMemo } from 'react'
 import { Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
-  CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend)
+ChartJS.register(LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
+
+const LIGHT_DELAY = 750
+
+const lightDelayZonePlugin = {
+  id: 'lightDelayZone',
+  beforeDraw(chart) {
+    const syncOffset = chart.options.plugins.lightDelayZone?.syncOffset ?? 0
+    const zoneEnd = LIGHT_DELAY * (1 - syncOffset)
+    if (zoneEnd <= 0) return
+
+    const { ctx, chartArea, scales } = chart
+    const xStart = scales.x.getPixelForValue(0)
+    const xEnd = scales.x.getPixelForValue(zoneEnd)
+    const clampedEnd = Math.min(xEnd, chartArea.right)
+
+    ctx.save()
+    ctx.fillStyle = 'rgba(249, 115, 22, 0.06)'
+    ctx.fillRect(xStart, chartArea.top, clampedEnd - xStart, chartArea.bottom - chartArea.top)
+
+    ctx.setLineDash([4, 4])
+    ctx.strokeStyle = 'rgba(249, 115, 22, 0.3)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.moveTo(clampedEnd, chartArea.top)
+    ctx.lineTo(clampedEnd, chartArea.bottom)
+    ctx.stroke()
+
+    ctx.setLineDash([])
+    ctx.fillStyle = 'rgba(249, 115, 22, 0.5)'
+    ctx.font = '10px ui-monospace, monospace'
+    ctx.fillText('Light-delay window', xStart + 6, chartArea.top + 14)
+    ctx.restore()
+  },
+}
+
+ChartJS.register(lightDelayZonePlugin)
 
 export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
   const data = useMemo(() => {
-    const lightDelay = 750
-    const correction = lightDelay * syncOffset
+    const correction = LIGHT_DELAY * syncOffset
 
     const earthPoints = earthTxs.map((tx, i) => ({
       x: tx.timestamp,
@@ -24,7 +59,7 @@ export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
     }))
 
     const marsPoints = marsTxs.map((tx, i) => ({
-      x: tx.timestamp + lightDelay - correction,
+      x: tx.timestamp + LIGHT_DELAY - correction,
       y: i + 1,
     }))
 
@@ -34,17 +69,27 @@ export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
           label: 'Earth Ledger',
           data: earthPoints,
           borderColor: '#22c55e',
-          backgroundColor: '#22c55e',
-          pointRadius: 3,
+          backgroundColor: 'rgba(34, 197, 94, 0.08)',
+          pointBackgroundColor: '#22c55e',
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor: '#fff',
           tension: 0.1,
+          fill: 'origin',
         },
         {
           label: 'Mars Ledger (as seen from Earth)',
           data: marsPoints,
           borderColor: '#f97316',
-          backgroundColor: '#f97316',
-          pointRadius: 3,
+          backgroundColor: 'rgba(249, 115, 22, 0.08)',
+          pointBackgroundColor: '#f97316',
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointHoverBorderWidth: 2,
+          pointHoverBorderColor: '#fff',
           tension: 0.1,
+          fill: 'origin',
         },
       ],
     }
@@ -53,6 +98,14 @@ export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+      duration: 600,
+      easing: 'easeInOutQuart',
+    },
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     scales: {
       x: {
         type: 'linear',
@@ -68,6 +121,14 @@ export default function LedgerTimeline({ earthTxs, marsTxs, syncOffset }) {
     },
     plugins: {
       legend: { labels: { color: '#d1d5db' } },
+      tooltip: {
+        backgroundColor: '#1f2937',
+        borderColor: '#374151',
+        borderWidth: 1,
+        titleColor: '#e5e7eb',
+        bodyColor: '#d1d5db',
+      },
+      lightDelayZone: { syncOffset },
     },
   }
 
