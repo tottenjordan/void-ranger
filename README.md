@@ -14,10 +14,10 @@ React Frontend (Vite + Tailwind + Three.js + Chart.js)
   │
   ├── /api/*  →  FastAPI Backend (Python)
   │                ├── POST /api/physics/cartesian    — galactic → Cartesian coords
-  │                ├── POST /api/physics/efficiency   — time dilation + latency metrics
-  │                └── GET  /api/stars                — processed HYG star catalog
+  │                ├── POST /api/physics/efficiency   — gravity (from catalog) + latency metrics
+  │                └── GET  /api/stars                — processed HYG star catalog (with mass)
   │
-  └── Star data  ←  HYG Database (8,920 stars, processed from v41)
+  └── Star data  ←  HYG Database (8,920 stars w/ mass estimates, processed from v41)
 ```
 
 ## Prerequisites
@@ -82,18 +82,20 @@ Open http://localhost:5173
 
 **Features:**
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore. Background stars twinkle; data stars are color-coded by luminosity (brighter stars appear warmer).
-- **Server Placement** — Click anywhere on the map or enter galactic coordinates (distance, longitude, latitude) to deploy a void server. The server appears as a floating, glowing cyan sphere with an orbit-ring marker and sparkles.
-- **Earth's Gravity Well** — Amber concentric shells surround the green Earth marker, representing the gravitational well that slows Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the void server's fast one — so the well is drawn at Earth, where it physically belongs, not at the server.
+- **Server Placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag rotates** the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement. The server appears as a floating, glowing cyan sphere with an orbit-ring marker and sparkles.
+- **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). Place it in a deep void and its clock runs fast (a real time advantage); place it next to a bright star and that star's gravity slows it down, eroding or reversing the gain. Genuine void-hunting is rewarded.
+- **Earth's Gravity Well** — Amber concentric shells surround the green Earth marker, representing the dense solar-neighborhood field that slows Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the server's clock — so the well is drawn at Earth, where it physically belongs.
 - **Light-Speed Communication Line** — A dashed cyan line connects Earth to your server, carrying an animated **red signal pulse** on the round trip. Its label shows the round-trip travel time (RTT).
 - **Distance Dimension Line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), with the straight-line Earth↔server distance in parsecs at its midpoint.
 - **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, void server, orbit marker, comm link, signal pulse, distance).
-- **Metrics Dashboard** — Four cards update in real time with animated value transitions:
+- **Metrics Dashboard** — Five cards update in real time with animated value transitions:
   - *Distance from Earth* — straight-line distance to the server in parsecs, with light-years and miles beneath (both scientific notation and a plain-language "≈ N trillion miles" phrasing); 1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi
-  - *Earth Compute Time* — how much Earth time passes while the void server completes the task (less than the raw task duration, because the server's clock is faster)
+  - *Server Clock Advantage* — how fast the server's clock ticks relative to Earth's (e.g. `1.063× Earth`), derived from its local gravity; >1 (cyan) is a void advantage, <1 (red) means it's in a denser region than Earth
+  - *Earth Compute Time* — how much Earth time passes while the server completes the task
   - *Earth Wait Time* — compute time + round-trip light delay
   - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost
 - **Task Duration Control** — Adjust the "Task (s)" input in the header to simulate different workload sizes. Longer tasks benefit more from time dilation.
-- **Note on Scale** — The gravitational dilation effect is pedagogically exaggerated. Real Sun-Earth time dilation is ~1 part per billion. The dashboard models Earth in an extreme gravitational well (near a neutron-star-mass object) to make the effect visible and the tradeoffs explorable.
+- **Note on Scale** — The gravitational dilation effect is pedagogically exaggerated (real interstellar potentials are ~1 part in 10¹³). A documented constant scales it so the contrast between the crowded solar neighborhood and deep voids is visible and explorable.
 - **Camera Fly-To** — The camera automatically frames both Earth and the server when you place one.
 
 **What problems does it address?**
@@ -150,11 +152,11 @@ So there is a **break-even task size**: below it, the fixed communication overhe
 
 ![Deep-Space Cloud Compute mode showing a void server deployed in the star field](docs/images/far-future.png)
 
-This capture shows a void server deployed at **20 pc** with a **10¹² second** workload (set via the *Task (s)* field in the header). Reading the screen:
+This capture shows a server deployed at **400 pc** (a deep void) with a **10¹³ second** workload (set via the *Task (s)* field in the header). Reading the screen:
 
-- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed void server. A dashed **communication line** connects them, with a **red signal pulse** traveling the round trip. A **Map Key** below the metrics labels every element.
-- The **metrics row** shows the result: *Earth Compute Time* ≈ 30,108 yr (less than the 31,700 yr the task would take locally, because the server's clock runs faster), *Earth Wait Time* ≈ 30,238 yr (compute + round-trip light delay), and a **positive Net Gain of ~1,471 yr** (green) — offloading wins here.
-- Try dragging the server farther out: the light-delay term grows until the Net Gain flips negative (red), demonstrating the latency/dilation tradeoff.
+- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed server. A dashed cyan **communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** below the metrics labels every element.
+- The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), *Earth Compute Time* and *Wait Time* in the ~300,000-year range, and a **positive Net Gain of ~16,000 yr** (green) — offloading wins here.
+- Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the new physics models.
 
 ### Interplanetary DevOps
 
@@ -200,43 +202,45 @@ $$
 
 *Verification:* a server 1 pc away yields a 6.52-year round trip, consistent with 1 pc ≈ 3.26 light-years one way.
 
-### 3. Gravitational time dilation (Schwarzschild metric)
+### 3. Gravitational time dilation (weak-field, from the star catalog)
 
-For a static clock at radius $r$ from a spherical mass $M$, the Schwarzschild metric gives the clock's tick rate relative to a clock at infinity (flat spacetime):
+Both Earth and the server sit in the **same field of catalog stars**, so the model uses the weak-field metric: a clock at gravitational potential $\Phi$ ticks at rate
 
 $$
-\frac{d\tau}{dt} = \sqrt{1 - \frac{r_s}{r}}, \qquad r_s = \frac{2GM}{c^2}
+\frac{d\tau}{dt} = \sqrt{1 + \frac{2\Phi}{c^2}}
 $$
 
-where $r_s$ is the **Schwarzschild radius**. In the void scenario, this factor describes **Earth's** clock — Earth sits deep in a gravitational well, so its clock runs *slow* (factor < 1). The void server sits in near-flat spacetime (factor ≈ 1), so it runs *faster* than Earth by $1 / \text{factor}$.
+relative to flat spacetime. The potential at any point is the softened Newtonian sum over all catalog stars (masses estimated per §3a):
 
-*Verification:* the code computes $r_s = 2954\ \text{m}$ for the Sun, matching the textbook value of ~2953 m.
+$$
+\Phi(\mathbf{r}) = -\sum_i \frac{G M_i}{\sqrt{|\mathbf{r} - \mathbf{r}_i|^2 + \epsilon^2}}
+$$
+
+where $\epsilon$ is a softening length ($0.1\ \text{pc}$) that keeps the potential finite if a server is placed right on top of a star. **Earth's** factor $f_\text{earth}$ is this evaluated at the origin — the dense solar neighborhood, so Earth's clock runs slow. The **server's** factor $f_\text{server}$ is evaluated at its placement: in a deep void $\Phi \to 0$ and $f_\text{server} \to 1$ (fast); near other stars $\Phi$ deepens and $f_\text{server}$ drops, eroding or reversing the advantage. This is the "place it in a void, not next to a star" physics.
+
+> **Exaggeration:** real interstellar potentials produce dilation of ~1 part in $10^{13}$ — invisible. The code multiplies $2\Phi/c^2$ by a documented constant (`GRAVITY_EXAGGERATION`) so the spread between the crowded solar neighborhood and deep voids becomes a visible few-to-tens-of-percent effect, and caps the well depth so the factor stays real.
+
+### 3a. Stellar mass estimate (mass–luminosity relation)
+
+The data pipeline estimates each star's mass from its catalog luminosity $L$ (solar units) using the main-sequence mass–luminosity relation, clamped to $0.1$–$50\ M_\odot$:
+
+$$
+\frac{M}{M_\odot} = \left(\frac{L}{L_\odot}\right)^{1/3.5}
+$$
+
+This is crude — it treats every star as main-sequence, ignoring giants, white dwarfs, and binaries — but it is enough to make void-hunting physically meaningful.
 
 ### 4. Computation efficiency
 
-Given a task requiring `task_seconds` of compute (in the local clock of whichever machine runs it), the model compares running it locally on Earth versus offloading to the void server:
+Given a task requiring `task_seconds` of compute (in the local clock of whichever machine runs it), the model compares running it locally on Earth versus offloading to the server:
 
 $$
-t_\text{compute} = t_\text{task} \cdot f_\text{earth}
-$$
-
-$$
-t_\text{wait} = t_\text{compute} + t_\text{latency}
-$$
-
-$$
+t_\text{compute} = t_\text{task} \cdot \frac{f_\text{earth}}{f_\text{server}}, \qquad
+t_\text{wait} = t_\text{compute} + t_\text{latency}, \qquad
 \text{net gain} = t_\text{task} - t_\text{wait}
 $$
 
-where $f_\text{earth}$ is Earth's dilation factor from §3, $t_\text{compute}$ is the Earth time elapsed during the offloaded computation, and $t_\text{wait}$ is the total Earth time from dispatch to receiving the result. The void server burns $t_\text{task}$ of its own (≈coordinate) time, during which Earth ages only $t_\text{task} \cdot f_\text{earth}$ — but you must wait $t_\text{latency}$ for the round trip. A **positive net gain** means offloading beats local execution.
-
-### 5. Lorentz factor (special relativity)
-
-Provided for velocity-based time dilation, where $v$ is in km/s:
-
-$$
-\gamma = \frac{1}{\sqrt{1 - (v/c)^2}}
-$$
+The server completes the task in $t_\text{task}$ of its own proper time; the Earth time that elapses meanwhile is $t_\text{task} \cdot (f_\text{earth}/f_\text{server})$. When the server's clock is faster ($f_\text{server} > f_\text{earth}$, i.e. a weaker field) Earth ages less, so the work effectively finishes sooner — but you still wait $t_\text{latency}$ for the round trip. The **clock advantage** reported in the UI is $f_\text{server}/f_\text{earth}$ (>1 = the server runs faster than Earth). A **positive net gain** means offloading beats local execution.
 
 ### 6. Interplanetary light delay (Near-Future mode)
 
@@ -252,15 +256,19 @@ With $d_\text{Earth–Mars} = 2.25 \times 10^8\ \text{km}$ (a realistic mid-rang
 
 These are intentional simplifications. They keep the simulation legible, but a physicist should know where it departs from reality:
 
-1. **The gravitational dilation is fictional in scale.** The default places Earth at $r = 3 \times 10^4\ \text{m}$ (30 km) from a solar mass — *inside* the real Sun, so it only makes sense as a compact object (black hole / neutron star). This yields a ~5.3% effect. Real Sun–Earth dilation is ~1 part in $10^8$ — invisible on a dashboard. The exaggeration is deliberate and flagged in code.
+1. **The gravitational dilation is exaggerated in scale.** Real interstellar potentials produce dilation of ~1 part in $10^{13}$. The `GRAVITY_EXAGGERATION` constant scales this into a visible few-to-tens-of-percent effect so the contrast between the crowded solar neighborhood and deep voids is explorable. Relative differences between locations are meaningful; the absolute magnitude is not.
 
-2. **Net gain is hard to reach at interstellar distances.** With a ~5% clock advantage, a positive net gain requires $t_\text{task}(1 - f) > 2d/c$. Even a $10^6$-second task breaks even only within ~$2.45 \times 10^{-4}$ pc of Earth. This is physically *true* — light latency dominates at interstellar scale — but it means most server placements show a net loss. To make "wins" common, lower `radius_m` (stronger dilation) or scale distances down.
+2. **Stellar masses are a crude estimate.** Masses come from a main-sequence mass–luminosity relation ($M = L^{1/3.5}$, clamped to 0.1–50 $M_\odot$), which mis-estimates giants, white dwarfs, and binaries. Good enough for relative potential, not for precision astrophysics.
 
-3. **Two coordinate systems share one 3D scene.** Catalog stars are placed from equatorial coordinates (RA/Dec), while servers use galactic longitude/latitude. Both produce valid Cartesian points, but their axes are not physically aligned, so a server's position does not correspond to the true galactic-frame location of nearby stars. This is cosmetic.
+3. **"Void = far away" is partly a catalog artifact.** The catalog is magnitude-limited (only stars brighter than mag 6.5), so star density falls off with distance from Earth. That makes distant regions read as low-potential voids — roughly true for the solar neighborhood vs. intergalactic space, but amplified by the cutoff.
 
-4. **"Relativistic Sync Protocol" is loosely named.** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
+4. **Net gain still requires large tasks.** Light latency grows with distance while the clock advantage saturates, so a positive net gain needs a big enough task to amortize the round trip. This is the genuine tradeoff the dashboard is built to show — small jobs at large distances correctly read as net losses.
 
-5. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
+5. **Two coordinate systems share one 3D scene.** Catalog stars are placed from equatorial coordinates (RA/Dec), while servers use galactic longitude/latitude. Both produce valid Cartesian points, but their axes are not physically aligned, so a server's position does not correspond to the true galactic-frame location of nearby stars. This is cosmetic — but note the gravitational potential is computed in the same Cartesian frame the stars are stored in, so the relative geometry used for physics is self-consistent.
+
+6. **"Relativistic Sync Protocol" is loosely named.** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
+
+7. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
 
 ## Project Structure
 

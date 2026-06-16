@@ -298,9 +298,23 @@ function webglAvailable() {
   }
 }
 
+const CLICK_DRAG_THRESHOLD_PX = 5
+
 export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
-  const handleClick = (e) => {
-    if (!onPlaceServer) return
+  const pointerDown = useRef(null)
+
+  const handlePointerDown = (e) => {
+    pointerDown.current = { x: e.clientX, y: e.clientY }
+  }
+
+  const handlePointerUp = (e) => {
+    if (!onPlaceServer || !pointerDown.current) return
+    const dx = e.clientX - pointerDown.current.x
+    const dy = e.clientY - pointerDown.current.y
+    pointerDown.current = null
+    // A drag (used to orbit the camera) moves the pointer; only a near-stationary
+    // press counts as a click that places/moves the server.
+    if (Math.hypot(dx, dy) > CLICK_DRAG_THRESHOLD_PX) return
     onPlaceServer({ x: e.point.x, y: e.point.y, z: e.point.z })
   }
 
@@ -324,7 +338,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
   return (
     <div className="relative w-full h-[500px] rounded-xl border border-gray-800 overflow-hidden">
       <div className="absolute top-2 left-3 z-10 text-[10px] font-mono text-gray-500 pointer-events-none">
-        Drag to orbit · scroll to zoom · click to place a server
+        Click to place a server · drag to orbit · scroll to zoom
       </div>
       <Canvas camera={{ position: [0, 200, 400], fov: 60 }}>
         <BackgroundSphere />
@@ -348,7 +362,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
           cellThickness={0.3}
           sectionThickness={0.6}
         />
-        <mesh visible={false} onClick={handleClick}>
+        <mesh visible={false} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
           <planeGeometry args={[2000, 2000]} />
           <meshBasicMaterial side={THREE.DoubleSide} />
         </mesh>

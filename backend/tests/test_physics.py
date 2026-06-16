@@ -1,12 +1,13 @@
 import math
 
 from app.services.physics import (
-    SOLAR_MASS,
     compute_efficiency,
+    earth_dilation_factor,
     galactic_to_cartesian,
+    gravitational_dilation,
     light_latency,
-    lorentz_factor,
-    time_dilation_factor,
+    local_potential,
+    server_dilation_factor,
 )
 
 
@@ -36,40 +37,50 @@ def test_light_latency_origin():
 
 
 def test_light_latency_positive():
-    latency = light_latency(1, 0, 0)
-    assert latency > 0
+    assert light_latency(1, 0, 0) > 0
 
 
-def test_time_dilation_far_from_mass():
-    factor = time_dilation_factor(SOLAR_MASS, 1e15)
-    assert abs(factor - 1.0) < 1e-6
+# --- Gravitational potential & dilation -------------------------------------
+
+def test_local_potential_finite_everywhere():
+    # Even far outside the catalog the potential is finite and non-negative.
+    assert local_potential(100000, 100000, 100000) >= 0
 
 
-def test_time_dilation_closer_to_mass():
-    far = time_dilation_factor(SOLAR_MASS, 1e15)
-    close = time_dilation_factor(SOLAR_MASS, 1e10)
-    assert close < far
+def test_local_potential_higher_near_origin_than_deep_void():
+    # The origin sits in the dense solar neighborhood; a far point is a void.
+    assert local_potential(0, 0, 0) > local_potential(5000, 5000, 5000)
 
 
-def test_lorentz_factor_at_rest():
-    assert lorentz_factor(0) == 1.0
+def test_gravitational_dilation_void_is_near_one():
+    # Negligible potential -> clock ~ flat spacetime.
+    assert abs(gravitational_dilation(0.0) - 1.0) < 1e-9
 
 
-def test_lorentz_factor_increases_with_speed():
-    slow = lorentz_factor(1000)
-    fast = lorentz_factor(100000)
-    assert fast > slow
+def test_gravitational_dilation_decreases_with_potential():
+    shallow = gravitational_dilation(1e5)
+    deep = gravitational_dilation(1e7)
+    assert deep < shallow < 1.0
 
 
-def test_compute_efficiency_zero_latency():
-    result = compute_efficiency(100, 0.5, 0)
-    assert result["earth_compute_time"] == 50.0
-    assert result["earth_wait_time"] == 50.0
-    assert result["net_gain"] == 50.0
+def test_server_faster_in_void_than_at_earth():
+    f_earth = earth_dilation_factor()
+    f_void = server_dilation_factor(5000, 5000, 5000)
+    assert f_void > f_earth  # void server's clock runs faster than Earth's
 
 
-def test_compute_efficiency_with_latency():
-    result = compute_efficiency(100, 0.5, 200)
-    assert result["earth_compute_time"] == 50.0
-    assert result["earth_wait_time"] == 250.0
-    assert result["net_gain"] == -150.0
+def test_compute_efficiency_void_advantage():
+    # Equal clocks -> compute time equals task time.
+    eq = compute_efficiency(100, 0.9, 0.9, 0)
+    assert abs(eq["earth_compute_time"] - 100) < 1e-9
+
+    # Faster server (higher f_server) -> less Earth time elapses.
+    faster = compute_efficiency(100, 0.9, 1.0, 0)
+    assert faster["earth_compute_time"] < 100
+    assert faster["net_gain"] > 0
+
+
+def test_compute_efficiency_latency_can_cause_loss():
+    result = compute_efficiency(100, 0.9, 1.0, 50)
+    assert result["earth_wait_time"] == result["earth_compute_time"] + 50
+    assert result["net_gain"] < 0

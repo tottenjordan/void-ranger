@@ -3,12 +3,6 @@ import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
 
-// Earth's gravitational environment — exaggerated for educational visibility.
-// Models Earth orbiting close to a solar-mass object so the dilation effect
-// is large enough to see in the dashboard. Real Sun-Earth dilation is ~1e-8.
-const DEFAULT_MASS_KG = 1.989e30   // solar mass
-const DEFAULT_RADIUS_M = 3e4       // 30 km — near neutron-star surface
-
 const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in a gravitational well — its clock runs slow.' },
   { swatch: 'ring', color: '#f59e0b', label: 'Gravity well', desc: "Shells around Earth showing the field that slows its clock." },
@@ -45,9 +39,10 @@ function MapLegend() {
       </div>
       <p className="text-[11px] text-gray-600 mt-3 leading-relaxed">
         Time dilation comes from the <span className="text-amber-400">difference</span> between
-        Earth's slow clock (deep in the gravity well) and the server's fast clock (in the void).
-        Placing the server farther away increases that round-trip light delay — the tradeoff the
-        metrics above quantify.
+        Earth's slow clock (deep in the dense solar neighborhood) and the server's clock, whose
+        rate depends on the gravity of stars near where you place it. Deep voids run fastest;
+        placing the server near a star slows it down. Farther placements also add round-trip light
+        delay — the tradeoff the metrics above quantify.
       </p>
     </div>
   )
@@ -77,8 +72,6 @@ export default function FarFutureView({ taskSeconds }) {
           y: coords.y,
           z: coords.z,
           task_seconds: taskSeconds,
-          mass_kg: DEFAULT_MASS_KG,
-          radius_m: DEFAULT_RADIUS_M,
         }),
       })
       setMetrics(await res.json())
@@ -118,6 +111,7 @@ export default function FarFutureView({ taskSeconds }) {
           distancePc={serverPosition
             ? Math.sqrt(serverPosition.x ** 2 + serverPosition.y ** 2 + serverPosition.z ** 2)
             : 0}
+          clockAdvantage={metrics.clock_advantage}
           earthComputeTime={metrics.earth_compute_time}
           earthWaitTime={metrics.earth_wait_time}
           netGain={metrics.net_gain}

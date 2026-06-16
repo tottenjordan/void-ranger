@@ -18,8 +18,6 @@ class EfficiencyRequest(BaseModel):
     y: float
     z: float
     task_seconds: float
-    mass_kg: float       # mass of gravitational well Earth sits in
-    radius_m: float      # Earth's distance from center of that mass
 
 
 class EfficiencyResponse(BaseModel):
@@ -27,4 +25,6 @@ class EfficiencyResponse(BaseModel):
     earth_wait_time: float
     net_gain: float
     latency_seconds: float
-    dilation_factor: float
+    earth_dilation_factor: float
+    server_dilation_factor: float
+    clock_advantage: float

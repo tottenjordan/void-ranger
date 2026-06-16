@@ -80,10 +80,11 @@ function DistanceSub({ pc }) {
   )
 }
 
-export default function MetricsDash({ distancePc, earthComputeTime, earthWaitTime, netGain }) {
+export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTime, earthWaitTime, netGain }) {
   if (earthComputeTime == null) return null
 
   const animDistance = useAnimatedValue(distancePc ?? 0)
+  const animAdvantage = useAnimatedValue(clockAdvantage ?? 1)
   const animCompute = useAnimatedValue(earthComputeTime)
   const animWait = useAnimatedValue(earthWaitTime)
   const animGain = useAnimatedValue(netGain)
@@ -92,14 +93,23 @@ export default function MetricsDash({ distancePc, earthComputeTime, earthWaitTim
   const improving = netGain > prevGain.current
   useEffect(() => { prevGain.current = netGain }, [netGain])
 
+  const advantageGood = animAdvantage >= 1
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
       <MetricCard
         label="Distance from Earth"
         value={`${animDistance.toFixed(2)} pc`}
         sub={<DistanceSub pc={animDistance} />}
         color="text-violet-300 hover:shadow-violet-500/10"
         tooltip="Straight-line distance from Earth to the void server. Shown in parsecs, light-years, and miles (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi). This sets the round-trip communication latency."
+      />
+      <MetricCard
+        label="Server Clock Advantage"
+        value={`${animAdvantage.toFixed(3)}× Earth`}
+        sub={advantageGood ? 'server clock runs faster' : 'server clock runs slower'}
+        color={advantageGood ? 'text-cyan-400 hover:shadow-cyan-500/10' : 'text-red-400 hover:shadow-red-500/10'}
+        tooltip="How fast the server's clock ticks relative to Earth's, based on the local gravitational potential from nearby catalog stars. >1 means the server sits in weaker gravity (a void) and runs faster — the time advantage. <1 means it's in a denser region than Earth and runs slower."
       />
       <MetricCard
         label="Earth Compute Time"
