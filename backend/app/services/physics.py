@@ -23,6 +23,14 @@ def light_latency(x: float, y: float, z: float) -> float:
 
 
 def time_dilation_factor(mass_kg: float, radius_m: float) -> float:
+    """Schwarzschild time dilation for a clock in a gravitational well.
+
+    Returns the clock rate relative to flat spacetime (always < 1).
+    In the void scenario, this describes Earth's clock — Earth sits in
+    the gravitational well of mass_kg at distance radius_m. The void
+    server's clock runs at ~1.0 (flat spacetime), so the ratio
+    1.0 / factor tells you how much faster the server is.
+    """
     rs = (2 * G * mass_kg) / (C * 1000) ** 2
     return math.sqrt(1 - rs / radius_m)
 
@@ -31,13 +39,19 @@ def lorentz_factor(v: float) -> float:
     return 1 / math.sqrt(1 - (v / C) ** 2)
 
 
-def compute_efficiency(task_seconds: float, dilation_factor: float,
+def compute_efficiency(task_seconds: float, earth_dilation_factor: float,
                        latency_seconds: float) -> dict:
-    local_time = task_seconds * dilation_factor
-    earth_wait_time = local_time + latency_seconds
+    """Compute the efficiency of offloading work to a void server.
+
+    The void server's clock runs faster than Earth's. For a task needing
+    task_seconds of CPU time, Earth's slow clock measures less time
+    passing: earth_compute_time = task_seconds * earth_dilation_factor.
+    """
+    earth_compute_time = task_seconds * earth_dilation_factor
+    earth_wait_time = earth_compute_time + latency_seconds
     net_gain = task_seconds - earth_wait_time
     return {
-        "local_time": local_time,
+        "earth_compute_time": earth_compute_time,
         "earth_wait_time": earth_wait_time,
         "net_gain": net_gain,
     }

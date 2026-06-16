@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 INPUT_PATH = BASE_DIR / "data" / "hygdata_v41.csv"
 OUTPUT_PATH = BASE_DIR / "data" / "stars.json"
 
-
+1
 def process_stars():
     df = pd.read_csv(INPUT_PATH)
 

@@ -5,7 +5,7 @@ An interactive educational web application demonstrating the effects of relativi
 ## Simulation Modes
 
 - **Interplanetary DevOps** — Synchronize database ledgers between Earth and Mars, dealing with light-speed delay and micro-time drifts. Adjust a relativistic sync protocol slider to correct transaction ordering in real time.
-- **Deep-Space Cloud Compute** — Place computational servers in a 3D star field to maximize gravitational time dilation while balancing light-speed communication latency. See real-time efficiency metrics.
+- **Deep-Space Cloud Compute** — Place computational servers in cosmological voids where clocks tick faster than Earth's (weaker gravitational field), then balance the dilation benefit against light-speed communication latency.
 
 ## Architecture
 
@@ -78,25 +78,27 @@ Open http://localhost:5173
 
 ### Deep-Space Cloud Compute (Far-Future Mode)
 
-**Concept:** In a far-future scenario, humanity places computational servers near massive celestial objects to exploit gravitational time dilation. Clocks tick slower in stronger gravitational fields (general relativity), so a server near a dense star could complete days of computation while only hours pass on Earth. The tradeoff: the results must travel back at light speed, and the farther the server, the longer the round-trip delay.
+**Concept:** In a far-future scenario, humanity places computational servers in cosmological voids — vast regions of space with negligible gravitational influence. Clocks tick slower in stronger gravitational fields (general relativity), and Earth sits in the gravitational wells of the Sun and Milky Way. A server in a void experiences weaker gravity, so its clock ticks *faster* than Earth's — it can complete days of computation while only hours pass on Earth. The tradeoff: the results must travel back at light speed, and the farther the void, the longer the round-trip delay.
 
 **Features:**
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore. Background stars twinkle; data stars are color-coded by luminosity (brighter stars appear warmer).
-- **Server Placement** — Click anywhere on the map or enter galactic coordinates (distance, longitude, latitude) to deploy a "Time Sink" server. The server appears as a floating, glowing sphere surrounded by gravitational field rings and sparkles.
+- **Server Placement** — Click anywhere on the map or enter galactic coordinates (distance, longitude, latitude) to deploy a void server. The server appears as a floating, glowing sphere surrounded by gravitational field rings and sparkles.
 - **Light-Speed Communication Line** — A dashed line connects Earth (green marker at origin) to your server, with an animated signal pulse traveling back and forth. The label shows distance in parsecs and round-trip travel time.
 - **Metrics Dashboard** — Three cards update in real time with animated value transitions:
-  - *Local Server Compute Time* — how long the task takes on the server's dilated clock
+  - *Earth Compute Time* — how much Earth time passes while the void server completes the task (less than the raw task duration, because the server's clock is faster)
   - *Earth Wait Time* — compute time + round-trip light delay
   - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost
 - **Task Duration Control** — Adjust the "Task (s)" input in the header to simulate different workload sizes. Longer tasks benefit more from time dilation.
+- **Note on Scale** — The gravitational dilation effect is pedagogically exaggerated. Real Sun-Earth time dilation is ~1 part per billion. The dashboard models Earth in an extreme gravitational well (near a neutron-star-mass object) to make the effect visible and the tradeoffs explorable.
 - **Camera Fly-To** — The camera automatically frames both Earth and the server when you place one.
 
 **What problems does it address?**
-- Builds intuition for the competing forces in relativistic computing: gravitational time dilation saves compute time, but light-speed latency adds communication overhead.
-- Demonstrates why "closer to a black hole" is not always better — at some distance, the latency cost exceeds the dilation benefit.
+- Builds intuition for the competing forces in relativistic computing: placing a server in a gravitational void speeds up its clock relative to Earth's, but light-speed latency adds communication overhead.
+- Demonstrates that "farther into the void" is not always better — at some distance, the latency cost exceeds the dilation benefit.
 - Provides a hands-on way to explore the Schwarzschild metric without equations.
+- Illustrates a key asymmetry: Earth's gravitational well slows our clocks, and escaping it (into a void) is computationally advantageous — the opposite of the sci-fi trope of "computing near a black hole."
 
-**Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances. Now increase the task duration to 1,000,000 seconds — at what distance does the dilation benefit finally win?
+**Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances even though the server's clock advantage is constant. Now increase the task duration to 1,000,000 seconds — at what distance does the dilation benefit finally overcome the latency cost?
 
 ---
 

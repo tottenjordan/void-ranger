@@ -63,13 +63,13 @@ def test_lorentz_factor_increases_with_speed():
 
 def test_compute_efficiency_zero_latency():
     result = compute_efficiency(100, 0.5, 0)
-    assert result["local_time"] == 50.0
+    assert result["earth_compute_time"] == 50.0
     assert result["earth_wait_time"] == 50.0
     assert result["net_gain"] == 50.0
 
 
 def test_compute_efficiency_with_latency():
     result = compute_efficiency(100, 0.5, 200)
-    assert result["local_time"] == 50.0
+    assert result["earth_compute_time"] == 50.0
     assert result["earth_wait_time"] == 250.0
     assert result["net_gain"] == -150.0

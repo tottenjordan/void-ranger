@@ -3,8 +3,11 @@ import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
 
-const DEFAULT_MASS_KG = 1.989e30
-const DEFAULT_RADIUS_M = 1e10
+// Earth's gravitational environment — exaggerated for educational visibility.
+// Models Earth orbiting close to a solar-mass object so the dilation effect
+// is large enough to see in the dashboard. Real Sun-Earth dilation is ~1e-8.
+const DEFAULT_MASS_KG = 1.989e30   // solar mass
+const DEFAULT_RADIUS_M = 3e4       // 30 km — near neutron-star surface
 
 export default function FarFutureView({ taskSeconds }) {
   const [stars, setStars] = useState([])
@@ -68,7 +71,7 @@ export default function FarFutureView({ taskSeconds }) {
       </div>
       {metrics && (
         <MetricsDash
-          localTime={metrics.local_time}
+          earthComputeTime={metrics.earth_compute_time}
           earthWaitTime={metrics.earth_wait_time}
           netGain={metrics.net_gain}
         />

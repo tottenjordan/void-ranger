@@ -49,11 +49,11 @@ function MetricCard({ label, value, color, tooltip, arrow }) {
   )
 }
 
-export default function MetricsDash({ localTime, earthWaitTime, netGain }) {
-  if (localTime == null) return null
+export default function MetricsDash({ earthComputeTime, earthWaitTime, netGain }) {
+  if (earthComputeTime == null) return null
 
-  const animLocal = useAnimatedValue(localTime)
-  const animEarth = useAnimatedValue(earthWaitTime)
+  const animCompute = useAnimatedValue(earthComputeTime)
+  const animWait = useAnimatedValue(earthWaitTime)
   const animGain = useAnimatedValue(netGain)
 
   const prevGain = useRef(netGain)
@@ -63,22 +63,22 @@ export default function MetricsDash({ localTime, earthWaitTime, netGain }) {
   return (
     <div className="grid grid-cols-3 gap-4">
       <MetricCard
-        label="Local Server Compute"
-        value={formatTime(animLocal)}
+        label="Earth Compute Time"
+        value={formatTime(animCompute)}
         color="text-cyan-400 hover:shadow-cyan-500/10"
-        tooltip="Time elapsed on the server's local clock (task duration x dilation factor). Gravitational time dilation causes clocks near massive objects to tick slower."
+        tooltip="How long Earth's clock measures while the void server completes the task. Because the server's clock runs faster (weaker gravity), it finishes the work in less Earth time than running locally would take."
       />
       <MetricCard
         label="Earth Wait Time"
-        value={formatTime(animEarth)}
+        value={formatTime(animWait)}
         color="text-amber-400 hover:shadow-amber-500/10"
-        tooltip="Total time an Earth observer waits: the server's local compute time plus round-trip light-speed communication latency."
+        tooltip="Total time an Earth observer waits: the compute time plus round-trip light-speed communication latency to the void server and back."
       />
       <MetricCard
         label={animGain >= 0 ? 'Net Gain' : 'Net Loss'}
         value={formatTime(animGain)}
         color={animGain >= 0 ? 'text-green-400 hover:shadow-green-500/10' : 'text-red-400 hover:shadow-red-500/10'}
-        tooltip="Difference between running the task locally on Earth vs. on the remote server. Positive = the server finishes before Earth would. Negative = light-speed latency outweighs the dilation benefit."
+        tooltip="Difference between running the task locally on Earth vs. offloading to the void server. Positive = the void server saves time overall. Negative = light-speed latency outweighs the dilation benefit."
         arrow={improving ? '▲' : '▼'}
       />
     </div>
