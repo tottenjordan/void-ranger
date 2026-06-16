@@ -75,15 +75,11 @@ function formatLatency(seconds) {
 }
 
 function CommLine({ serverPosition }) {
-  if (!serverPosition) return null
-
-  const distPc = Math.sqrt(serverPosition.x ** 2 + serverPosition.y ** 2 + serverPosition.z ** 2)
-  const roundTripSeconds = (2 * distPc * PARSEC_KM) / C_KM_S
   const pulseRef = useRef()
 
   const points = useMemo(() => [
     new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(serverPosition.x, serverPosition.y, serverPosition.z),
+    new THREE.Vector3(serverPosition?.x ?? 0, serverPosition?.y ?? 0, serverPosition?.z ?? 0),
   ], [serverPosition])
 
   useFrame(({ clock }) => {
@@ -92,6 +88,11 @@ function CommLine({ serverPosition }) {
     const ping = t < 0.5 ? t * 2 : 2 - t * 2
     pulseRef.current.position.lerpVectors(points[0], points[1], ping)
   })
+
+  if (!serverPosition) return null
+
+  const distPc = Math.sqrt(serverPosition.x ** 2 + serverPosition.y ** 2 + serverPosition.z ** 2)
+  const roundTripSeconds = (2 * distPc * PARSEC_KM) / C_KM_S
 
   return (
     <group>
@@ -122,22 +123,25 @@ function CommLine({ serverPosition }) {
   )
 }
 
-function GravityRings({ position }) {
-  if (!position) return null
-  const ringsRef = useRef([])
+const GRAVITY_RINGS = [
+  { inner: 4, outer: 4.5, opacity: 0.25, speed: 0.2 },
+  { inner: 7, outer: 7.4, opacity: 0.15, speed: -0.15 },
+  { inner: 11, outer: 11.3, opacity: 0.08, speed: 0.1 },
+  { inner: 16, outer: 16.2, opacity: 0.04, speed: -0.08 },
+]
 
-  const rings = [
-    { inner: 4, outer: 4.5, opacity: 0.25, speed: 0.2 },
-    { inner: 7, outer: 7.4, opacity: 0.15, speed: -0.15 },
-    { inner: 11, outer: 11.3, opacity: 0.08, speed: 0.1 },
-    { inner: 16, outer: 16.2, opacity: 0.04, speed: -0.08 },
-  ]
+function GravityRings({ position }) {
+  const ringsRef = useRef([])
 
   useFrame((_, delta) => {
     ringsRef.current.forEach((mesh, i) => {
-      if (mesh) mesh.rotation.z += delta * rings[i].speed
+      if (mesh) mesh.rotation.z += delta * GRAVITY_RINGS[i].speed
     })
   })
+
+  if (!position) return null
+
+  const rings = GRAVITY_RINGS
 
   return (
     <group position={[position.x, position.y, position.z]}>
@@ -163,12 +167,13 @@ function GravityRings({ position }) {
 }
 
 function ServerMarker({ position }) {
-  if (!position) return null
   const ringRef = useRef()
 
   useFrame((_, delta) => {
     if (ringRef.current) ringRef.current.rotation.z += delta * 0.3
   })
+
+  if (!position) return null
 
   return (
     <group position={[position.x, position.y, position.z]}>

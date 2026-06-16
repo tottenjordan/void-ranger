@@ -121,6 +121,29 @@ Open http://localhost:5173
 
 **Try this:** Start with the slider at 0% and press Play. Watch the drift counter climb as Mars transactions arrive out of order. Pause, drag the slider to 100%, and replay — the conflicts disappear. Now try 50% — partial compensation reduces but doesn't eliminate drift. This is the core tradeoff real mission planners face.
 
+## Example Walkthrough
+
+### Deep-Space Cloud Compute
+
+![Deep-Space Cloud Compute mode showing a void server deployed in the star field](docs/images/far-future.png)
+
+This capture shows a void server deployed at **20 pc** with a **10¹² second** workload (set via the *Task (s)* field in the header). Reading the screen:
+
+- The **green marker** at the center is Earth; the **cyan sphere** with an orbit ring and gravitational field rings is the deployed server. A dashed **communication line** connects them, with an animated signal pulse traveling the round trip.
+- The **metrics row** shows the result: *Earth Compute Time* ≈ 30,108 yr (less than the 31,700 yr the task would take locally, because the server's clock runs faster), *Earth Wait Time* ≈ 30,238 yr (compute + round-trip light delay), and a **positive Net Gain of ~1,471 yr** (green) — offloading wins here.
+- Try dragging the server farther out: the light-delay term grows until the Net Gain flips negative (red), demonstrating the latency/dilation tradeoff.
+
+### Interplanetary DevOps
+
+![Interplanetary DevOps mode showing Earth and Mars ledger timelines](docs/images/near-future.png)
+
+This capture shows the ledger timeline with the **Relativistic Sync Protocol at 40%**. Reading the screen:
+
+- **Green points** are Earth transactions; **orange points** are Mars transactions as seen from Earth, shifted right by the residual light delay. The faint **orange band** on the left is the light-delay window — it shrinks as you increase compensation.
+- The **red dot** near the top marks a causality conflict (a transaction that arrived out of order). The **ring gauge** on the right reports the drift: 1 error across 50 transactions (2%).
+- The slider description reads *"Partial compensation — ~375s residual delay."* Drag it to 100% and the conflict and drift clear; drag to 0% and they grow.
+- Press **Play** to replay the transactions in real time with a sweeping playhead, at 1x/2x/5x speed.
+
 ## Physics & Assumptions
 
 All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below.
