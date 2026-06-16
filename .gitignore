@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/data/hygdata_v41.csv
+backend/data/hyg_v42.csv.gz
+.env
+.env.local
