@@ -1,5 +1,5 @@
-import { useRef, useMemo } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { useRef, useMemo, useEffect } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, PointMaterial, Float, Sparkles, Grid, Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 
@@ -224,6 +224,30 @@ function BackgroundSphere() {
   )
 }
 
+function CameraController({ serverPosition }) {
+  const { camera } = useThree()
+  const target = useRef(null)
+  const active = useRef(false)
+
+  useEffect(() => {
+    if (!serverPosition) return
+    const sv = new THREE.Vector3(serverPosition.x, serverPosition.y, serverPosition.z)
+    const midpoint = sv.clone().multiplyScalar(0.5)
+    const dist = sv.length()
+    const offset = new THREE.Vector3(0, dist * 0.6, dist * 1.2)
+    target.current = midpoint.clone().add(offset)
+    active.current = true
+  }, [serverPosition])
+
+  useFrame(() => {
+    if (!active.current || !target.current) return
+    camera.position.lerp(target.current, 0.04)
+    if (camera.position.distanceTo(target.current) < 1) active.current = false
+  })
+
+  return null
+}
+
 export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
   const handleClick = (e) => {
     if (!onPlaceServer) return
@@ -257,6 +281,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
           <planeGeometry args={[2000, 2000]} />
           <meshBasicMaterial side={THREE.DoubleSide} />
         </mesh>
+        <CameraController serverPosition={serverPosition} />
         <OrbitControls enableDamping dampingFactor={0.1} />
       </Canvas>
     </div>
