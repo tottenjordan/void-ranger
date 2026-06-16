@@ -1,14 +1,36 @@
-# ChronoCloud
-
-An interactive educational web application demonstrating the effects of relativistic computing and time dilation.
-
 <div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0e4d6e,100:030712&height=200&section=header&text=ChronoCloud&fontColor=06b6d4&fontSize=70&desc=Relativistic%20computing%20%26%20time%20dilation&descAlignY=68&descSize=18" alt="ChronoCloud" width="100%" />
+
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?logo=chart.js&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-18%20passing-brightgreen)
 
 <img src="docs/images/galaxy-orbit.gif" width="640" alt="ChronoCloud galaxy map orbiting Earth and a void server while the light-speed signal pulses back and forth" />
 
 <sub><i>Deep-Space mode — orbiting Earth (green) and a server placed in a cosmic void (cyan), where weaker gravity speeds its clock; the red pulse is a message crossing the light-speed gap to Earth and back, through 8,920 catalog stars.</i></sub>
 
 </div>
+
+> An interactive educational web application demonstrating the effects of relativistic computing and time dilation.
+
+## Table of Contents
+
+- [Simulation Modes](#simulation-modes)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [Development](#development)
+- [How Each Mode Works](#how-each-mode-works)
+- [Example Walkthrough](#example-walkthrough)
+- [Physics and Assumptions](#physics-and-assumptions)
+- [Project Structure](#project-structure)
+- [Tests](#tests)
 
 ## Simulation Modes
 
@@ -35,6 +57,9 @@ React Frontend (Vite + Tailwind + Three.js + Chart.js)
 - Node.js 20+
 
 ## Setup
+
+<details>
+<summary><b>Show backend, star-data, and frontend setup steps</b></summary>
 
 ### Backend
 
@@ -66,6 +91,8 @@ cd frontend
 npm install
 ```
 
+</details>
+
 ## Development
 
 Start the backend and frontend in separate terminals:
@@ -82,7 +109,7 @@ npm run dev
 
 Open http://localhost:5173
 
-## Simulation Modes — In Depth
+## How Each Mode Works
 
 ### Deep-Space Cloud Compute (Far-Future Mode)
 
@@ -179,9 +206,12 @@ This capture shows the ledger timeline with the **Relativistic Sync Protocol at 
 - The slider description reads *"Partial compensation — ~375s residual delay."* Drag it to 100% and the conflict and drift clear; drag to 0% and they grow.
 - Press **Play** to replay the transactions in real time with a sweeping playhead, at 1x/2x/5x speed.
 
-## Physics & Assumptions
+## Physics and Assumptions
 
 All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below.
+
+<details>
+<summary><b>Show formulas, derivations, and caveats</b></summary>
 
 ### Constants
 
@@ -279,6 +309,8 @@ These are intentional simplifications. They keep the simulation legible, but a p
 6. **"Relativistic Sync Protocol" is loosely named.** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
 
 7. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
+
+</details>
 
 ## Project Structure
 
