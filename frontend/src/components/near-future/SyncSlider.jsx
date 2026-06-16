@@ -20,7 +20,10 @@ export default function SyncSlider({ value, onChange }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-gray-500 uppercase tracking-wider">Relativistic Sync Protocol</p>
+        <p
+          className="text-xs text-gray-500 uppercase tracking-wider cursor-help"
+          title="Timestamp compensation for Earth–Mars light delay. At 0% no correction is applied and Mars events look ~750s late; at 100% timestamps are fully pre-adjusted so both ledgers line up. Higher compensation removes ordering conflicts."
+        >Relativistic Sync Protocol</p>
         <span className="text-sm font-mono text-cyan-400">{pct}%</span>
       </div>
       <div className="relative pt-1 pb-4">

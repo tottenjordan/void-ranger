@@ -253,14 +253,44 @@ function CameraController({ serverPosition }) {
   return null
 }
 
+function webglAvailable() {
+  try {
+    const canvas = document.createElement('canvas')
+    return !!(window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')))
+  } catch {
+    return false
+  }
+}
+
 export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
   const handleClick = (e) => {
     if (!onPlaceServer) return
     onPlaceServer({ x: e.point.x, y: e.point.y, z: e.point.z })
   }
 
+  if (!webglAvailable()) {
+    return (
+      <div className="w-full h-[500px] rounded-xl border border-gray-800 flex items-center justify-center p-6">
+        <div className="max-w-md text-sm text-gray-400 space-y-3">
+          <p className="text-gray-300 font-medium">The 3D galaxy map needs WebGL, which this browser can't currently create.</p>
+          <p>To enable it in Chrome:</p>
+          <ol className="list-decimal list-inside space-y-1 text-gray-500 text-xs">
+            <li>Open <span className="font-mono text-cyan-400">chrome://settings/system</span> and turn on "Use hardware acceleration when available", then relaunch.</li>
+            <li>If that doesn't work (e.g. no GPU), open <span className="font-mono text-cyan-400">chrome://flags</span>, set "Override software rendering list" to <span className="text-gray-300">Enabled</span>, and relaunch — this lets Chrome render WebGL in software.</li>
+            <li>Verify at <span className="font-mono text-cyan-400">chrome://gpu</span> that "WebGL" shows as enabled.</li>
+          </ol>
+          <p className="text-gray-500 text-xs">The metrics panel still works without WebGL — deploy a server using the form.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="w-full h-[500px] rounded-xl border border-gray-800 overflow-hidden">
+    <div className="relative w-full h-[500px] rounded-xl border border-gray-800 overflow-hidden">
+      <div className="absolute top-2 left-3 z-10 text-[10px] font-mono text-gray-500 pointer-events-none">
+        Drag to orbit · scroll to zoom · click to place a server
+      </div>
       <Canvas camera={{ position: [0, 200, 400], fov: 60 }}>
         <BackgroundSphere />
         <ambientLight intensity={0.3} />

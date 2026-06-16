@@ -16,7 +16,10 @@ export default function DriftCounter({ driftCount, totalTransactions }) {
 
   return (
     <div className={`bg-gray-900 border ${c.border} rounded-xl p-4 ${c.glow} transition-shadow duration-500`}>
-      <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Data Drift Errors</p>
+      <p
+        className="text-xs text-gray-500 uppercase tracking-wider mb-3 cursor-help"
+        title="Number of transactions that arrive out of causal order because of light delay — a later transaction appearing before an earlier one. The gauge shows this as a percentage of all transactions. Raise the sync slider to reduce it."
+      >Data Drift Errors</p>
       <div className="flex items-center gap-4">
         <div className="relative w-20 h-20 flex-shrink-0">
           <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
