@@ -107,8 +107,8 @@ function CommLine({ serverPosition }) {
         transparent
       />
       <mesh ref={pulseRef}>
-        <sphereGeometry args={[0.8, 8, 8]} />
-        <meshBasicMaterial color="#06b6d4" />
+        <sphereGeometry args={[1, 8, 8]} />
+        <meshBasicMaterial color="#ef4444" />
       </mesh>
       <Html
         position={[serverPosition.x, serverPosition.y + 5, serverPosition.z]}
