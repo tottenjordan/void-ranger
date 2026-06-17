@@ -58,7 +58,9 @@ function EarthMarker() {
         <sphereGeometry args={[1.5, 16, 16]} />
         <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.3} />
       </mesh>
-      <Html position={[0, 4, 0]} center style={{ pointerEvents: 'none' }}>
+      {/* Anchor the label's bottom just above the sphere (screen-space transform,
+          so it stays clear of the object at any zoom). */}
+      <Html position={[0, 2, 0]} style={{ pointerEvents: 'none', transform: 'translate(-50%, -120%)' }}>
         <span className="text-sm font-bold font-mono text-green-400 bg-gray-950/80 px-2 py-0.5 rounded whitespace-nowrap">
           Earth
         </span>
@@ -110,9 +112,8 @@ function CommLine({ serverPosition }) {
         </mesh>
       </group>
       <Html
-        position={[serverPosition.x, serverPosition.y + 6, serverPosition.z]}
-        center
-        style={{ pointerEvents: 'none' }}
+        position={[serverPosition.x, serverPosition.y + 3, serverPosition.z]}
+        style={{ pointerEvents: 'none', transform: 'translate(-50%, -115%)' }}
       >
         <div className="flex flex-col items-center whitespace-nowrap">
           <span className="text-sm font-bold font-mono text-cyan-300 bg-gray-950/80 px-2 py-0.5 rounded">
