@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
+import { commaInt, parseSecondsInput } from '../../utils/format'
 
 const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in a gravitational well — its clock runs slow.' },
@@ -48,11 +49,60 @@ function MapLegend() {
   )
 }
 
-export default function FarFutureView({ taskSeconds }) {
+function BreakevenLine({ breakeven, taskSeconds }) {
+  if (breakeven === undefined) return null // no server placed yet
+  const title = "Smallest task whose time-dilation savings cover the round-trip light delay at this location. Tasks larger than this net a gain; smaller ones net a loss."
+  if (breakeven === null) {
+    return (
+      <p className="text-center text-[11px] italic text-gray-500 mt-1" title={title}>
+        Breakeven: <span className="text-red-400 not-italic">none — no time advantage here</span>
+      </p>
+    )
+  }
+  const winning = taskSeconds >= breakeven
+  return (
+    <p className="text-center text-[11px] italic text-gray-500 mt-1" title={title}>
+      Breakeven workload:{' '}
+      <span className={`not-italic font-mono ${winning ? 'text-green-400' : 'text-red-400'}`}>
+        {commaInt(breakeven)} s
+      </span>
+    </p>
+  )
+}
+
+function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <label
+        className="block text-center text-xs text-gray-400 uppercase tracking-wider mb-2"
+        title="Workload size: compute-seconds measured on the running machine's own clock."
+      >
+        Task Workload Size (s)
+      </label>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={commaInt(taskSeconds)}
+        onChange={e => {
+          const v = parseSecondsInput(e.target.value)
+          if (v !== null) onTaskSecondsChange(v)
+        }}
+        className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-center text-lg font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
+      />
+      <p className="text-center text-[11px] italic text-gray-500 mt-2 leading-tight">
+        This is the processing time for a program on a given server.
+      </p>
+      <BreakevenLine breakeven={breakeven} taskSeconds={taskSeconds} />
+    </div>
+  )
+}
+
+export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
   const [stars, setStars] = useState([])
   const [serverPosition, setServerPosition] = useState(null)
   const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [panelOpen, setPanelOpen] = useState(true)
 
   useEffect(() => {
     fetch('/api/stars')
@@ -90,21 +140,34 @@ export default function FarFutureView({ taskSeconds }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 min-w-0">
           <GalaxyMap stars={stars} serverPosition={serverPosition} onPlaceServer={placeServer} />
         </div>
-        <div className="space-y-6">
-          <ServerPlacer onPlaceServer={placeServer} />
-          {serverPosition && (
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Server Position</p>
-              <p className="text-sm font-mono text-gray-300">
-                ({serverPosition.x.toFixed(1)}, {serverPosition.y.toFixed(1)}, {serverPosition.z.toFixed(1)}) pc
-              </p>
+        {panelOpen ? (
+          <div className="lg:w-80 flex-shrink-0 space-y-6">
+            <div className="flex justify-end">
+              <button onClick={() => setPanelOpen(false)} title="Collapse panel"
+                className="text-gray-500 hover:text-cyan-400 text-sm">▶ collapse</button>
             </div>
-          )}
-        </div>
+            <TaskField taskSeconds={taskSeconds} onTaskSecondsChange={onTaskSecondsChange}
+              breakeven={metrics ? metrics.breakeven_task_seconds : undefined} />
+            <ServerPlacer onPlaceServer={placeServer} />
+            {serverPosition && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Server Position</p>
+                <p className="text-sm font-mono text-gray-300">
+                  ({serverPosition.x.toFixed(1)}, {serverPosition.y.toFixed(1)}, {serverPosition.z.toFixed(1)}) pc
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button onClick={() => setPanelOpen(true)} title="Expand controls"
+            className="lg:w-8 flex-shrink-0 flex items-start justify-center pt-2 text-gray-500 hover:text-cyan-400">
+            ◀
+          </button>
+        )}
       </div>
       {metrics && (
         <MetricsDash

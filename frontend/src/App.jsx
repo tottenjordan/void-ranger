@@ -7,13 +7,10 @@ export default function App() {
   const { mode, setMode, taskSeconds, setTaskSeconds } = useSimulation()
 
   return (
-    <Layout
-      mode={mode}
-      onModeChange={setMode}
-      taskSeconds={taskSeconds}
-      onTaskSecondsChange={setTaskSeconds}
-    >
-      {mode === 'near-future' ? <NearFutureView /> : <FarFutureView taskSeconds={taskSeconds} />}
+    <Layout mode={mode} onModeChange={setMode}>
+      {mode === 'near-future'
+        ? <NearFutureView />
+        : <FarFutureView taskSeconds={taskSeconds} onTaskSecondsChange={setTaskSeconds} />}
     </Layout>
   )
 }
