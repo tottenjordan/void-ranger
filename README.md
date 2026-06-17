@@ -2,7 +2,7 @@
 
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
-> An interactive application demonstrating the effects and computational complexity of relativistic computing.  
+> An interactive application demonstrating the effects and complexity of relativistic computing.  
 > **Can time dilation be used as a computational resource?**
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
@@ -28,7 +28,6 @@
 - [Setup](#setup)
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
-- [Example Walkthrough](#example-walkthrough)
 - [Glossary](docs/GLOSSARY.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
@@ -123,29 +122,36 @@ Open http://localhost:5173
 **Scale of the simulated universe:** The simulation includes **8,920 stars** — every star in the HYG catalog brighter than visual magnitude 6.5 (roughly the naked-eye limit). They span from the nearest at **1.3 pc** (~4.3 light-years) out through a sphere centered on Earth: the median star is ~124 pc away and **95% lie within ~560 pc** (~1,830 light-years). A handful of distant entries reach the catalog's "unknown distance" sentinel. In short, the playable volume is the bright **solar neighborhood of the Milky Way** — a sphere very roughly 1,000+ pc across, a small patch of a galaxy that is itself ~30,000 pc across. Every star also carries an estimated mass, so its gravity shapes where servers run fast or slow.
 
 **Features:**
-- **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore. Background stars twinkle; data stars are color-coded by luminosity (brighter stars appear warmer).
-- **Server Placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag rotates** the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement. The server appears as a floating, glowing cyan sphere with an orbit-ring marker and sparkles.
-- **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). Place it in a deep void and its clock runs fast (a real time advantage); place it next to a bright star and that star's gravity slows it down, eroding or reversing the gain. Genuine void-hunting is rewarded.
-- **Earth's Gravity Well** — Amber concentric shells surround the green Earth marker, representing the dense solar-neighborhood field that slows Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the server's clock — so the well is drawn at Earth, where it physically belongs.
-- **Light-Speed Communication Line** — A dashed **red** line connects Earth to your server, carrying an animated **red signal pulse** on the round trip. Its label shows the round-trip travel time (RTT).
-- **Cosmic Server label** — The deployed server shows a bold **"Cosmic Server"** label with its **RTT** (round-trip time) beneath it, so the latency to that location is readable right on the map.
-- **Orbit marker (orbit-ring)** — A decorative cyan ring with drifting sparkles around the Cosmic Server, marking its position so it's easy to spot among the 8,920 stars. It's a **visual locator only** — not a real orbit, and it carries no physics.
-- **Distance Dimension Line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), with the straight-line Earth↔server distance in parsecs at its midpoint. Short perpendicular tick marks connect it back down to Earth and the server. The offset is deliberate (not a glitch) and **scales with distance** (≈18% of the Earth↔server distance, with a small floor), so on far placements the violet line sits noticeably higher above the red comm line.
-- **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, **Cosmic Server**, orbit marker, comm link, signal pulse, distance).
-- **Metrics Dashboard** — Six cards update in real time with animated value transitions, each with an italic one-line description; time metrics are shown as comma-grouped seconds with a human-readable subline:
-  - *Distance from Earth* — straight-line distance to the server in parsecs, with light-years and miles beneath (both scientific notation and a plain-language "≈ N trillion miles" phrasing); 1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi
-  - *Server Clock Advantage* — how fast the server's clock ticks relative to Earth's (e.g. `1.063× Earth`), derived from its local gravity; >1 (cyan) is a void advantage, <1 (red) means it's in a denser region than Earth
-  - *Earth Compute Time* — how much Earth time passes while the server completes the task
-  - *Earth Wait Time* — compute time + round-trip light delay
-  - *Communication Cost* — the round-trip light-speed delay to the server and back, in seconds (the fixed cost the dilation advantage must overcome)
-  - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost
-- **Task Workload Size field** — Lives in the control panel as a wide, comma-formatted input (not the top header). Enter the size of the computational job in seconds to simulate different workloads; longer tasks benefit more from time dilation.
-- **Breakeven workload readout** — Shown under the Task field once you place a server: the smallest task size whose dilation savings cover the round-trip light delay at that location (shows "none" when the spot has no time advantage). It's green when your current task clears it, red otherwise.
-- **Collapsible control panel** — The control panel (Task field, breakeven readout, server placement) collapses to a thin rail via an arrow, letting the 3D map widen.
-- **Note on Scale** — The gravitational dilation effect is pedagogically exaggerated (real interstellar potentials are ~1 part in 10¹³). A documented constant scales it so the contrast between the crowded solar neighborhood and deep voids is visible and explorable.
-- **Camera Fly-To** — The camera automatically frames both Earth and the server when you place one.
 
-**What problems does it address?**
+#### Explore & place a server
+- **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore; background stars twinkle and data stars are color-coded by luminosity (brighter stars appear warmer).
+- **Server placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag** rotates the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement.
+- **Collapsible control panel** — The control panel (Task field, breakeven readout, server placement) collapses to a thin rail via an arrow, letting the 3D map widen.
+- **Camera fly-to** — The camera automatically frames both Earth and the server when you place one.
+
+#### What's on the map
+- **Earth & its gravity well** — A green marker for Earth, wrapped in amber concentric shells that represent the dense solar-neighborhood field slowing Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the server's — so the well is drawn at Earth, where it belongs.
+- **Cosmic Server** — The deployed server: a floating, glowing cyan sphere with a bold **"Cosmic Server"** label and its **RTT** (round-trip time) beneath it, so the latency to that location is readable right on the map.
+- **Orbit marker (orbit-ring)** — A decorative cyan ring with drifting sparkles around the Cosmic Server, marking its position so it's easy to spot among the 8,920 stars. A **visual locator only** — not a real orbit, and it carries no physics.
+- **Light-speed communication line** — A dashed **red** line from Earth to the server, carrying an animated **red signal pulse** on the round trip; its label shows the round-trip travel time (RTT).
+- **Distance dimension line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), labeled with the straight-line Earth↔server distance in parsecs. The offset is deliberate (not a glitch) and **scales with distance** (≈18%, with a small floor), so far placements sit noticeably higher above the red comm line.
+- **Map Key** — A legend below the metrics row explaining every on-screen element.
+
+#### Set the workload & read the results
+- **Task Workload Size field** — A wide, comma-formatted input in the control panel (shown in hours), setting the size of the computational job; longer tasks benefit more from time dilation. See [Understanding the Task Workload Size](#understanding-the-task-workload-size).
+- **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). A deep void runs fast (a real advantage); next to a bright star, that star's gravity slows it down, eroding or reversing the gain. This is what drives the *Server Clock Advantage*.
+- **Metrics dashboard** — Six cards update live, each with a one-line description; time values are shown in hours with a years line beneath and a colored ▲/▼:
+  - *Distance from Earth* — straight-line distance in parsecs (plus light-years and miles)
+  - *Server Clock Advantage* — how fast the server's clock ticks vs. Earth's (e.g. `1.063× Earth`); >1 (green) = void advantage, <1 (red) = denser region than Earth
+  - *Earth Compute Time* — Earth time elapsed while the server computes
+  - *Earth Wait Time* — compute time + round-trip light delay
+  - *Communication Cost* — the round-trip light delay (the fixed cost the dilation advantage must overcome)
+  - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost (▲ gain / ▼ loss)
+- **Breakeven workload readout** — Under the Task field once a server is placed: the smallest task whose dilation savings cover the round-trip delay at that location ("none" where the spot has no advantage). Green when your task clears it, red otherwise.
+- **In plain terms panel** — A plain-language summary below the metrics that translates the numbers into relatable units (e.g. *"this job would take ~114,000 years on Earth; offloaded it finishes in ~110,000 years — a net saving of ~4,150 years."*).
+- **Note on scale** — The gravitational dilation is pedagogically **exaggerated** (real interstellar potentials are ~1 part in 10¹³); a documented constant scales it so the contrast between the crowded neighborhood and deep voids is explorable.
+
+#### What it teaches
 - Builds intuition for the competing forces in relativistic computing: placing a server in a gravitational void speeds up its clock relative to Earth's, but light-speed latency adds communication overhead.
 - Demonstrates that "farther into the void" is not always better — at some distance, the latency cost exceeds the dilation benefit.
 - Provides a hands-on way to explore the Schwarzschild metric without equations.
@@ -171,6 +177,18 @@ $$
 So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{earth}/f_\text{server})$ — below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. The dashboard computes this value for the clicked location and shows it as the **Breakeven workload** under the Task field (green once your task size clears it, red otherwise; "none" where the spot has no time advantage). This is why the walkthrough screenshot needs an enormous task (hundreds of millions of hours) to show a positive net gain at a deep-void distance — a one-hour job out there would be a massive net loss.
 
 **Real-world analogy:** It is the same calculus as deciding whether to ship a job to a distant data center. The network round-trip is a fixed tax, so it is only worth paying if the job is big enough that the remote machine's advantage (here, a faster clock; in reality, cheaper or faster hardware) outweighs the transit cost. Small jobs stay local; large jobs justify the trip.
+
+#### Example Walkthrough
+
+![Deep-Space Cloud Compute mode showing a Cosmic Server deployed in the star field](docs/images/far-future.png)
+
+This capture shows a server deployed at **400 pc** (a deep void) with a **1,000,000,000-hour** workload (set via the *Task Workload Size (hrs)* field in the control panel). Reading the screen:
+
+- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** below the metrics labels every element.
+- After placing the server, the **Breakeven workload** readout under the Task field shows the smallest task that pays off here, and the metrics row's **Communication Cost** card shows the round-trip light delay.
+- The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), an *Earth Compute Time* of ~940.8 million hours and *Earth Wait Time* of ~963.6 million hours, and a **positive Net Gain of ~36.4 million hours** (green) — offloading wins here. (Times are shown in hours; the model computes in seconds internally.)
+- The **In plain terms** panel below the metrics translates that into relatable units: *running this job on Earth would take ~114,000 years; offloaded to the Cosmic Server the same computation takes ~107,000 years of Earth time plus ~2,600 years of signal round-trip — a total ~110,000-year wait, a net saving of ~4,150 years.*
+- Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the physics models.
 
 ---
 
@@ -198,30 +216,9 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 **Try this:** Start with the slider at 0% and press Play. Watch the drift counter climb as Mars transactions arrive out of order. Pause, drag the slider to 100%, and replay — the conflicts disappear. Now try 50% — partial compensation reduces but doesn't eliminate drift. This is the core tradeoff real mission planners face.
 
-</details>
-
-## Example Walkthrough
-
-### Deep-Space Cloud Compute
-
-![Deep-Space Cloud Compute mode showing a Cosmic Server deployed in the star field](docs/images/far-future.png)
-
-This capture shows a server deployed at **400 pc** (a deep void) with a **1,000,000,000-hour** workload (set via the *Task Workload Size (hrs)* field in the control panel). Reading the screen:
-
-- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** below the metrics labels every element.
-- After placing the server, the **Breakeven workload** readout under the Task field shows the smallest task that pays off here, and the metrics row's **Communication Cost** card shows the round-trip light delay.
-- The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), an *Earth Compute Time* of ~940.8 million hours and *Earth Wait Time* of ~963.6 million hours, and a **positive Net Gain of ~36.4 million hours** (green) — offloading wins here. (Times are shown in hours; the model computes in seconds internally.)
-- The **In plain terms** panel below the metrics translates that into relatable units: *running this job on Earth would take ~114,000 years; offloaded to the Cosmic Server the same computation takes ~107,000 years of Earth time plus ~2,600 years of signal round-trip — a total ~110,000-year wait, a net saving of ~4,150 years.*
-- Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the new physics models.
-
-### Interplanetary DevOps 🚧 WIP
-
-<details>
-<summary>Show Interplanetary DevOps walkthrough</summary>
+**Example walkthrough** — the ledger timeline with the **Relativistic Sync Protocol at 40%**:
 
 ![Interplanetary DevOps mode showing Earth and Mars ledger timelines](docs/images/near-future.png)
-
-This capture shows the ledger timeline with the **Relativistic Sync Protocol at 40%**. Reading the screen:
 
 - **Green points** are Earth transactions; **orange points** are Mars transactions as seen from Earth, shifted right by the residual light delay. The faint **orange band** on the left is the light-delay window — it shrinks as you increase compensation.
 - The **red dot** near the top marks a causality conflict (a transaction that arrived out of order). The **ring gauge** on the right reports the drift: 1 error across 50 transactions (2%).
