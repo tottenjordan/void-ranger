@@ -34,6 +34,13 @@ export function hoursLabel(seconds, digits = null) {
   return digits === null ? `${commaInt(h)} hrs` : `${commaFixed(h, digits)} hrs`
 }
 
+// Format a duration given in SECONDS as whole years, comma-grouped, e.g.
+// "114,155 years". Shown under the hours value so big magnitudes are legible.
+export function yearsLabel(seconds) {
+  if (seconds == null || !isFinite(seconds)) return '—'
+  return `${commaInt(seconds / 31536000)} years`
+}
+
 // Plain-language duration that auto-picks a relatable unit (seconds → minutes →
 // hours → days → years), comma-grouped, with full unit words. Used for the
 // "in plain terms" summary so the magnitudes are easy to relate to.
