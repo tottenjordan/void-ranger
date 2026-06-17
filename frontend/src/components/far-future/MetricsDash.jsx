@@ -83,13 +83,6 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
   const animComm = useAnimatedValue(communicationCost ?? 0)
   const animGain = useAnimatedValue(netGain ?? 0)
 
-  // Trend arrow compares the raw (non-animated) gain to its previous value on
-  // purpose: animGain changes every frame during the tween, so keying the arrow
-  // off it would make ▲/▼ flicker. Raw values give one stable flip per update.
-  const prevGain = useRef(netGain)
-  const improving = netGain > prevGain.current
-  useEffect(() => { prevGain.current = netGain }, [netGain])
-
   if (earthComputeTime == null) return null
 
   const advantageGood = animAdvantage >= 1
@@ -143,7 +136,7 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         years={yearsLabel(animGain)}
         color={animGain >= 0 ? 'text-green-400 hover:shadow-green-500/10' : 'text-red-400 hover:shadow-red-500/10'}
         tooltip="Difference between running the task locally on Earth vs. offloading to the Cosmic Server. Positive = the Cosmic Server saves time overall. Negative = light-speed latency outweighs the dilation benefit."
-        arrow={improving ? '▲' : '▼'}
+        arrow={animGain >= 0 ? '▲' : '▼'}
         desc="Whether the dilation benefit outweighs the communication cost (hours saved vs. running on Earth)."
       />
     </div>
