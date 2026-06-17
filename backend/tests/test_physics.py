@@ -100,3 +100,31 @@ def test_breakeven_none_when_server_not_faster():
     # server same/slower than Earth → never breaks even
     assert breakeven_task_seconds(0.9, 0.9, 100.0) is None
     assert breakeven_task_seconds(0.9, 0.8, 100.0) is None
+
+
+def test_deepest_void_is_within_radius_and_deep():
+    from app.services.physics import find_deepest_void, server_dilation_factor
+    v = find_deepest_void(max_distance_pc=300.0)
+    d = (v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2) ** 0.5
+    assert d <= 300.0 + 1e-6
+    # deeper void than Earth's dense neighborhood → higher clock advantage
+    adv = server_dilation_factor(v["x"], v["y"], v["z"]) / earth_dilation_factor()
+    assert adv > 1.0
+
+
+def test_deepest_void_is_deterministic():
+    from app.services.physics import find_deepest_void
+    assert find_deepest_void(300.0) == find_deepest_void(300.0)
+
+
+def test_best_spot_beats_a_reference_point_for_a_big_task():
+    from app.services.physics import find_best_spot, server_dilation_factor
+    task = 3.6e12  # ~114,000 yr
+    s = find_best_spot(task_seconds=task, max_distance_pc=300.0)
+
+    def net(x, y, z):
+        f_e = earth_dilation_factor()
+        f_s = server_dilation_factor(x, y, z)
+        return task * (1 - f_e / f_s) - light_latency(x, y, z)
+
+    assert net(s["x"], s["y"], s["z"]) >= net(30.0, 0.0, 0.0)

@@ -106,3 +106,94 @@ def breakeven_task_seconds(f_earth: float, f_server: float,
     if ratio >= 1:
         return None
     return latency_seconds / (1 - ratio)
+
+
+# --- Placement search (deepest void / best spot) ----------------------------
+# Both searches scan candidate points inside a ball of radius max_distance_pc
+# (the distance cap is a LATENCY budget, not a gravity assumption) and evaluate
+# the full catalog potential at each — so they account for proximity to *every*
+# star, not distance from Earth. A coarse grid finds the basin; two levels of
+# local refinement polish it. Deterministic (fixed grid, no RNG).
+
+def _ball_points(max_distance_pc: float, step: float) -> np.ndarray:
+    """Deterministic grid points (parsecs) inside the ball of the given radius."""
+    axis = np.arange(-max_distance_pc, max_distance_pc + step, step)
+    gx, gy, gz = np.meshgrid(axis, axis, axis, indexing="ij")
+    pts = np.column_stack([gx.ravel(), gy.ravel(), gz.ravel()])
+    return pts[(pts ** 2).sum(axis=1) <= max_distance_pc ** 2]
+
+
+def _potential_at(pts: np.ndarray) -> np.ndarray:
+    """Vectorized gravitational potential (J/kg) at each row of pts (parsecs).
+
+    Chunked over candidates to bound memory (~chunk x n_stars at a time).
+    """
+    xs, ys, zs, masses_kg = load_star_arrays()
+    sx, sy, sz = xs * PARSEC_M, ys * PARSEC_M, zs * PARSEC_M
+    out = np.empty(len(pts))
+    CHUNK = 256
+    for i in range(0, len(pts), CHUNK):
+        c = pts[i:i + CHUNK] * PARSEC_M
+        dx = c[:, 0:1] - sx[None, :]
+        dy = c[:, 1:2] - sy[None, :]
+        dz = c[:, 2:3] - sz[None, :]
+        r = np.sqrt(dx * dx + dy * dy + dz * dz + SOFTENING_M ** 2)
+        out[i:i + len(c)] = np.sum(G * masses_kg[None, :] / r, axis=1)
+    return out
+
+
+def _dilation_array(potential: np.ndarray) -> np.ndarray:
+    """Vectorized clock factor for an array of potential magnitudes."""
+    depth = np.minimum(GRAVITY_EXAGGERATION * 2 * potential / C_M_S ** 2, MAX_WELL_DEPTH)
+    return np.sqrt(1 - depth)
+
+
+def _refine(best: np.ndarray, pick, max_distance_pc: float, span: float) -> np.ndarray:
+    """Two levels of local grid refinement around `best`.
+
+    `pick(local_points) -> index` selects the winner (argmin/argmax of the objective).
+    """
+    for _ in range(2):
+        span /= 5.0
+        axis = np.linspace(-span, span, 5)
+        gx, gy, gz = np.meshgrid(axis, axis, axis, indexing="ij")
+        local = best + np.column_stack([gx.ravel(), gy.ravel(), gz.ravel()])
+        local = local[(local ** 2).sum(axis=1) <= max_distance_pc ** 2]
+        if len(local) == 0:
+            break
+        best = local[pick(local)]
+    return best
+
+
+def find_deepest_void(max_distance_pc: float = 300.0) -> dict:
+    """Coordinates (pc) of the lowest-potential point within max_distance_pc.
+
+    Minimizes the full catalog potential, i.e. the point farthest from *all*
+    massive stars (an empty pocket) — not the point farthest from Earth.
+    """
+    step = max_distance_pc / 12.0
+    pts = _ball_points(max_distance_pc, step)
+    best = pts[int(np.argmin(_potential_at(pts)))]
+    best = _refine(best, lambda L: int(np.argmin(_potential_at(L))), max_distance_pc, step)
+    return {"x": float(best[0]), "y": float(best[1]), "z": float(best[2])}
+
+
+def find_best_spot(task_seconds: float, max_distance_pc: float = 300.0) -> dict:
+    """Coordinates (pc) within max_distance_pc that maximize net gain for a task.
+
+    net_gain = task * (1 - f_earth/f_server) - latency; balances the void's clock
+    advantage against round-trip light latency.
+    """
+    f_earth = earth_dilation_factor()
+
+    def net(pts: np.ndarray) -> np.ndarray:
+        f_server = _dilation_array(_potential_at(pts))
+        d_pc = np.sqrt((pts ** 2).sum(axis=1))
+        latency = (2 * d_pc * PARSEC_KM) / C
+        return task_seconds * (1 - f_earth / f_server) - latency
+
+    step = max_distance_pc / 12.0
+    pts = _ball_points(max_distance_pc, step)
+    best = pts[int(np.argmax(net(pts)))]
+    best = _refine(best, lambda L: int(np.argmax(net(L))), max_distance_pc, step)
+    return {"x": float(best[0]), "y": float(best[1]), "z": float(best[2])}

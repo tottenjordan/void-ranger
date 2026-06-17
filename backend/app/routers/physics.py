@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
 from app.models.schemas import (
+    BestSpotRequest,
     CartesianResponse,
+    DeepestVoidRequest,
     EfficiencyRequest,
     EfficiencyResponse,
     GalacticCoordsRequest,
@@ -10,6 +12,8 @@ from app.services.physics import (
     breakeven_task_seconds,
     compute_efficiency,
     earth_dilation_factor,
+    find_best_spot,
+    find_deepest_void,
     galactic_to_cartesian,
     light_latency,
     server_dilation_factor,
@@ -37,3 +41,13 @@ async def efficiency(req: EfficiencyRequest):
         "clock_advantage": f_server / f_earth,
         "breakeven_task_seconds": breakeven_task_seconds(f_earth, f_server, latency),
     }
+
+
+@router.post("/api/physics/best-void", response_model=CartesianResponse)
+async def best_void(req: DeepestVoidRequest):
+    return find_deepest_void(req.max_distance_pc)
+
+
+@router.post("/api/physics/best-spot", response_model=CartesianResponse)
+async def best_spot(req: BestSpotRequest):
+    return find_best_spot(req.task_seconds, req.max_distance_pc)
