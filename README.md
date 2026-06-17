@@ -219,9 +219,6 @@ This capture shows the ledger timeline with the **Relativistic Sync Protocol at 
 
 All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below.
 
-<details>
-<summary><b>Show formulas, derivations, and caveats</b></summary>
-
 ### Constants
 
 | Symbol | Value | Meaning |
@@ -235,17 +232,17 @@ All physics lives in [`backend/app/services/physics.py`](backend/app/services/ph
 
 Converts a server's galactic coordinates — distance $d$ (parsecs), longitude $l$, latitude $b$ — into Cartesian coordinates for 3D rendering. This is the standard spherical-to-Cartesian transformation, where $b$ is the elevation above the galactic plane and $l$ is the azimuth:
 
-```math
+$$
 x = d \cos(b)\cos(l), \qquad y = d \cos(b)\sin(l), \qquad z = d \sin(b)
-```
+$$
 
 ### 2. Light-speed latency
 
 Round-trip communication time from Earth at the origin to a server at $(x, y, z)$, in parsecs. The factor of 2 accounts for the round trip (dispatch the task, receive the result):
 
-```math
+$$
 t_\text{latency} = \frac{2 \, d}{c}, \qquad d = \sqrt{x^2 + y^2 + z^2}\ \ (\text{converted to km})
-```
+$$
 
 *Verification:* a server 1 pc away yields a 6.52-year round trip, consistent with 1 pc ≈ 3.26 light-years one way.
 
@@ -253,15 +250,15 @@ t_\text{latency} = \frac{2 \, d}{c}, \qquad d = \sqrt{x^2 + y^2 + z^2}\ \ (\text
 
 Both Earth and the server sit in the **same field of catalog stars**, so the model uses the weak-field metric: a clock at gravitational potential $\Phi$ ticks at rate
 
-```math
+$$
 \frac{d\tau}{dt} = \sqrt{1 + \frac{2\Phi}{c^2}}
-```
+$$
 
 relative to flat spacetime. The potential at any point is the softened Newtonian sum over all catalog stars (masses estimated per §3a):
 
-```math
+$$
 \Phi(\mathbf{r}) = -\sum_i \frac{G M_i}{\sqrt{|\mathbf{r} - \mathbf{r}_i|^2 + \epsilon^2}}
-```
+$$
 
 where $\epsilon$ is a softening length ($0.1\ \text{pc}$) that keeps the potential finite if a server is placed right on top of a star. **Earth's** factor $f_\text{earth}$ is this evaluated at the origin — the dense solar neighborhood, so Earth's clock runs slow. The **server's** factor $f_\text{server}$ is evaluated at its placement: in a deep void $\Phi \to 0$ and $f_\text{server} \to 1$ (fast); near other stars $\Phi$ deepens and $f_\text{server}$ drops, eroding or reversing the advantage. This is the "place it in a void, not next to a star" physics.
 
@@ -271,9 +268,9 @@ where $\epsilon$ is a softening length ($0.1\ \text{pc}$) that keeps the potenti
 
 The data pipeline estimates each star's mass from its catalog luminosity $L$ (solar units) using the main-sequence mass–luminosity relation, clamped to $0.1$–$50\ M_\odot$:
 
-```math
+$$
 \frac{M}{M_\odot} = \left(\frac{L}{L_\odot}\right)^{1/3.5}
-```
+$$
 
 This is crude — it treats every star as main-sequence, ignoring giants, white dwarfs, and binaries — but it is enough to make void-hunting physically meaningful.
 
@@ -281,9 +278,9 @@ This is crude — it treats every star as main-sequence, ignoring giants, white 
 
 Given a task requiring `task_seconds` of compute (in the local clock of whichever machine runs it), the model compares running it locally on Earth versus offloading to the server:
 
-```math
+$$
 t_\text{compute} = t_\text{task} \cdot \frac{f_\text{earth}}{f_\text{server}}, \qquad t_\text{wait} = t_\text{compute} + t_\text{latency}, \qquad \text{net gain} = t_\text{task} - t_\text{wait}
-```
+$$
 
 The server completes the task in $t_\text{task}$ of its own proper time; the Earth time that elapses meanwhile is $t_\text{task} \cdot (f_\text{earth}/f_\text{server})$. When the server's clock is faster ($f_\text{server} > f_\text{earth}$, i.e. a weaker field) Earth ages less, so the work effectively finishes sooner — but you still wait $t_\text{latency}$ for the round trip. The **clock advantage** reported in the UI is $f_\text{server}/f_\text{earth}$ (>1 = the server runs faster than Earth). A **positive net gain** means offloading beats local execution.
 
@@ -291,9 +288,9 @@ The server completes the task in $t_\text{task}$ of its own proper time; the Ear
 
 Earth–Mars one-way signal delay is pure light-travel time (no relativity involved):
 
-```math
+$$
 t_\text{delay} = \frac{d_\text{Earth-Mars}}{c}
-```
+$$
 
 With $d_\text{Earth–Mars} = 2.25 \times 10^8\ \text{km}$ (a realistic mid-range distance; the true range is 55–401 million km), this gives **750 s ≈ 12.5 min**. A Mars transaction at timestamp $t$ appears on Earth at $t + t_\text{delay}(1 - \text{syncOffset})$, where the sync slider applies compensation from 0 (none) to 1 (full).
 
@@ -314,8 +311,6 @@ These are intentional simplifications. They keep the simulation legible, but a p
 6. **"Relativistic Sync Protocol" is loosely named.** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
 
 7. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
-
-</details>
 
 ## Project Structure
 
