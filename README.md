@@ -125,12 +125,18 @@ Open http://localhost:5173
 **Features:**
 
 #### Explore & place a server
+
+![Galaxy map with the Deploy Cosmic Server control panel — Task Workload Size field and galactic-coordinate placement form](docs/images/feature-explore-place.png)
+
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore; background stars twinkle and data stars are color-coded by luminosity (brighter stars appear warmer).
 - **Server placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag** rotates the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement.
 - **Collapsible control panel** — The control panel (Task field, breakeven readout, server placement) collapses to a thin rail via an arrow, letting the 3D map widen.
 - **Camera fly-to** — The camera automatically frames both Earth and the server when you place one.
 
 #### What's on the map
+
+![Galaxy map close-up after placing a server: green Earth marker, cyan Cosmic Server with RTT label, red round-trip comm line, and the violet distance dimension line labeled 400.0 pc](docs/images/feature-whats-on-map.png)
+
 - **Earth & its gravity well** — A green marker for Earth, wrapped in amber concentric shells that represent the dense solar-neighborhood field slowing Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the server's — so the well is drawn at Earth, where it belongs.
 - **Cosmic Server** — The deployed server: a floating, glowing cyan sphere with a bold **"Cosmic Server"** label and its **RTT** (round-trip time) beneath it, so the latency to that location is readable right on the map.
 - **Orbit marker (orbit-ring)** — A decorative cyan ring with drifting sparkles around the Cosmic Server, marking its position so it's easy to spot among the 8,920 stars. A **visual locator only** — not a real orbit, and it carries no physics.
