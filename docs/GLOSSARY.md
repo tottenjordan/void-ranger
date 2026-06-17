@@ -26,23 +26,23 @@ Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a 
 
 **Earth Compute Time** — how much Earth time passes while the server completes the task.
 
-`earth_compute = task_seconds × (f_earth / f_server) = task ÷ advantage`. When the server's clock runs faster (advantage `> 1`), Earth ages less than the job's own runtime, so the work effectively finishes sooner than running it locally would.
+`earth_compute = task_seconds × (f_earth / f_server) = task ÷ advantage`. When the server's clock runs faster (advantage `> 1`), Earth ages less than the job's own runtime, so the work effectively finishes sooner than running it locally would. (Deep dive: [Efficiency & Breakeven](efficiency-model.md).)
 
 **Communication Cost** — the round-trip light-speed delay to the server and back.
 
-`comm_cost = 2d / c`. It's fixed by distance and independent of job size — you pay the same round trip whether the job is tiny or enormous. This is the tax the dilation savings must overcome.
+`comm_cost = 2d / c`. It's fixed by distance and independent of job size — you pay the same round trip whether the job is tiny or enormous. This is the tax the dilation savings must overcome. (Deep dive: [Light-Speed Latency](light-latency.md).)
 
 **Earth Wait Time** — the total time an Earth observer waits, end to end.
 
-`earth_wait = earth_compute + comm_cost`: dispatch the job, wait for the server to compute it, and wait for the result to travel back. It differs from Earth Compute Time by exactly the Communication Cost.
+`earth_wait = earth_compute + comm_cost`: dispatch the job, wait for the server to compute it, and wait for the result to travel back. It differs from Earth Compute Time by exactly the Communication Cost. (Deep dive: [Efficiency & Breakeven](efficiency-model.md).)
 
 **Net Gain / Net Loss** — whether offloading beats just running the job on Earth.
 
-`net_gain = task_seconds − earth_wait`. Positive (green) means the Cosmic Server saves time overall; negative (red) means the round-trip latency outweighs the dilation benefit. The ▲/▼ arrow shows whether the value rose or fell since your last change.
+`net_gain = task_seconds − earth_wait`. Positive (green) means the Cosmic Server saves time overall; negative (red) means the round-trip latency outweighs the dilation benefit. The ▲/▼ arrow points up for a net gain, down for a net loss. (Deep dive: [Efficiency & Breakeven](efficiency-model.md).)
 
 **Breakeven Workload** — the smallest task size that pays off at the clicked location.
 
-`breakeven = comm_cost / (1 − f_earth/f_server)`. It depends only on the placement, not the current task size. Below it, the fixed latency dominates (net loss); above it, the dilation savings win. It reads **green** once your Task Workload Size clears it, **red** otherwise, and **"none"** where the spot has no time advantage (`advantage ≤ 1`), since no job size could ever win there.
+`breakeven = comm_cost / (1 − f_earth/f_server)`. It depends only on the placement, not the current task size. Below it, the fixed latency dominates (net loss); above it, the dilation savings win. It reads **green** once your Task Workload Size clears it, **red** otherwise, and **"none"** where the spot has no time advantage (`advantage ≤ 1`), since no job size could ever win there. (Deep dive: [Efficiency & Breakeven](efficiency-model.md).)
 
 ## Interplanetary DevOps 🚧 WIP
 

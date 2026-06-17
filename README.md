@@ -29,7 +29,7 @@
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
 - [Glossary](docs/GLOSSARY.md)
-- [Gravitational Field Model](docs/gravitational-field.md)
+- Deep dives: [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Roadmap](#roadmap)
@@ -230,7 +230,7 @@ This capture shows a server deployed at **400 pc** (a deep void) with a **114,15
 
 ## Physics and Assumptions
 
-All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below. For quick one-line definitions of every on-screen metric and term, see the [Glossary](docs/GLOSSARY.md); for a deep dive on how the gravitational field is computed at any coordinate (including near other stars), see the [Gravitational Field Model](docs/gravitational-field.md).
+All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below. For quick one-line definitions of every on-screen metric and term, see the [Glossary](docs/GLOSSARY.md). For deep dives, see the [Gravitational Field Model](docs/gravitational-field.md) (how the field is computed at any coordinate, including near other stars), the [Efficiency & Breakeven](docs/efficiency-model.md) math, and the [Light-Speed Latency](docs/light-latency.md) model.
 
 ### Constants
 
