@@ -35,10 +35,30 @@ export function hoursLabel(seconds, digits = null) {
 }
 
 // Format a duration given in SECONDS as whole years, comma-grouped, e.g.
-// "114,155 years". Shown under the hours value so big magnitudes are legible.
+// "114,155 yrs". The prominent unit on the time widgets (hours shown beneath).
 export function yearsLabel(seconds) {
   if (seconds == null || !isFinite(seconds)) return '—'
-  return `${commaInt(seconds / 31536000)} years`
+  return `${commaInt(seconds / 31536000)} yrs`
+}
+
+// Display value for the editable Task Workload Size field, in YEARS. Comma-groups
+// the integer part and keeps up to 4 decimals (trailing zeros trimmed) so small,
+// sub-year tasks remain enterable, e.g. 31536000 -> "1", 15768000 -> "0.5".
+export function yearsInput(seconds) {
+  if (seconds == null || !isFinite(seconds)) return '0'
+  const y = Math.round((seconds / 31536000) * 10000) / 10000
+  const [intPart, decPart] = String(y).split('.')
+  const grouped = Number(intPart).toLocaleString('en-US')
+  return decPart ? `${grouped}.${decPart}` : grouped
+}
+
+// Parse a user-typed YEARS string (digits, commas, one decimal point) into a
+// non-negative float number of years. Returns null when nothing usable typed.
+export function parseYearsInput(str) {
+  const cleaned = String(str).replace(/[^\d.]/g, '')
+  if (cleaned === '' || cleaned === '.') return null
+  const n = parseFloat(cleaned)
+  return isFinite(n) ? n : null
 }
 
 // Plain-language duration that auto-picks a relatable unit (seconds → minutes →

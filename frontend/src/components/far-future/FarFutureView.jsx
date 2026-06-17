@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
-import { commaInt, parseSecondsInput, hoursLabel, yearsLabel, relatableDuration } from '../../utils/format'
+import { hoursLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration } from '../../utils/format'
 
 const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in the gravity well of our dense solar-neighborhood.' },
@@ -95,46 +95,46 @@ function BreakevenLine({ breakeven, taskSeconds }) {
     <p className="text-center text-[11px] italic text-gray-500 mt-1" title={title}>
       Breakeven workload:{' '}
       <span className={`not-italic font-mono ${winning ? 'text-green-400' : 'text-red-400'}`}>
-        {hoursLabel(breakeven)}
+        {yearsLabel(breakeven)}
       </span>
     </p>
   )
 }
 
 function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
-  // Local text mirrors taskSeconds (shown in whole hours) but allows a transient
-  // empty value so the field can be cleared and retyped. Valid numbers are
-  // converted hours->seconds and pushed up; emptying leaves taskSeconds as-is.
-  // (Comma reformatting can still move the caret to the end on mid-string edits.)
-  const [text, setText] = useState(commaInt(taskSeconds / 3600))
-  useEffect(() => { setText(commaInt(taskSeconds / 3600)) }, [taskSeconds])
+  // The field is entered in YEARS (decimals allowed). Local text holds the raw
+  // keystrokes while editing so decimals can be typed without the value being
+  // reformatted mid-entry; it's re-grouped with commas on blur. taskSeconds is
+  // only ever changed by this field, so there's no external value to sync back.
+  const [text, setText] = useState(() => yearsInput(taskSeconds))
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
       <label
         className="block text-center text-xs text-gray-400 uppercase tracking-wider mb-2"
-        title="Workload size: compute-hours the job needs, measured on the running machine's own clock."
+        title="Workload size: compute-years the job needs, measured on the running machine's own clock."
       >
-        Task Workload Size (hrs)
+        Task Workload Size (yrs)
       </label>
       <input
         type="text"
-        inputMode="numeric"
+        inputMode="decimal"
         value={text}
         onChange={e => {
-          const h = parseSecondsInput(e.target.value)
-          if (h === null) { setText(''); return }
-          setText(commaInt(h))
-          onTaskSecondsChange(h * 3600)
+          const raw = e.target.value
+          setText(raw) // keep raw keystrokes so decimals (e.g. "0.5") are typeable
+          const y = parseYearsInput(raw)
+          if (y !== null) onTaskSecondsChange(Math.round(y * 31536000))
         }}
+        onBlur={() => setText(yearsInput(taskSeconds))} // re-group with commas when done
         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-center text-lg font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
       />
-      {/* Years equivalent, in the same color family as the input value. */}
+      {/* Hours equivalent, in the same color family as the input value. */}
       <p className="text-center text-[11px] font-mono text-gray-300 mt-1 leading-tight">
-        {yearsLabel(taskSeconds)}
+        {hoursLabel(taskSeconds)}
       </p>
       <p className="text-center text-[11px] italic text-gray-500 mt-2 leading-tight">
-        This is the processing time (in hours) for a program on a given server.
+        This is the processing time (in years) for a program on a given server.
       </p>
       <BreakevenLine breakeven={breakeven} taskSeconds={taskSeconds} />
     </div>
