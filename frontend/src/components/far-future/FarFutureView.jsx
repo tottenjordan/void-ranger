@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
-import { commaInt, parseSecondsInput, hoursLabel } from '../../utils/format'
+import { commaInt, parseSecondsInput, hoursLabel, relatableDuration } from '../../utils/format'
 
 const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in the gravity well of our dense solar-neighborhood.' },
@@ -22,6 +22,37 @@ function Swatch({ type, color }) {
     return <span className="inline-block w-3 h-0.5 flex-shrink-0" style={{ backgroundColor: color }} />
   }
   return <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+}
+
+// Plain-language "so what?" translation of the metrics into relatable units.
+function PlainSummary({ taskSeconds, metrics }) {
+  if (!metrics || metrics.earth_compute_time == null) return null
+  const compute = metrics.earth_compute_time
+  const wait = metrics.earth_wait_time
+  const comm = metrics.latency_seconds
+  const net = metrics.net_gain
+  const faster = metrics.clock_advantage > 1
+  const saves = net >= 0
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+      <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">In plain terms</p>
+      <p className="text-sm text-gray-300 leading-relaxed">
+        Running this job <span className="text-gray-100 font-medium">on Earth</span> would take{' '}
+        <span className="font-mono text-amber-300">{relatableDuration(taskSeconds)}</span>. Offloaded to the{' '}
+        <span className="text-cyan-300 font-medium">Cosmic Server</span>, the same computation takes{' '}
+        <span className="font-mono text-cyan-300">{relatableDuration(compute)}</span> of Earth time
+        (its clock runs {faster ? 'faster' : 'slower'} than ours), plus{' '}
+        <span className="font-mono text-amber-300">{relatableDuration(comm)}</span> waiting for the round-trip
+        signal — a total wait of{' '}
+        <span className="font-mono text-amber-300">{relatableDuration(wait)}</span>.{' '}
+        {saves ? (
+          <>Net result: you <span className="text-green-400 font-medium">save {relatableDuration(Math.abs(net))}</span> versus computing at home.</>
+        ) : (
+          <>Net result: you <span className="text-red-400 font-medium">lose {relatableDuration(Math.abs(net))}</span> — not worth offloading from here.</>
+        )}
+      </p>
+    </div>
+  )
 }
 
 function MapLegend() {
@@ -195,6 +226,7 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
           netGain={metrics.net_gain}
         />
       )}
+      <PlainSummary taskSeconds={taskSeconds} metrics={metrics} />
       <MapLegend />
     </div>
   )

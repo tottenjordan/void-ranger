@@ -34,6 +34,24 @@ export function hoursLabel(seconds, digits = null) {
   return digits === null ? `${commaInt(h)} hrs` : `${commaFixed(h, digits)} hrs`
 }
 
+// Plain-language duration that auto-picks a relatable unit (seconds → minutes →
+// hours → days → years), comma-grouped, with full unit words. Used for the
+// "in plain terms" summary so the magnitudes are easy to relate to.
+export function relatableDuration(seconds) {
+  if (seconds == null || !isFinite(seconds)) return '—'
+  const sign = seconds < 0 ? '-' : ''
+  const abs = Math.abs(seconds)
+  const fmt = (val, unit) => {
+    const n = val >= 100 ? Math.round(val).toLocaleString('en-US') : val.toFixed(1)
+    return `${sign}${n} ${unit}`
+  }
+  if (abs < 60) return fmt(abs, 'seconds')
+  if (abs < 3600) return fmt(abs / 60, 'minutes')
+  if (abs < 86400) return fmt(abs / 3600, 'hours')
+  if (abs < 31536000) return fmt(abs / 86400, 'days')
+  return fmt(abs / 31536000, 'years')
+}
+
 // Parse a user-typed string into a non-negative integer number of seconds,
 // keeping only digit characters (e.g. "12,345" -> 12345). Returns null when
 // nothing usable was typed. Note: only plain digits/commas are supported —
