@@ -76,10 +76,10 @@ function DistanceSub({ pc }) {
 export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTime, earthWaitTime, communicationCost, netGain }) {
   const animDistance = useAnimatedValue(distancePc ?? 0)
   const animAdvantage = useAnimatedValue(clockAdvantage ?? 1)
-  const animCompute = useAnimatedValue(earthComputeTime)
-  const animWait = useAnimatedValue(earthWaitTime)
+  const animCompute = useAnimatedValue(earthComputeTime ?? 0)
+  const animWait = useAnimatedValue(earthWaitTime ?? 0)
   const animComm = useAnimatedValue(communicationCost ?? 0)
-  const animGain = useAnimatedValue(netGain)
+  const animGain = useAnimatedValue(netGain ?? 0)
 
   const prevGain = useRef(netGain)
   const improving = netGain > prevGain.current
