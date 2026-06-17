@@ -96,7 +96,7 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         value={`${animDistance.toFixed(2)} pc`}
         sub={<DistanceSub pc={animDistance} />}
         color="text-violet-300 hover:shadow-violet-500/10"
-        tooltip="Straight-line distance from Earth to the void server. Shown in parsecs, light-years, and miles (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi). This sets the round-trip communication latency."
+        tooltip="Straight-line distance from Earth to the Cosmic Server. Shown in parsecs, light-years, and miles (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi). This sets the round-trip communication latency."
         desc="Straight-line Earth↔server distance; sets the round-trip latency."
       />
       <MetricCard
@@ -112,7 +112,7 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         value={`${commaInt(animCompute)} s`}
         sub={humanDuration(animCompute)}
         color="text-cyan-400 hover:shadow-cyan-500/10"
-        tooltip="How long Earth's clock measures while the void server completes the task. Because the server's clock runs faster (weaker gravity), it finishes the work in less Earth time than running locally would take."
+        tooltip="How long Earth's clock measures while the Cosmic Server completes the task. Because the server's clock runs faster (weaker gravity), it finishes the work in less Earth time than running locally would take."
         desc="How much Earth time passes while the server completes the task."
       />
       <MetricCard
@@ -120,7 +120,7 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         value={`${commaInt(animWait)} s`}
         sub={`${humanDuration(animWait)} · +${commaInt(animComm)} s light delay`}
         color="text-amber-400 hover:shadow-amber-500/10"
-        tooltip="Total time an Earth observer waits: the compute time plus round-trip light-speed communication latency to the void server and back."
+        tooltip="Total time an Earth observer waits: the compute time plus round-trip light-speed communication latency to the Cosmic Server and back."
         desc="Compute time + round-trip light delay."
       />
       <MetricCard
@@ -135,7 +135,7 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         label={animGain >= 0 ? 'Net Gain' : 'Net Loss'}
         value={`${commaFixed(animGain, 2)} s`}
         color={animGain >= 0 ? 'text-green-400 hover:shadow-green-500/10' : 'text-red-400 hover:shadow-red-500/10'}
-        tooltip="Difference between running the task locally on Earth vs. offloading to the void server. Positive = the void server saves time overall. Negative = light-speed latency outweighs the dilation benefit."
+        tooltip="Difference between running the task locally on Earth vs. offloading to the Cosmic Server. Positive = the Cosmic Server saves time overall. Negative = light-speed latency outweighs the dilation benefit."
         arrow={improving ? '▲' : '▼'}
         desc="Whether the dilation benefit outweighs the communication cost (seconds saved vs. running on Earth)."
       />
