@@ -29,7 +29,7 @@
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
 - [Glossary](docs/GLOSSARY.md)
-- Deep dives: [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md)
+- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Roadmap](#roadmap)
