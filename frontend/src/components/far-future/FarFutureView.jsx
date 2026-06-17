@@ -201,7 +201,7 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
             </div>
             <TaskField taskSeconds={taskSeconds} onTaskSecondsChange={onTaskSecondsChange}
               breakeven={metrics ? metrics.breakeven_task_seconds : undefined} />
-            <ServerPlacer onPlaceServer={placeServer} />
+            <ServerPlacer onPlaceServer={placeServer} taskSeconds={taskSeconds} />
             {serverPosition && (
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Server Position</p>

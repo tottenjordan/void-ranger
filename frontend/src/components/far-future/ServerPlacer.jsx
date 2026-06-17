@@ -13,10 +13,12 @@ function Field({ label, hint, tooltip, children }) {
 const inputCls =
   'w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm font-mono text-gray-100 focus:border-cyan-500 focus:outline-none'
 
-export default function ServerPlacer({ onPlaceServer }) {
+export default function ServerPlacer({ onPlaceServer, taskSeconds }) {
   const [distance, setDistance] = useState(10)
   const [longitude, setLongitude] = useState(0)
   const [latitude, setLatitude] = useState(0)
+  const [radius, setRadius] = useState(300)
+  const [searching, setSearching] = useState(false)
 
   const handleDeploy = async () => {
     try {
@@ -29,6 +31,24 @@ export default function ServerPlacer({ onPlaceServer }) {
       onPlaceServer(coords)
     } catch {
       // silent fail
+    }
+  }
+
+  // Ask the backend to search for a placement, then drop the server there (the
+  // existing onPlaceServer flow handles metrics + camera fly-to).
+  const findSpot = async (endpoint, body) => {
+    setSearching(true)
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      onPlaceServer(await res.json())
+    } catch {
+      // silent fail
+    } finally {
+      setSearching(false)
     }
   }
 
@@ -75,6 +95,36 @@ export default function ServerPlacer({ onPlaceServer }) {
       <p className="text-[10px] text-gray-600 leading-tight">
         Tip: you can also click anywhere in the galaxy map to place a server.
       </p>
+
+      <div className="border-t border-gray-800 pt-4 space-y-3">
+        <p className="text-xs text-gray-500 leading-relaxed">
+          Or let the app find a spot within a search radius:
+        </p>
+        <Field
+          label="Search radius (pc)"
+          hint="How far out to look. Larger = emptier voids, but more latency."
+          tooltip="Caps how far from Earth the search looks. The cap is a latency budget — it does not change the gravity; the search evaluates every star's pull to find the emptiest pocket."
+        >
+          <input type="number" min="1" step="10" value={radius}
+            onChange={e => setRadius(Number(e.target.value))} className={inputCls} />
+        </Field>
+        <button
+          onClick={() => findSpot('/api/physics/best-void', { max_distance_pc: radius })}
+          disabled={searching}
+          title="Find the lowest-gravity spot within the radius — the emptiest pocket, farthest from all stars, where the clock runs fastest."
+          className="w-full bg-gray-800 hover:bg-gray-700 border border-cyan-700 text-cyan-300 font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {searching ? 'Searching…' : 'Find deepest void'}
+        </button>
+        <button
+          onClick={() => findSpot('/api/physics/best-spot', { task_seconds: taskSeconds, max_distance_pc: radius })}
+          disabled={searching}
+          title="Find the spot that maximizes net gain — balances the void's clock advantage against light-delay latency for your current Task Workload Size."
+          className="w-full bg-gray-800 hover:bg-gray-700 border border-green-700 text-green-300 font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {searching ? 'Searching…' : 'Best spot for this task'}
+        </button>
+      </div>
     </div>
   )
 }
