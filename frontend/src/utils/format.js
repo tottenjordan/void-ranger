@@ -14,14 +14,16 @@ export function commaFixed(n, digits = 2) {
 }
 
 // Human-readable duration (kept as a secondary subline), mirrors the prior
-// MetricsDash formatTime so we don't lose the at-a-glance scale.
-export function humanDuration(seconds) {
+// MetricsDash formatTime so we don't lose the at-a-glance scale. Sign-safe
+// (negative durations keep their '-') and `digits` controls decimal places.
+export function humanDuration(seconds, digits = 2) {
+  const sign = seconds < 0 ? '-' : ''
   const abs = Math.abs(seconds)
-  if (abs < 60) return `${abs.toFixed(2)} s`
-  if (abs < 3600) return `${(abs / 60).toFixed(2)} min`
-  if (abs < 86400) return `${(abs / 3600).toFixed(2)} hr`
-  if (abs < 31536000) return `${(abs / 86400).toFixed(2)} days`
-  return `${(abs / 31536000).toFixed(2)} yr`
+  if (abs < 60) return `${sign}${abs.toFixed(digits)} s`
+  if (abs < 3600) return `${sign}${(abs / 60).toFixed(digits)} min`
+  if (abs < 86400) return `${sign}${(abs / 3600).toFixed(digits)} hr`
+  if (abs < 31536000) return `${sign}${(abs / 86400).toFixed(digits)} days`
+  return `${sign}${(abs / 31536000).toFixed(digits)} yr`
 }
 
 // Parse a user-typed string into a non-negative integer number of seconds,

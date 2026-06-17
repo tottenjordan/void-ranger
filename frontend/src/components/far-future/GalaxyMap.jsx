@@ -2,6 +2,7 @@ import { useRef, useMemo, useEffect } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, PointMaterial, Float, Sparkles, Grid, Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
+import { humanDuration } from '../../utils/format'
 
 const PARSEC_KM = 3.086e13
 const C_KM_S = 299792.458
@@ -66,14 +67,6 @@ function EarthMarker() {
   )
 }
 
-function formatLatency(seconds) {
-  if (seconds < 60) return `${seconds.toFixed(1)}s`
-  if (seconds < 3600) return `${(seconds / 60).toFixed(1)} min`
-  if (seconds < 86400) return `${(seconds / 3600).toFixed(1)} hr`
-  if (seconds < 31536000) return `${(seconds / 86400).toFixed(1)} days`
-  return `${(seconds / 31536000).toFixed(1)} yr`
-}
-
 function CommLine({ serverPosition }) {
   const pulseRef = useRef()
 
@@ -126,7 +119,7 @@ function CommLine({ serverPosition }) {
             Cosmic Server
           </span>
           <span className="text-[10px] font-mono text-cyan-400 bg-gray-950/70 px-1.5 py-0.5 rounded mt-0.5">
-            RTT {formatLatency(roundTripSeconds)}
+            RTT {humanDuration(roundTripSeconds, 1)}
           </span>
         </div>
       </Html>

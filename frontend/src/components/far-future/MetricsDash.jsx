@@ -81,6 +81,9 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
   const animComm = useAnimatedValue(communicationCost ?? 0)
   const animGain = useAnimatedValue(netGain ?? 0)
 
+  // Trend arrow compares the raw (non-animated) gain to its previous value on
+  // purpose: animGain changes every frame during the tween, so keying the arrow
+  // off it would make ▲/▼ flicker. Raw values give one stable flip per update.
   const prevGain = useRef(netGain)
   const improving = netGain > prevGain.current
   useEffect(() => { prevGain.current = netGain }, [netGain])
