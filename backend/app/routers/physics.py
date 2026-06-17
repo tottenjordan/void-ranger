@@ -7,6 +7,7 @@ from app.models.schemas import (
     GalacticCoordsRequest,
 )
 from app.services.physics import (
+    breakeven_task_seconds,
     compute_efficiency,
     earth_dilation_factor,
     galactic_to_cartesian,
@@ -34,4 +35,5 @@ async def efficiency(req: EfficiencyRequest):
         "earth_dilation_factor": f_earth,
         "server_dilation_factor": f_server,
         "clock_advantage": f_server / f_earth,
+        "breakeven_task_seconds": breakeven_task_seconds(f_earth, f_server, latency),
     }

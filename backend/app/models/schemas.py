@@ -28,3 +28,4 @@ class EfficiencyResponse(BaseModel):
     earth_dilation_factor: float
     server_dilation_factor: float
     clock_advantage: float
+    breakeven_task_seconds: float | None = None

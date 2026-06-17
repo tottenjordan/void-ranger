@@ -94,3 +94,15 @@ def compute_efficiency(task_seconds: float, f_earth: float, f_server: float,
         "earth_wait_time": earth_wait_time,
         "net_gain": net_gain,
     }
+
+
+def breakeven_task_seconds(f_earth: float, f_server: float,
+                           latency_seconds: float) -> float | None:
+    """Smallest task (in server proper-seconds) whose dilation savings just
+    cover the round-trip light delay. Returns None when the server is not in a
+    weaker field than Earth (f_server <= f_earth), i.e. no task size ever wins.
+    """
+    ratio = f_earth / f_server
+    if ratio >= 1:
+        return None
+    return latency_seconds / (1 - ratio)

@@ -1,6 +1,9 @@
 import math
 
+import pytest
+
 from app.services.physics import (
+    breakeven_task_seconds,
     compute_efficiency,
     earth_dilation_factor,
     galactic_to_cartesian,
@@ -84,3 +87,16 @@ def test_compute_efficiency_latency_can_cause_loss():
     result = compute_efficiency(100, 0.9, 1.0, 50)
     assert result["earth_wait_time"] == result["earth_compute_time"] + 50
     assert result["net_gain"] < 0
+
+
+def test_breakeven_positive_when_server_faster():
+    # server faster than Earth (f_server > f_earth) → finite positive breakeven
+    be = breakeven_task_seconds(f_earth=0.9, f_server=1.0, latency_seconds=100.0)
+    # 100 / (1 - 0.9/1.0) = 100 / 0.1 = 1000
+    assert be == pytest.approx(1000.0)
+
+
+def test_breakeven_none_when_server_not_faster():
+    # server same/slower than Earth → never breaks even
+    assert breakeven_task_seconds(0.9, 0.9, 100.0) is None
+    assert breakeven_task_seconds(0.9, 0.8, 100.0) is None
