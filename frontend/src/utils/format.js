@@ -24,8 +24,10 @@ export function humanDuration(seconds) {
   return `${(abs / 31536000).toFixed(2)} yr`
 }
 
-// Parse a user-typed string ("12,345" / "1.2e6") into a non-negative integer
-// number of seconds; returns null when nothing usable was typed.
+// Parse a user-typed string into a non-negative integer number of seconds,
+// keeping only digit characters (e.g. "12,345" -> 12345). Returns null when
+// nothing usable was typed. Note: only plain digits/commas are supported —
+// scientific notation is not (it would be stripped to its digits).
 export function parseSecondsInput(str) {
   const digits = String(str).replace(/[^\d]/g, '')
   if (digits === '') return null
