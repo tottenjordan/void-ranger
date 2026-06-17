@@ -79,6 +79,9 @@ function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
       >
         Task Workload Size (s)
       </label>
+      {/* Value is derived from state: empty input is ignored (field can't be
+          blanked) and comma reformatting may push the caret to the end on
+          mid-string edits — acceptable for this short numeric field. */}
       <input
         type="text"
         inputMode="numeric"
@@ -130,6 +133,11 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
     }
   }, [taskSeconds])
 
+  // Re-run the efficiency calc when the task size changes. Deps intentionally
+  // omit placeServer/serverPosition: placeServer is already useCallback'd on
+  // taskSeconds (so the closure is current), and serverPosition changes post
+  // via placeServer directly — listing them here would double-post.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (serverPosition) placeServer(serverPosition)
   }, [taskSeconds])
