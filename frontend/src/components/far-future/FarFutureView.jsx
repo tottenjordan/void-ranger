@@ -71,6 +71,13 @@ function BreakevenLine({ breakeven, taskSeconds }) {
 }
 
 function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
+  // Local text mirrors taskSeconds but allows a transient empty/partial value so
+  // the field can be cleared and retyped. Valid numbers are pushed up; emptying
+  // the field leaves taskSeconds at its last value. (Comma reformatting can still
+  // move the caret to the end on mid-string edits — minor for this short field.)
+  const [text, setText] = useState(commaInt(taskSeconds))
+  useEffect(() => { setText(commaInt(taskSeconds)) }, [taskSeconds])
+
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
       <label
@@ -79,16 +86,15 @@ function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
       >
         Task Workload Size (s)
       </label>
-      {/* Value is derived from state: empty input is ignored (field can't be
-          blanked) and comma reformatting may push the caret to the end on
-          mid-string edits — acceptable for this short numeric field. */}
       <input
         type="text"
         inputMode="numeric"
-        value={commaInt(taskSeconds)}
+        value={text}
         onChange={e => {
           const v = parseSecondsInput(e.target.value)
-          if (v !== null) onTaskSecondsChange(v)
+          if (v === null) { setText(''); return }
+          setText(commaInt(v))
+          onTaskSecondsChange(v)
         }}
         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-center text-lg font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
       />
