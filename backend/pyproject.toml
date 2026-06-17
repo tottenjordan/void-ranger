@@ -1,7 +1,7 @@
 [project]
-name = "chronocloud-backend"
+name = "void-ranger-backend"
 version = "0.1.0"
-description = "ChronoCloud — relativistic computing education API"
+description = "Void Ranger — relativistic computing education API"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import physics, stars
 
-app = FastAPI(title="ChronoCloud API")
+app = FastAPI(title="Void Ranger API")
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,4 +1,4 @@
-# ChronoCloud Glossary
+# Void Ranger Glossary
 
 Quick reference for the terms and metrics used in the two dashboards. Each entry is the term in **bold** with a one-line summary, followed by the detail below it. Formulas are written in plain notation for quick reading; the fully typeset derivations live in the README's [Physics and Assumptions](../README.md#physics-and-assumptions) section.
 

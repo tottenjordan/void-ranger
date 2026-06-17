@@ -2,7 +2,7 @@
 
 Guidance for Claude Code when working in this repository.
 
-## What ChronoCloud is
+## What Void Ranger is
 
 An interactive educational web app demonstrating relativistic computing and
 time dilation, with two modes:
