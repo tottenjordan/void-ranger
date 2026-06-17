@@ -32,6 +32,7 @@
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
 - [Example Walkthrough](#example-walkthrough)
+- [Glossary](#glossary)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [Project Structure](#project-structure)
 - [Tests](#tests)
@@ -214,6 +215,110 @@ This capture shows the ledger timeline with the **Relativistic Sync Protocol at 
 - The **red dot** near the top marks a causality conflict (a transaction that arrived out of order). The **ring gauge** on the right reports the drift: 1 error across 50 transactions (2%).
 - The slider description reads *"Partial compensation — ~375s residual delay."* Drag it to 100% and the conflict and drift clear; drag to 0% and they grow.
 - Press **Play** to replay the transactions in real time with a sweeping playhead, at 1x/2x/5x speed.
+
+## Glossary
+
+Quick reference for the terms and metrics used in the dashboards. Each entry has a one-line summary; expand **Details** for the formula and nuance. (Formulas here are written in plain notation so they render inside the collapsibles; the fully typeset versions live in [Physics and Assumptions](#physics-and-assumptions).)
+
+### Deep-Space Cloud Compute
+
+**Cosmic Server** — the compute server you deploy in a cosmological void, where weak gravity makes its clock tick faster than Earth's.
+
+<details><summary>Details</summary>
+
+The premise of the mode: escape Earth's gravitational well into near-empty space and your clock speeds up, so a fixed job finishes in less Earth time. Where you place it sets **both** levers at once — its *local gravity* (how fast its clock runs) and its *distance* (how long the round-trip signal takes). Click the map to place it, or enter galactic coordinates in the panel.
+
+</details>
+
+**Task Workload Size** — how much compute the job needs, expressed as a duration in hours.
+
+<details><summary>Details</summary>
+
+A proxy for job size measured in time rather than FLOPs or rows: "this job needs *N* hours of CPU time." The model assumes the same job costs the same amount of compute time on either machine (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick. The field accepts hours; internally the physics works in seconds (`seconds = hours × 3600`). Only used in Deep-Space mode.
+
+</details>
+
+**Distance from Earth** — straight-line Earth↔server separation, shown in parsecs (with light-years and miles).
+
+<details><summary>Details</summary>
+
+Computed as `d = √(x² + y² + z²)`. It's the single input to communication latency (`2d/c`); it does **not** affect the clock rate. `1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi`.
+
+</details>
+
+**Server Clock Advantage** — how fast the Cosmic Server's clock ticks relative to Earth's; `>1` (green) is a void advantage, `<1` (red) means it sits in a denser region than Earth.
+
+<details><summary>Details</summary>
+
+Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a location's clock rate and `Φ` is the gravitational potential there (the softened sum of `−G·Mᵢ/r` over all catalog stars). Earth sits in the dense solar neighborhood, so `f_earth < 1` (slow clock); a deep void has `Φ → 0`, so `f_server → 1` (fast). `1.063×` means the server ticks 6.3% faster than Earth, so it finishes a job in less Earth time: `earth_compute = task ÷ advantage`. Real interstellar dilation is ~1 part in 10¹³ (invisible), so a `GRAVITY_EXAGGERATION` constant scales it into a visible few-percent effect — relative comparisons between placements are faithful; the absolute magnitude is not.
+
+</details>
+
+**Earth Compute Time** — how much Earth time passes while the server completes the task.
+
+<details><summary>Details</summary>
+
+`earth_compute = task_seconds × (f_earth / f_server) = task ÷ advantage`. When the server's clock runs faster (advantage `> 1`), Earth ages less than the job's own runtime, so the work effectively finishes sooner than running it locally would.
+
+</details>
+
+**Communication Cost** — the round-trip light-speed delay to the server and back.
+
+<details><summary>Details</summary>
+
+`comm_cost = 2d / c`. It's fixed by distance and independent of job size — you pay the same round trip whether the job is tiny or enormous. This is the tax the dilation savings must overcome.
+
+</details>
+
+**Earth Wait Time** — the total time an Earth observer waits, end to end.
+
+<details><summary>Details</summary>
+
+`earth_wait = earth_compute + comm_cost`: dispatch the job, wait for the server to compute it, and wait for the result to travel back. It differs from Earth Compute Time by exactly the Communication Cost.
+
+</details>
+
+**Net Gain / Net Loss** — whether offloading beats just running the job on Earth.
+
+<details><summary>Details</summary>
+
+`net_gain = task_seconds − earth_wait`. Positive (green) means the Cosmic Server saves time overall; negative (red) means the round-trip latency outweighs the dilation benefit. The ▲/▼ arrow shows whether the value rose or fell since your last change.
+
+</details>
+
+**Breakeven Workload** — the smallest task size that pays off at the clicked location.
+
+<details><summary>Details</summary>
+
+`breakeven = comm_cost / (1 − f_earth/f_server)`. It depends only on the placement, not the current task size. Below it, the fixed latency dominates (net loss); above it, the dilation savings win. It reads **green** once your Task Workload Size clears it, **red** otherwise, and **"none"** where the spot has no time advantage (`advantage ≤ 1`), since no job size could ever win there.
+
+</details>
+
+### Interplanetary DevOps
+
+**Light Delay (Earth–Mars)** — the one-way time for a signal to cross between the planets, ~750 s (12.5 min) at a mid-range distance.
+
+<details><summary>Details</summary>
+
+`t_delay = d / c`, with `d ≈ 2.25×10⁸ km` (the true range is 55–401 million km). Because nothing travels faster than light, Earth always *sees* a Mars event this long after it actually happened — the source of all the ordering trouble.
+
+</details>
+
+**Relativistic Sync Protocol** — the 0–100% slider that compensates for the light delay to restore correct event ordering.
+
+<details><summary>Details</summary>
+
+It subtracts a fraction of the *known* light delay from incoming Mars timestamps: a Mars event at time `t` is placed at `t + t_delay × (1 − syncOffset)`. At 100% the residual delay is zero and the ledger orders correctly; at 0% events land late and scramble. It's loosely named — it models signal-propagation delay and event-ordering correction (Lamport-clock territory), not real relativistic time dilation.
+
+</details>
+
+**Drift / Causality Conflict** — an out-of-order transaction caused by the light delay.
+
+<details><summary>Details</summary>
+
+When a Mars transaction that truly happened first is *observed* on Earth after a later Earth transaction, merging the two ledgers by arrival time scrambles the real order — breaking last-write-wins and similar consistency assumptions. The ring gauge reports the drift rate (e.g. 1 conflict in 50 transactions = 2%); raising the sync slider clears it.
+
+</details>
 
 ## Physics and Assumptions
 
