@@ -34,8 +34,17 @@ export function hoursLabel(seconds, digits = null) {
   return digits === null ? `${commaInt(h)} hrs` : `${commaFixed(h, digits)} hrs`
 }
 
+// Format a duration given in SECONDS as days, e.g. 172800 -> "2 days".
+// digits === null -> whole days (comma-grouped); otherwise fixed decimals.
+// This is the secondary "how long is that really" unit beneath the years value.
+export function daysLabel(seconds, digits = null) {
+  if (seconds == null || !isFinite(seconds)) return '—'
+  const d = seconds / 86400
+  return digits === null ? `${commaInt(d)} days` : `${commaFixed(d, digits)} days`
+}
+
 // Format a duration given in SECONDS as whole years, comma-grouped, e.g.
-// "114,155 yrs". The prominent unit on the time widgets (hours shown beneath).
+// "114,155 yrs". The prominent unit on the time widgets (days shown beneath).
 export function yearsLabel(seconds) {
   if (seconds == null || !isFinite(seconds)) return '—'
   return `${commaInt(seconds / 31536000)} yrs`

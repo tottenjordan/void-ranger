@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
-import { hoursLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration } from '../../utils/format'
+import { daysLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration } from '../../utils/format'
 
 const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in the gravity well of our dense solar-neighborhood.' },
@@ -129,9 +129,9 @@ function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
         onBlur={() => setText(yearsInput(taskSeconds))} // re-group with commas when done
         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-center text-lg font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
       />
-      {/* Hours equivalent, in the same color family as the input value. */}
+      {/* Days equivalent, in the same color family as the input value. */}
       <p className="text-center text-[11px] font-mono text-gray-300 mt-1 leading-tight">
-        {hoursLabel(taskSeconds)}
+        {daysLabel(taskSeconds)}
       </p>
       <p className="text-center text-[11px] italic text-gray-500 mt-2 leading-tight">
         This is the processing time (in years) for a program on a given server.
