@@ -8,6 +8,10 @@ Quick reference for the terms and metrics used in the two dashboards. Each entry
 
 The premise of the mode: escape Earth's gravitational well into near-empty space and your clock speeds up, so a fixed job finishes in less Earth time. Where you place it sets **both** levers at once — its *local gravity* (how fast its clock runs) and its *distance* (how long the round-trip signal takes). Click the map to place it, or enter galactic coordinates in the panel.
 
+**Orbit marker (orbit-ring)** — the cyan ring and drifting sparkles drawn around the deployed Cosmic Server.
+
+A purely **visual locator** that makes the server easy to spot in the dense star field — think of it as a "you placed it here" highlight on the cyan sphere at its center. It does **not** represent a physical orbit or any physics: the server isn't orbiting a star or planet, and the ring's size and rotation carry no meaning. It exists only so the server doesn't get lost among the 8,920 catalog stars.
+
 **Task Workload Size** — how much compute the job needs, expressed as a duration in hours.
 
 A proxy for job size measured in time rather than FLOPs or rows: "this job needs *N* hours of CPU time." The model assumes the same job costs the same amount of compute time on either machine (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick. The field accepts hours; internally the physics works in seconds (`seconds = hours × 3600`). Only used in Deep-Space mode.

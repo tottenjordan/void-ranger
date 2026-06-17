@@ -8,7 +8,7 @@ const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in the gravity well of our dense solar-neighborhood.' },
   { swatch: 'ring', color: '#f59e0b', label: 'Gravity well', desc: 'Shells around Earth showing the gravitational field that slows the clock.' },
   { swatch: 'dot', color: '#06b6d4', label: 'Cosmic Server', desc: 'The deployed server, in weak gravity where its clock runs fast (the time advantage).' },
-  { swatch: 'ring', color: '#06b6d4', label: 'Orbit marker', desc: 'Ring + sparkles marking the deployed server.' },
+  { swatch: 'ring', color: '#06b6d4', label: 'Orbit marker', desc: 'Decorative cyan ring + sparkles that highlight where the Cosmic Server sits in the star field — a locator, not a real orbit.' },
   { swatch: 'line', color: '#ef4444', label: 'Comm link', desc: 'Light-speed channel (red) between Earth and the server; its label shows the round-trip time.' },
   { swatch: 'dot', color: '#ef4444', label: 'Signal pulse', desc: 'The message packet traveling the round-trip link at light speed.' },
   { swatch: 'line', color: '#a78bfa', label: 'Distance', desc: 'Straight-line Earth↔server distance in parsecs. Drawn as an offset dimension line (parallel above the comm link, with tick marks) so it never overlaps the signal path; the offset grows with distance.' },

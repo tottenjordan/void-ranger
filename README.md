@@ -2,6 +2,9 @@
 
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
+> An interactive web application demonstrating the effects and computational complexity of relativistic computing.  
+> **Can time dilation be used as a computational resource?**
+
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
 ![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?logo=chart.js&logoColor=white)
@@ -16,12 +19,6 @@
 <sub><i>The Deep-Space dashboard in action — deploy a compute server in a cosmic void and watch its clock advantage, light-delay, and net time gain update live as the signal pulses between Earth and the server across 8,920 catalog stars.</i></sub>
 
 </div>
-
-> An interactive educational web application demonstrating the effects of
-> relativistic computing and time dilation. Use the Void Finder to explore time
-> dilation as a computational resource. The Interplanetary DevOps tab models the
-> signal-propagation delay and event-ordering correction needed to synchronize
-> database ledgers between Earth and Mars.
 
 ## Table of Contents
 
@@ -41,6 +38,7 @@
 ## Simulation Modes
 
 - **Deep-Space Cloud Compute** — Place computational servers in cosmological voids where clocks tick faster than Earth's (weaker gravitational field), then balance the dilation benefit against light-speed communication latency.
+
 - **Interplanetary DevOps** 🚧 *WIP* — Synchronize database ledgers between Earth and Mars, dealing with light-speed delay and micro-time drifts. Adjust a relativistic sync protocol slider to correct transaction ordering in real time. *(Parked while Deep-Space is the focus — see the [Roadmap](#roadmap).)*
 
 ## Architecture
@@ -117,7 +115,7 @@ Open http://localhost:5173
 
 ## How Each Mode Works
 
-### Deep-Space Cloud Compute (Far-Future Mode)
+### Deep-Space Cloud Compute
 
 **Concept:** In a far-future scenario, humanity places computational servers in cosmological voids — vast regions of space with negligible gravitational influence. Clocks tick slower in stronger gravitational fields (general relativity), and Earth sits in the gravitational wells of the Sun and Milky Way. A server in a void experiences weaker gravity, so its clock ticks *faster* than Earth's — it can complete days of computation while only hours pass on Earth. The tradeoff: the results must travel back at light speed, and the farther the void, the longer the round-trip delay.
 
@@ -130,6 +128,7 @@ Open http://localhost:5173
 - **Earth's Gravity Well** — Amber concentric shells surround the green Earth marker, representing the dense solar-neighborhood field that slows Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the server's clock — so the well is drawn at Earth, where it physically belongs.
 - **Light-Speed Communication Line** — A dashed **red** line connects Earth to your server, carrying an animated **red signal pulse** on the round trip. Its label shows the round-trip travel time (RTT).
 - **Cosmic Server label** — The deployed server shows a bold **"Cosmic Server"** label with its **RTT** (round-trip time) beneath it, so the latency to that location is readable right on the map.
+- **Orbit marker (orbit-ring)** — A decorative cyan ring with drifting sparkles around the Cosmic Server, marking its position so it's easy to spot among the 8,920 stars. It's a **visual locator only** — not a real orbit, and it carries no physics.
 - **Distance Dimension Line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), with the straight-line Earth↔server distance in parsecs at its midpoint. Short perpendicular tick marks connect it back down to Earth and the server. The offset is deliberate (not a glitch) and **scales with distance** (≈18% of the Earth↔server distance, with a small floor), so on far placements the violet line sits noticeably higher above the red comm line.
 - **Map Key** — A legend below the metrics row explains every on-screen element (Earth, gravity well, **Cosmic Server**, orbit marker, comm link, signal pulse, distance).
 - **Metrics Dashboard** — Six cards update in real time with animated value transitions, each with an italic one-line description; time metrics are shown as comma-grouped seconds with a human-readable subline:
@@ -174,7 +173,7 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 ---
 
-### Interplanetary DevOps (Near-Future Mode) 🚧 WIP
+### Interplanetary DevOps 🚧 WIP
 
 > 🚧 **Work in progress** — this mode is parked while Deep-Space Cloud Compute is the focus. The details below are preserved for when it resumes; see the [Roadmap](#roadmap).
 
