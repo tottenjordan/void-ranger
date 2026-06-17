@@ -128,6 +128,8 @@ Open http://localhost:5173
 
 ![Animated demo: dragging to orbit the interactive star field, then clicking to place a server, with the camera flying to frame Earth and the new Cosmic Server](docs/images/feature-explore-place.gif)
 
+<sub><i>Drag anywhere to orbit the interactive star field; a single click drops a server at that spot, and the camera flies in to frame Earth and the new Cosmic Server (a click-and-drag rotates the view instead of placing).</i></sub>
+
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore; background stars twinkle and data stars are color-coded by luminosity (brighter stars appear warmer).
 - **Server placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag** rotates the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement.
 - **Collapsible control panel** — The control panel (Task field, breakeven readout, server placement) collapses to a thin rail via an arrow, letting the 3D map widen.
@@ -136,6 +138,8 @@ Open http://localhost:5173
 #### What's on the map
 
 ![Galaxy map close-up after placing a server: green Earth marker, cyan Cosmic Server with RTT label, red round-trip comm line, and the violet distance dimension line labeled 120.0 pc](docs/images/feature-whats-on-map-closeup.png)
+
+<sub><i>A server placed 120 pc out: Earth (green, wrapped in its amber gravity well) at center-left, the cyan Cosmic Server with its RTT label at right, the red round-trip communication line between them, and the violet distance line labeling the separation.</i></sub>
 
 - **Earth & its gravity well** — A green marker for Earth, wrapped in amber concentric shells that represent the dense solar-neighborhood field slowing Earth's clock. The time-dilation advantage comes from the *difference* between Earth's slow clock and the server's — so the well is drawn at Earth, where it belongs.
 - **Cosmic Server** — The deployed server: a floating, glowing cyan sphere with a bold **"Cosmic Server"** label and its **RTT** (round-trip time) beneath it, so the latency to that location is readable right on the map.
@@ -189,6 +193,8 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 ![Deep-Space Cloud Compute mode showing a Cosmic Server deployed in the star field](docs/images/far-future.png)
 
+<sub><i>The full Deep-Space dashboard: a Cosmic Server deployed in a deep void at 400 pc, with the six-card metrics row (years over days) and the "In plain terms" summary below the map. Annotated walkthrough below.</i></sub>
+
 This capture shows a server deployed at **400 pc** (a deep void) with a **114,155-year** workload (~41.7 million days, set via the *Task Workload Size (yrs)* field in the control panel). Reading the screen:
 
 - The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** below the metrics labels every element.
@@ -226,6 +232,8 @@ This capture shows a server deployed at **400 pc** (a deep void) with a **114,15
 **Example walkthrough** — the ledger timeline with the **Relativistic Sync Protocol at 40%**:
 
 ![Interplanetary DevOps mode showing Earth and Mars ledger timelines](docs/images/near-future.png)
+
+<sub><i>The Interplanetary DevOps ledger timeline with the Relativistic Sync Protocol at 40%: Earth transactions (green) and Mars transactions (orange) seen from Earth, the light-delay window, a causality-conflict marker, and the drift gauge. Annotated walkthrough below.</i></sub>
 
 - **Green points** are Earth transactions; **orange points** are Mars transactions as seen from Earth, shifted right by the residual light delay. The faint **orange band** on the left is the light-delay window — it shrinks as you increase compensation.
 - The **red dot** near the top marks a causality conflict (a transaction that arrived out of order). The **ring gauge** on the right reports the drift: 1 error across 50 transactions (2%).
