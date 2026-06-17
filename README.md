@@ -1,6 +1,6 @@
-# 🌀 a matter of time ⌛
-
 <div align="center">
+
+<h1 align="center">🌀 a matter of time ⌛</h1>
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
