@@ -34,13 +34,14 @@
 - [Example Walkthrough](#example-walkthrough)
 - [Glossary](docs/GLOSSARY.md)
 - [Physics and Assumptions](#physics-and-assumptions)
+- [Roadmap](#roadmap)
 - [Project Structure](#project-structure)
 - [Tests](#tests)
 
 ## Simulation Modes
 
 - **Deep-Space Cloud Compute** — Place computational servers in cosmological voids where clocks tick faster than Earth's (weaker gravitational field), then balance the dilation benefit against light-speed communication latency.
-- **Interplanetary DevOps** — Synchronize database ledgers between Earth and Mars, dealing with light-speed delay and micro-time drifts. Adjust a relativistic sync protocol slider to correct transaction ordering in real time.
+- **Interplanetary DevOps** 🚧 *WIP* — Synchronize database ledgers between Earth and Mars, dealing with light-speed delay and micro-time drifts. Adjust a relativistic sync protocol slider to correct transaction ordering in real time. *(Parked while Deep-Space is the focus — see the [Roadmap](#roadmap).)*
 
 ## Architecture
 
@@ -173,7 +174,12 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 ---
 
-### Interplanetary DevOps (Near-Future Mode)
+### Interplanetary DevOps (Near-Future Mode) 🚧 WIP
+
+> 🚧 **Work in progress** — this mode is parked while Deep-Space Cloud Compute is the focus. The details below are preserved for when it resumes; see the [Roadmap](#roadmap).
+
+<details>
+<summary>Show Interplanetary DevOps details</summary>
 
 **Concept:** In a near-future scenario, Earth and Mars each run database ledgers. Transactions originate on both planets, but Mars transactions take ~12.5 minutes (750 seconds) to reach Earth at light speed. Without compensation, Earth sees Mars transactions arriving late, causing ordering conflicts — a transaction that happened first on Mars might appear to happen after a later Earth transaction. The Relativistic Sync Protocol applies timestamp compensation to correct this.
 
@@ -192,6 +198,8 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 **Try this:** Start with the slider at 0% and press Play. Watch the drift counter climb as Mars transactions arrive out of order. Pause, drag the slider to 100%, and replay — the conflicts disappear. Now try 50% — partial compensation reduces but doesn't eliminate drift. This is the core tradeoff real mission planners face.
 
+</details>
+
 ## Example Walkthrough
 
 ### Deep-Space Cloud Compute
@@ -206,7 +214,10 @@ This capture shows a server deployed at **400 pc** (a deep void) with a **1,000,
 - The **In plain terms** panel below the metrics translates that into relatable units: *running this job on Earth would take ~114,000 years; offloaded to the Cosmic Server the same computation takes ~107,000 years of Earth time plus ~2,600 years of signal round-trip — a total ~110,000-year wait, a net saving of ~4,150 years.*
 - Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the new physics models.
 
-### Interplanetary DevOps
+### Interplanetary DevOps 🚧 WIP
+
+<details>
+<summary>Show Interplanetary DevOps walkthrough</summary>
 
 ![Interplanetary DevOps mode showing Earth and Mars ledger timelines](docs/images/near-future.png)
 
@@ -216,6 +227,8 @@ This capture shows the ledger timeline with the **Relativistic Sync Protocol at 
 - The **red dot** near the top marks a causality conflict (a transaction that arrived out of order). The **ring gauge** on the right reports the drift: 1 error across 50 transactions (2%).
 - The slider description reads *"Partial compensation — ~375s residual delay."* Drag it to 100% and the conflict and drift clear; drag to 0% and they grow.
 - Press **Play** to replay the transactions in real time with a sweeping playhead, at 1x/2x/5x speed.
+
+</details>
 
 ## Physics and Assumptions
 
@@ -286,7 +299,7 @@ $$
 
 The server completes the task in $t_\text{task}$ of its own proper time; the Earth time that elapses meanwhile is $t_\text{task} \cdot (f_\text{earth}/f_\text{server})$. When the server's clock is faster ($f_\text{server} > f_\text{earth}$, i.e. a weaker field) Earth ages less, so the work effectively finishes sooner — but you still wait $t_\text{latency}$ for the round trip. The **clock advantage** reported in the UI is $f_\text{server}/f_\text{earth}$ (>1 = the server runs faster than Earth). A **positive net gain** means offloading beats local execution.
 
-### 5. Interplanetary light delay (Near-Future mode)
+### 5. Interplanetary light delay (Near-Future mode) 🚧 WIP
 
 Earth–Mars one-way signal delay is pure light-travel time (no relativity involved):
 
@@ -310,9 +323,21 @@ These are intentional simplifications. They keep the simulation legible, but a p
 
 5. **Two coordinate systems share one 3D scene.** Catalog stars are placed from equatorial coordinates (RA/Dec), while servers use galactic longitude/latitude. Both produce valid Cartesian points, but their axes are not physically aligned, so a server's position does not correspond to the true galactic-frame location of nearby stars. This is cosmetic — but note the gravitational potential is computed in the same Cartesian frame the stars are stored in, so the relative geometry used for physics is self-consistent.
 
-6. **"Relativistic Sync Protocol" is loosely named.** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
+6. **"Relativistic Sync Protocol" is loosely named (🚧 WIP mode).** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
 
 7. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
+
+## Roadmap
+
+### 🚧 Interplanetary DevOps (Near-Future Mode) — parked
+
+This mode is implemented and runnable, but **parked** while Deep-Space Cloud Compute is the active focus. Its README sections are collapsed and tagged 🚧 WIP. Outstanding work before it's considered done:
+
+- [ ] Clarify or rename the **"Relativistic Sync Protocol"** — it models signal-propagation delay and event-ordering correction (Lamport-clock territory), not relativistic time dilation.
+- [ ] Add backend/unit tests for the ledger sync, drift counter, and conflict detection.
+- [ ] Make the **Earth–Mars distance and light delay configurable** (currently a fixed ~750 s mid-range value).
+- [ ] Replace the static 50-transaction fixture (`frontend/src/data/near-future-ledger.json`) with generated/realistic data.
+- [ ] Bring the near-future UI to parity with Deep-Space — per-metric descriptions, glossary tie-in, and an "in plain terms" summary.
 
 ## Project Structure
 

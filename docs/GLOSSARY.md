@@ -40,7 +40,9 @@ Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a 
 
 `breakeven = comm_cost / (1 − f_earth/f_server)`. It depends only on the placement, not the current task size. Below it, the fixed latency dominates (net loss); above it, the dilation savings win. It reads **green** once your Task Workload Size clears it, **red** otherwise, and **"none"** where the spot has no time advantage (`advantage ≤ 1`), since no job size could ever win there.
 
-## Interplanetary DevOps
+## Interplanetary DevOps 🚧 WIP
+
+> 🚧 **Work in progress** — this mode is parked while Deep-Space Cloud Compute is the focus. See the [Roadmap](../README.md#roadmap).
 
 **Light Delay (Earth–Mars)** — the one-way time for a signal to cross between the planets, ~750 s (12.5 min) at a mid-range distance.
 
