@@ -29,6 +29,7 @@
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
 - [Glossary](docs/GLOSSARY.md)
+- [Gravitational Field Model](docs/gravitational-field.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Roadmap](#roadmap)
@@ -139,7 +140,7 @@ Open http://localhost:5173
 
 #### Set the workload & read the results
 - **Task Workload Size field** — A wide, comma-formatted input in the control panel (entered in years, with the days equivalent beneath), setting the size of the computational job; longer tasks benefit more from time dilation. See [Understanding the Task Workload Size](#understanding-the-task-workload-size).
-- **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). A deep void runs fast (a real advantage); next to a bright star, that star's gravity slows it down, eroding or reversing the gain. This is what drives the *Server Clock Advantage*.
+- **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). A deep void runs fast (a real advantage); next to a bright star, that star's gravity slows it down, eroding or reversing the gain. This is what drives the *Server Clock Advantage*. Full details (formula, softening, worked example): [Gravitational Field Model](docs/gravitational-field.md).
 - **Metrics dashboard** — Six cards update live, each with a one-line description; time values are shown in years with a days equivalent beneath and a colored ▲/▼:
   - *Distance from Earth* — straight-line distance in parsecs (plus light-years and miles)
   - *Server Clock Advantage* — how fast the server's clock ticks vs. Earth's (e.g. `1.063× Earth`); >1 (green) = void advantage, <1 (red) = denser region than Earth
@@ -229,7 +230,7 @@ This capture shows a server deployed at **400 pc** (a deep void) with a **114,15
 
 ## Physics and Assumptions
 
-All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below. For quick one-line definitions of every on-screen metric and term, see the [Glossary](docs/GLOSSARY.md).
+All physics lives in [`backend/app/services/physics.py`](backend/app/services/physics.py) as pure functions. This section documents each formula, its derivation, and the simplifying assumptions the simulation makes. The math is textbook-correct; some **parameters are deliberately exaggerated** for visibility, as noted below. For quick one-line definitions of every on-screen metric and term, see the [Glossary](docs/GLOSSARY.md); for a deep dive on how the gravitational field is computed at any coordinate (including near other stars), see the [Gravitational Field Model](docs/gravitational-field.md).
 
 ### Constants
 
