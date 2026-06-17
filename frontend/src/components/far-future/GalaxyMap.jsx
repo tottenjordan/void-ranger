@@ -92,7 +92,7 @@ function CommLine({ serverPosition }) {
       <Line
         points={points}
         color="#ef4444"
-        lineWidth={1}
+        lineWidth={2}
         dashed
         dashSize={3}
         gapSize={2}
@@ -101,11 +101,11 @@ function CommLine({ serverPosition }) {
       />
       <group ref={pulseRef}>
         <mesh>
-          <sphereGeometry args={[1.6, 12, 12]} />
+          <sphereGeometry args={[1.1, 12, 12]} />
           <meshBasicMaterial color="#ef4444" />
         </mesh>
         <mesh>
-          <sphereGeometry args={[3.4, 12, 12]} />
+          <sphereGeometry args={[2.4, 12, 12]} />
           <meshBasicMaterial color="#ef4444" transparent opacity={0.25} depthWrite={false} />
         </mesh>
       </group>
@@ -149,7 +149,7 @@ function DistanceLine({ serverPosition }) {
 
   return (
     <group>
-      <Line points={points} color="#a78bfa" lineWidth={1} dashed dashSize={2} gapSize={1.5} opacity={0.7} transparent />
+      <Line points={points} color="#a78bfa" lineWidth={2} dashed dashSize={2} gapSize={1.5} opacity={0.7} transparent />
       {/* short ticks linking the dimension line back to Earth and the server */}
       <Line points={[[0, 0, 0], [0, offset, 0]]} color="#a78bfa" lineWidth={1} opacity={0.4} transparent />
       <Line

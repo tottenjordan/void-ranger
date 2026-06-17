@@ -26,6 +26,14 @@ export function humanDuration(seconds, digits = 2) {
   return `${sign}${(abs / 31536000).toFixed(digits)} yr`
 }
 
+// Format a duration given in SECONDS as hours, e.g. 7200 -> "2 hrs".
+// digits === null -> whole hours (comma-grouped); otherwise fixed decimals.
+export function hoursLabel(seconds, digits = null) {
+  if (seconds == null || !isFinite(seconds)) return '—'
+  const h = seconds / 3600
+  return digits === null ? `${commaInt(h)} hrs` : `${commaFixed(h, digits)} hrs`
+}
+
 // Parse a user-typed string into a non-negative integer number of seconds,
 // keeping only digit characters (e.g. "12,345" -> 12345). Returns null when
 // nothing usable was typed. Note: only plain digits/commas are supported —

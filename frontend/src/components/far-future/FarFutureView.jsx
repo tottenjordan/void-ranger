@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import MetricsDash from './MetricsDash'
-import { commaInt, parseSecondsInput } from '../../utils/format'
+import { commaInt, parseSecondsInput, hoursLabel } from '../../utils/format'
 
 const LEGEND_ITEMS = [
-  { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in a gravitational well — its clock runs slow.' },
-  { swatch: 'ring', color: '#f59e0b', label: 'Gravity well', desc: "Shells around Earth showing the field that slows its clock." },
+  { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in the gravity well of our dense solar-neighborhood.' },
+  { swatch: 'ring', color: '#f59e0b', label: 'Gravity well', desc: 'Shells around Earth showing the gravitational field that slows the clock.' },
   { swatch: 'dot', color: '#06b6d4', label: 'Cosmic Server', desc: 'The deployed server, in weak gravity where its clock runs fast (the time advantage).' },
   { swatch: 'ring', color: '#06b6d4', label: 'Orbit marker', desc: 'Ring + sparkles marking the deployed server.' },
   { swatch: 'line', color: '#ef4444', label: 'Comm link', desc: 'Light-speed channel (red) between Earth and the server; its label shows the round-trip time.' },
@@ -64,42 +64,42 @@ function BreakevenLine({ breakeven, taskSeconds }) {
     <p className="text-center text-[11px] italic text-gray-500 mt-1" title={title}>
       Breakeven workload:{' '}
       <span className={`not-italic font-mono ${winning ? 'text-green-400' : 'text-red-400'}`}>
-        {commaInt(breakeven)} s
+        {hoursLabel(breakeven)}
       </span>
     </p>
   )
 }
 
 function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
-  // Local text mirrors taskSeconds but allows a transient empty/partial value so
-  // the field can be cleared and retyped. Valid numbers are pushed up; emptying
-  // the field leaves taskSeconds at its last value. (Comma reformatting can still
-  // move the caret to the end on mid-string edits — minor for this short field.)
-  const [text, setText] = useState(commaInt(taskSeconds))
-  useEffect(() => { setText(commaInt(taskSeconds)) }, [taskSeconds])
+  // Local text mirrors taskSeconds (shown in whole hours) but allows a transient
+  // empty value so the field can be cleared and retyped. Valid numbers are
+  // converted hours->seconds and pushed up; emptying leaves taskSeconds as-is.
+  // (Comma reformatting can still move the caret to the end on mid-string edits.)
+  const [text, setText] = useState(commaInt(taskSeconds / 3600))
+  useEffect(() => { setText(commaInt(taskSeconds / 3600)) }, [taskSeconds])
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
       <label
         className="block text-center text-xs text-gray-400 uppercase tracking-wider mb-2"
-        title="Workload size: compute-seconds measured on the running machine's own clock."
+        title="Workload size: compute-hours the job needs, measured on the running machine's own clock."
       >
-        Task Workload Size (s)
+        Task Workload Size (hrs)
       </label>
       <input
         type="text"
         inputMode="numeric"
         value={text}
         onChange={e => {
-          const v = parseSecondsInput(e.target.value)
-          if (v === null) { setText(''); return }
-          setText(commaInt(v))
-          onTaskSecondsChange(v)
+          const h = parseSecondsInput(e.target.value)
+          if (h === null) { setText(''); return }
+          setText(commaInt(h))
+          onTaskSecondsChange(h * 3600)
         }}
         className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-center text-lg font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
       />
       <p className="text-center text-[11px] italic text-gray-500 mt-2 leading-tight">
-        This is the processing time for a program on a given server.
+        This is the processing time (in hours) for a program on a given server.
       </p>
       <BreakevenLine breakeven={breakeven} taskSeconds={taskSeconds} />
     </div>

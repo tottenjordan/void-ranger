@@ -48,7 +48,7 @@ React Frontend (Vite + Tailwind + Three.js + Chart.js)
   │
   ├── /api/*  →  FastAPI Backend (Python)
   │                ├── POST /api/physics/cartesian    — galactic → Cartesian coords
-  │                ├── POST /api/physics/efficiency   — gravity (from catalog) + latency metrics
+  │                ├── POST /api/physics/efficiency   — dilation + latency metrics + breakeven task size
   │                └── GET  /api/stars                — processed HYG star catalog (with mass)
   │
   └── Star data  ←  HYG Database (8,920 stars w/ mass estimates, processed from v41)

@@ -34,7 +34,7 @@ export default function ServerPlacer({ onPlaceServer }) {
 
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Deploy Time Sink Server</h3>
+      <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Deploy Cosmic Server</h3>
       <p className="text-xs text-gray-500 leading-relaxed">
         Choose where in the void to place a server. Position sets the light-speed
         communication latency; farther is slower.
@@ -70,7 +70,7 @@ export default function ServerPlacer({ onPlaceServer }) {
         title="Convert these galactic coordinates to a 3D position and place the server there."
         className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-medium py-2 rounded-lg transition-colors"
       >
-        Deploy Time Sink
+        Deploy Cosmic Server
       </button>
       <p className="text-[10px] text-gray-600 leading-tight">
         Tip: you can also click anywhere in the galaxy map to place a server.
