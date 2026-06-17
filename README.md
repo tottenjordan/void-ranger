@@ -149,13 +149,13 @@ Open http://localhost:5173
 - Provides a hands-on way to explore the Schwarzschild metric without equations.
 - Illustrates a key asymmetry: Earth's gravitational well slows our clocks, and escaping it (into a void) is computationally advantageous — the opposite of the sci-fi trope of "computing near a black hole."
 
-**Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances even though the server's clock advantage is constant. Now increase the task duration to 1,000,000 seconds — at what distance does the dilation benefit finally overcome the latency cost?
+**Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances even though the server's clock advantage is constant. Now increase the Task Workload Size into the hundreds of millions of hours — at what distance does the dilation benefit finally overcome the latency cost?
 
 #### Understanding the Task Workload Size
 
-The **Task Workload Size (s)** input in the control panel is the *size of the computational job*, expressed as a duration: how many seconds of compute the job requires on whatever machine runs it. (It only affects this Deep-Space mode; the Interplanetary ledger mode ignores it.)
+The **Task Workload Size (hrs)** input in the control panel is the *size of the computational job*, expressed as a duration: how many hours of compute the job requires on whatever machine runs it. (It only affects this Deep-Space mode; the Interplanetary ledger mode ignores it.)
 
-**What it represents:** Think of it as "this job needs *N* seconds of CPU time to finish." A small value like `3600` (1 hour) is a quick job; a large value like `1e12` (≈31,700 years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same number of compute-seconds on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth.
+**What it represents:** Think of it as "this job needs *N* hours of CPU time to finish." A small value like `1` (one hour) is a quick job; a large value like `10,000,000` (≈1,140 years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same amount of compute time on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth. (Internally the physics works in seconds; the field and metric cards just display hours.)
 
 **Why it's the key lever:** Task size determines whether offloading to a Cosmic Server actually pays off. From the efficiency formula:
 
@@ -166,7 +166,7 @@ $$
 - The **dilation benefit** grows linearly with task size. A faster-ticking Cosmic Server saves a *percentage* of the runtime (~5% with the default well), so the bigger the job, the more absolute time saved.
 - The **latency cost** is fixed — it depends only on distance, not job size. You pay the same round-trip light delay whether the job is tiny or enormous.
 
-So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{earth}/f_\text{server})$ — below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. The dashboard computes this value for the clicked location and shows it as the **Breakeven workload** under the Task field (green once your task size clears it, red otherwise; "none" where the spot has no time advantage). This is why the walkthrough screenshot needs a $10^{12}$ s task to show a positive net gain at 20 pc — a 1-hour job at that distance would be a massive net loss.
+So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{earth}/f_\text{server})$ — below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. The dashboard computes this value for the clicked location and shows it as the **Breakeven workload** under the Task field (green once your task size clears it, red otherwise; "none" where the spot has no time advantage). This is why the walkthrough screenshot needs an enormous task (hundreds of millions of hours) to show a positive net gain at a deep-void distance — a one-hour job out there would be a massive net loss.
 
 **Real-world analogy:** It is the same calculus as deciding whether to ship a job to a distant data center. The network round-trip is a fixed tax, so it is only worth paying if the job is big enough that the remote machine's advantage (here, a faster clock; in reality, cheaper or faster hardware) outweighs the transit cost. Small jobs stay local; large jobs justify the trip.
 
@@ -197,11 +197,11 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 ![Deep-Space Cloud Compute mode showing a Cosmic Server deployed in the star field](docs/images/far-future.png)
 
-This capture shows a server deployed at **400 pc** (a deep void) with a **10¹³ second** workload (set via the *Task Workload Size (s)* field in the control panel). Reading the screen:
+This capture shows a server deployed at **400 pc** (a deep void) with a **1,000,000,000-hour** workload (set via the *Task Workload Size (hrs)* field in the control panel). Reading the screen:
 
 - The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** below the metrics labels every element.
 - After placing the server, the **Breakeven workload** readout under the Task field shows the smallest task that pays off here, and the metrics row's **Communication Cost** card shows the round-trip light delay.
-- The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), *Earth Compute Time* and *Wait Time* in the ~300,000-year range, and a **positive Net Gain of ~16,000 yr** (green) — offloading wins here.
+- The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), an *Earth Compute Time* of ~940.8 million hours and *Earth Wait Time* of ~963.6 million hours, and a **positive Net Gain of ~36.4 million hours** (green) — offloading wins here. (Times are shown in hours; the model computes in seconds internally.)
 - Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the new physics models.
 
 ### Interplanetary DevOps
@@ -226,28 +226,26 @@ All physics lives in [`backend/app/services/physics.py`](backend/app/services/ph
 
 | Symbol | Value | Meaning |
 |--------|-------|---------|
-| $c$ | $299{,}792.458\ \text{km/s}$ | Speed of light |
-| $G$ | $6.674 \times 10^{-11}\ \text{m}^3\,\text{kg}^{-1}\,\text{s}^{-2}$ | Gravitational constant |
-| $M_\odot$ | $1.989 \times 10^{30}\ \text{kg}$ | Solar mass |
-| $1\ \text{pc}$ | $3.086 \times 10^{13}\ \text{km}$ | Parsec |
+| `c` | 299,792.458 km/s | Speed of light |
+| `G` | 6.674 × 10⁻¹¹ m³·kg⁻¹·s⁻² | Gravitational constant |
+| `M☉` | 1.989 × 10³⁰ kg | Solar mass |
+| `1 pc` | 3.086 × 10¹³ km | Parsec |
 
 ### 1. Galactic → Cartesian conversion
 
 Converts a server's galactic coordinates — distance $d$ (parsecs), longitude $l$, latitude $b$ — into Cartesian coordinates for 3D rendering. This is the standard spherical-to-Cartesian transformation, where $b$ is the elevation above the galactic plane and $l$ is the azimuth:
 
-$$
-x = d \cos(b)\cos(l), \qquad
-y = d \cos(b)\sin(l), \qquad
-z = d \sin(b)
-$$
+```math
+x = d \cos(b)\cos(l), \qquad y = d \cos(b)\sin(l), \qquad z = d \sin(b)
+```
 
 ### 2. Light-speed latency
 
 Round-trip communication time from Earth at the origin to a server at $(x, y, z)$, in parsecs. The factor of 2 accounts for the round trip (dispatch the task, receive the result):
 
-$$
+```math
 t_\text{latency} = \frac{2 \, d}{c}, \qquad d = \sqrt{x^2 + y^2 + z^2}\ \ (\text{converted to km})
-$$
+```
 
 *Verification:* a server 1 pc away yields a 6.52-year round trip, consistent with 1 pc ≈ 3.26 light-years one way.
 
@@ -255,15 +253,15 @@ $$
 
 Both Earth and the server sit in the **same field of catalog stars**, so the model uses the weak-field metric: a clock at gravitational potential $\Phi$ ticks at rate
 
-$$
+```math
 \frac{d\tau}{dt} = \sqrt{1 + \frac{2\Phi}{c^2}}
-$$
+```
 
 relative to flat spacetime. The potential at any point is the softened Newtonian sum over all catalog stars (masses estimated per §3a):
 
-$$
+```math
 \Phi(\mathbf{r}) = -\sum_i \frac{G M_i}{\sqrt{|\mathbf{r} - \mathbf{r}_i|^2 + \epsilon^2}}
-$$
+```
 
 where $\epsilon$ is a softening length ($0.1\ \text{pc}$) that keeps the potential finite if a server is placed right on top of a star. **Earth's** factor $f_\text{earth}$ is this evaluated at the origin — the dense solar neighborhood, so Earth's clock runs slow. The **server's** factor $f_\text{server}$ is evaluated at its placement: in a deep void $\Phi \to 0$ and $f_\text{server} \to 1$ (fast); near other stars $\Phi$ deepens and $f_\text{server}$ drops, eroding or reversing the advantage. This is the "place it in a void, not next to a star" physics.
 
@@ -273,9 +271,9 @@ where $\epsilon$ is a softening length ($0.1\ \text{pc}$) that keeps the potenti
 
 The data pipeline estimates each star's mass from its catalog luminosity $L$ (solar units) using the main-sequence mass–luminosity relation, clamped to $0.1$–$50\ M_\odot$:
 
-$$
+```math
 \frac{M}{M_\odot} = \left(\frac{L}{L_\odot}\right)^{1/3.5}
-$$
+```
 
 This is crude — it treats every star as main-sequence, ignoring giants, white dwarfs, and binaries — but it is enough to make void-hunting physically meaningful.
 
@@ -283,21 +281,19 @@ This is crude — it treats every star as main-sequence, ignoring giants, white 
 
 Given a task requiring `task_seconds` of compute (in the local clock of whichever machine runs it), the model compares running it locally on Earth versus offloading to the server:
 
-$$
-t_\text{compute} = t_\text{task} \cdot \frac{f_\text{earth}}{f_\text{server}}, \qquad
-t_\text{wait} = t_\text{compute} + t_\text{latency}, \qquad
-\text{net gain} = t_\text{task} - t_\text{wait}
-$$
+```math
+t_\text{compute} = t_\text{task} \cdot \frac{f_\text{earth}}{f_\text{server}}, \qquad t_\text{wait} = t_\text{compute} + t_\text{latency}, \qquad \text{net gain} = t_\text{task} - t_\text{wait}
+```
 
 The server completes the task in $t_\text{task}$ of its own proper time; the Earth time that elapses meanwhile is $t_\text{task} \cdot (f_\text{earth}/f_\text{server})$. When the server's clock is faster ($f_\text{server} > f_\text{earth}$, i.e. a weaker field) Earth ages less, so the work effectively finishes sooner — but you still wait $t_\text{latency}$ for the round trip. The **clock advantage** reported in the UI is $f_\text{server}/f_\text{earth}$ (>1 = the server runs faster than Earth). A **positive net gain** means offloading beats local execution.
 
-### 6. Interplanetary light delay (Near-Future mode)
+### 5. Interplanetary light delay (Near-Future mode)
 
 Earth–Mars one-way signal delay is pure light-travel time (no relativity involved):
 
-$$
-t_\text{delay} = \frac{d_\text{Earth–Mars}}{c}
-$$
+```math
+t_\text{delay} = \frac{d_\text{Earth-Mars}}{c}
+```
 
 With $d_\text{Earth–Mars} = 2.25 \times 10^8\ \text{km}$ (a realistic mid-range distance; the true range is 55–401 million km), this gives **750 s ≈ 12.5 min**. A Mars transaction at timestamp $t$ appears on Earth at $t + t_\text{delay}(1 - \text{syncOffset})$, where the sync slider applies compensation from 0 (none) to 1 (full).
 
