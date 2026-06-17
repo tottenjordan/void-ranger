@@ -185,6 +185,7 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
           clockAdvantage={metrics.clock_advantage}
           earthComputeTime={metrics.earth_compute_time}
           earthWaitTime={metrics.earth_wait_time}
+          communicationCost={metrics.latency_seconds}
           netGain={metrics.net_gain}
         />
       )}
