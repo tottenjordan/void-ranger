@@ -58,7 +58,7 @@ function EarthMarker() {
         <meshStandardMaterial color="#22c55e" emissive="#22c55e" emissiveIntensity={0.3} />
       </mesh>
       <Html position={[0, 4, 0]} center style={{ pointerEvents: 'none' }}>
-        <span className="text-[10px] font-mono text-green-400 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
+        <span className="text-sm font-bold font-mono text-green-400 bg-gray-950/80 px-2 py-0.5 rounded whitespace-nowrap">
           Earth
         </span>
       </Html>
@@ -98,12 +98,12 @@ function CommLine({ serverPosition }) {
     <group>
       <Line
         points={points}
-        color="#06b6d4"
+        color="#ef4444"
         lineWidth={1}
         dashed
         dashSize={3}
         gapSize={2}
-        opacity={0.4}
+        opacity={0.6}
         transparent
       />
       <group ref={pulseRef}>
@@ -117,13 +117,18 @@ function CommLine({ serverPosition }) {
         </mesh>
       </group>
       <Html
-        position={[serverPosition.x, serverPosition.y + 5, serverPosition.z]}
+        position={[serverPosition.x, serverPosition.y + 6, serverPosition.z]}
         center
         style={{ pointerEvents: 'none' }}
       >
-        <span className="text-[10px] font-mono text-cyan-400 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
-          RTT {formatLatency(roundTripSeconds)}
-        </span>
+        <div className="flex flex-col items-center whitespace-nowrap">
+          <span className="text-sm font-bold font-mono text-cyan-300 bg-gray-950/80 px-2 py-0.5 rounded">
+            Cosmic Server
+          </span>
+          <span className="text-[10px] font-mono text-cyan-400 bg-gray-950/70 px-1.5 py-0.5 rounded mt-0.5">
+            RTT {formatLatency(roundTripSeconds)}
+          </span>
+        </div>
       </Html>
     </group>
   )
@@ -149,15 +154,15 @@ function DistanceLine({ serverPosition }) {
 
   return (
     <group>
-      <Line points={points} color="#a78bfa" lineWidth={1} dashed dashSize={2} gapSize={1.5} opacity={0.55} transparent />
+      <Line points={points} color="#a78bfa" lineWidth={1} dashed dashSize={2} gapSize={1.5} opacity={0.7} transparent />
       {/* short ticks linking the dimension line back to Earth and the server */}
-      <Line points={[[0, 0, 0], [0, offset, 0]]} color="#a78bfa" lineWidth={1} opacity={0.25} transparent />
+      <Line points={[[0, 0, 0], [0, offset, 0]]} color="#a78bfa" lineWidth={1} opacity={0.4} transparent />
       <Line
         points={[[serverPosition.x, serverPosition.y, serverPosition.z], [serverPosition.x, serverPosition.y + offset, serverPosition.z]]}
-        color="#a78bfa" lineWidth={1} opacity={0.25} transparent
+        color="#a78bfa" lineWidth={1} opacity={0.4} transparent
       />
       <Html position={mid} center style={{ pointerEvents: 'none' }}>
-        <span className="text-[10px] font-mono text-violet-300 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
+        <span className="text-[10px] font-bold font-mono text-violet-300 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
           {distPc.toFixed(1)} pc
         </span>
       </Html>
@@ -373,7 +378,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
           <meshBasicMaterial side={THREE.DoubleSide} />
         </mesh>
         <CameraController serverPosition={serverPosition} />
-        <OrbitControls enableDamping dampingFactor={0.1} />
+        <OrbitControls enableDamping dampingFactor={0.1} rotateSpeed={0.45} />
       </Canvas>
     </div>
   )
