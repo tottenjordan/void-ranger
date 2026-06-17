@@ -160,13 +160,13 @@ The **Task Workload Size (s)** input in the control panel is the *size of the co
 **Why it's the key lever:** Task size determines whether offloading to a Cosmic Server actually pays off. From the efficiency formula:
 
 $$
-\text{net gain} = \underbrace{t_\text{task} \cdot (1 - f_\text{earth})}_{\text{dilation benefit (scales with size)}} - \underbrace{t_\text{latency}}_{\text{fixed cost}}
+\text{net gain} = \underbrace{t_\text{task} \cdot \left(1 - \frac{f_\text{earth}}{f_\text{server}}\right)}_{\text{dilation benefit (scales with size)}} - \underbrace{t_\text{latency}}_{\text{fixed cost}}
 $$
 
 - The **dilation benefit** grows linearly with task size. A faster-ticking Cosmic Server saves a *percentage* of the runtime (~5% with the default well), so the bigger the job, the more absolute time saved.
 - The **latency cost** is fixed — it depends only on distance, not job size. You pay the same round-trip light delay whether the job is tiny or enormous.
 
-So there is a **break-even task size**: below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. This is why the walkthrough screenshot needs a $10^{12}$ s task to show a positive net gain at 20 pc — a 1-hour job at that distance would be a massive net loss.
+So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{earth}/f_\text{server})$ — below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. The dashboard computes this value for the clicked location and shows it as the **Breakeven workload** under the Task field (green once your task size clears it, red otherwise; "none" where the spot has no time advantage). This is why the walkthrough screenshot needs a $10^{12}$ s task to show a positive net gain at 20 pc — a 1-hour job at that distance would be a massive net loss.
 
 **Real-world analogy:** It is the same calculus as deciding whether to ship a job to a distant data center. The network round-trip is a fixed tax, so it is only worth paying if the job is big enough that the remote machine's advantage (here, a faster clock; in reality, cheaper or faster hardware) outweighs the transit cost. Small jobs stay local; large jobs justify the trip.
 
