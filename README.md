@@ -2,7 +2,7 @@
 
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
-> An interactive web application demonstrating the effects and computational complexity of relativistic computing.  
+> An interactive application demonstrating the effects and computational complexity of relativistic computing.  
 > **Can time dilation be used as a computational resource?**
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
@@ -31,6 +31,7 @@
 - [Example Walkthrough](#example-walkthrough)
 - [Glossary](docs/GLOSSARY.md)
 - [Physics and Assumptions](#physics-and-assumptions)
+- [TODO](#todo)
 - [Roadmap](#roadmap)
 - [Project Structure](#project-structure)
 - [Tests](#tests)
@@ -325,6 +326,10 @@ These are intentional simplifications. They keep the simulation legible, but a p
 6. **"Relativistic Sync Protocol" is loosely named (🚧 WIP mode).** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
 
 7. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
+
+## TODO
+
+- [ ] **Plot a larger body of stars** — the map currently uses the solar neighborhood of the Milky Way (~8,920 HYG stars, magnitude ≤ 6.5). Expand to a deeper/wider catalog to cover more of the galaxy.
 
 ## Roadmap
 
