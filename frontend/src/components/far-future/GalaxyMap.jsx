@@ -136,6 +136,8 @@ function DistanceLine({ serverPosition }) {
     const sy = serverPosition?.y ?? 0
     const sz = serverPosition?.z ?? 0
     const dist = Math.sqrt(sx * sx + sy * sy + sz * sz)
+    // Vertical offset scales with distance (18%, min 4 units) so the dimension
+    // line stays clear of the comm line; farther servers push it higher.
     const off = Math.max(dist * 0.18, 4)
     const p = [new THREE.Vector3(0, off, 0), new THREE.Vector3(sx, sy + off, sz)]
     return { points: p, mid: [sx / 2, sy / 2 + off, sz / 2], offset: off }
