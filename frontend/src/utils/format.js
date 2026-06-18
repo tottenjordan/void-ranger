@@ -88,6 +88,19 @@ export function relatableDuration(seconds) {
   return fmt(abs / 31536000, 'years')
 }
 
+// Inverse of the backend's galactic→Cartesian conversion: turn a placed (x,y,z)
+// in parsecs into galactic { distance, longitude(0–360°), latitude(−90–90°) },
+// rounded to 1 decimal — used to sync the Deploy form to a map-click placement.
+export function cartesianToGalactic(x, y, z) {
+  const d = Math.sqrt(x * x + y * y + z * z)
+  if (d === 0) return { distance: 0, longitude: 0, latitude: 0 }
+  let l = Math.atan2(y, x) * 180 / Math.PI
+  if (l < 0) l += 360
+  const b = Math.asin(Math.max(-1, Math.min(1, z / d))) * 180 / Math.PI
+  const r = n => Math.round(n * 10) / 10
+  return { distance: r(d), longitude: r(l), latitude: r(b) }
+}
+
 // Parse a user-typed string into a non-negative integer number of seconds,
 // keeping only digit characters (e.g. "12,345" -> 12345). Returns null when
 // nothing usable was typed. Note: only plain digits/commas are supported —

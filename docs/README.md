@@ -12,10 +12,11 @@ model and the on-screen terms.
 | [Gravitational Field Model](gravitational-field.md) | How the gravitational potential — and thus the clock rate — is computed at any coordinate: the softened sum over all catalog stars, the softening length, proximity-to-a-star behavior, masses, and a worked example. |
 | [Efficiency & Breakeven](efficiency-model.md) | The offload-vs-local math: Earth Compute Time, Earth Wait Time, Net Gain/Loss, and the Breakeven workload derivation, with a worked example. |
 | [Light-Speed Latency](light-latency.md) | The round-trip communication delay (`2d/c`), why it limits void-hunting, and a distance→delay table. |
+| [Void Finding](void-finding.md) | How the app auto-locates good placements: what "low gravity" really means (sum over all stars, not distance from Earth), the search methods, and what the **Find deepest void** / **Best spot** buttons do. |
 
 ## How they fit together
 
-The three deep dives mirror the data flow of a single server placement:
+The deep dives mirror the data flow of a single server placement:
 
 ```
 where you place the server (x, y, z)
@@ -28,6 +29,9 @@ where you place the server (x, y, z)
         │
         └─ both feed ──────────────────►  Efficiency & Breakeven
               (Earth compute/wait time, net gain, breakeven)
+
+  …and Void Finding inverts this: it searches placements to optimize
+  the gravity (deepest void) or the net gain (best spot for a task).
 ```
 
 All the math lives in [`backend/app/services/physics.py`](../backend/app/services/physics.py);

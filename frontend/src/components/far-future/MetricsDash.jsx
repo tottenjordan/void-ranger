@@ -103,15 +103,23 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         sub={advantageGood ? 'server clock runs faster' : 'server clock runs slower'}
         color={advantageGood ? 'text-cyan-400 hover:shadow-cyan-500/10' : 'text-red-400 hover:shadow-red-500/10'}
         tooltip="How fast the server's clock ticks relative to Earth's, based on the local gravitational potential from nearby catalog stars. >1 means the server sits in weaker gravity (a void) and runs faster — the time advantage. <1 means it's in a denser region than Earth and runs slower."
-        desc="How fast the server's clock ticks relative to Earth's, derived from local gravity; >1 (green) = void advantage, <1 (red) = denser region than Earth."
+        desc="How fast the server's clock ticks relative to Earth's, derived from local gravity; >1 (cyan) = void advantage, <1 (red) = denser region than Earth."
       />
       <MetricCard
         label="Earth Compute Time"
         value={yearsLabel(animCompute)}
         subValue={daysLabel(animCompute)}
-        color="text-cyan-400 hover:shadow-cyan-500/10"
+        color="text-green-400 hover:shadow-green-500/10"
         tooltip="How long Earth's clock measures while the Cosmic Server completes the task. Because the server's clock runs faster (weaker gravity), it finishes the work in less Earth time than running locally would take."
         desc="How much Earth time passes while the server completes the task."
+      />
+      <MetricCard
+        label="Communication Cost"
+        value={yearsLabel(animComm)}
+        subValue={daysLabel(animComm)}
+        color="text-red-400 hover:shadow-red-500/10"
+        tooltip="Round-trip light-speed delay between Earth and the server. This is the fixed time cost that the dilation advantage must overcome."
+        desc="Round-trip light-speed delay to the server and back."
       />
       <MetricCard
         label="Earth Wait Time"
@@ -121,14 +129,6 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         color="text-amber-400 hover:shadow-amber-500/10"
         tooltip="Total time an Earth observer waits: the compute time plus round-trip light-speed communication latency to the Cosmic Server and back."
         desc="Compute time + round-trip light delay."
-      />
-      <MetricCard
-        label="Communication Cost"
-        value={yearsLabel(animComm)}
-        subValue={daysLabel(animComm)}
-        color="text-amber-400 hover:shadow-amber-500/10"
-        tooltip="Round-trip light-speed delay between Earth and the server. This is the fixed time cost that the dilation advantage must overcome."
-        desc="Round-trip light-speed delay to the server and back."
       />
       <MetricCard
         label={animGain >= 0 ? 'Net Gain' : 'Net Loss'}

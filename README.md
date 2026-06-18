@@ -2,8 +2,8 @@
 
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
-> An interactive application demonstrating the effects and complexity of relativistic computing.  
-> **Can time dilation be used as a computational resource?**
+> An interactive tool for exploring the time dilation between any two reference frames with differing gravitational potentials (General Relativity).
+> ***Can time dilation be used as a computational resource?***
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
@@ -14,7 +14,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 [![Tests](https://github.com/tottenjordan/void-ranger/actions/workflows/tests.yml/badge.svg)](https://github.com/tottenjordan/void-ranger/actions/workflows/tests.yml)
 
-<img src="docs/images/time_dilation_v5.gif" width="100%" alt="Void Ranger Deep-Space dashboard: deploying a server in a cosmic void and watching the time-dilation metrics update live" />
+<img src="docs/images/time_dilation_banner_v8_50p.gif" width="100%" alt="Void Ranger Deep-Space dashboard: deploying a server in a cosmic void and watching the time-dilation metrics update live" />
 
 <sub><i>The Deep-Space dashboard in action — deploy a compute server in a cosmic void and watch its clock advantage, light-delay, and net time gain update live as the signal pulses between Earth and the server across 8,920 catalog stars.</i></sub>
 
@@ -29,7 +29,7 @@
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
 - [Glossary](docs/GLOSSARY.md)
-- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md)
+- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Roadmap](#roadmap)
@@ -132,8 +132,9 @@ Open http://localhost:5173
 
 - **3D Galaxy Map** — An interactive star field rendered from the HYG astronomical catalog (8,920 real stars). Rotate, zoom, and pan to explore; background stars twinkle and data stars are color-coded by luminosity (brighter stars appear warmer).
 - **Server placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag** rotates the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement.
-- **Collapsible control panel** — The control panel (Task field, breakeven readout, server placement) collapses to a thin rail via an arrow, letting the 3D map widen.
+- **Top-bar controls over the map** — The Task Workload field, breakeven readout, and Server Position sit in a compact top bar, and the **Deploy Cosmic Server** and **Find a spot** controls open as collapsible dropdown panels that float over the 3D map instead of pushing it aside. With the Map Key as a thin strip along the bottom, the whole dashboard fits on one screen without scrolling.
 - **Camera fly-to** — The camera automatically frames both Earth and the server when you place one.
+- **Auto-find a spot** — Two one-click finders that search within an adjustable radius: **Find deepest void** (the emptiest pocket — lowest local gravity, fastest clock) and **Best spot for this task** (maximizes net gain, balancing the clock advantage against light-delay latency for your current Task Workload Size). How it works: [Void Finding](docs/void-finding.md).
 
 #### What's on the map
 
@@ -149,17 +150,17 @@ Open http://localhost:5173
 - **Map Key** — A legend below the metrics row explaining every on-screen element.
 
 #### Set the workload & read the results
-- **Task Workload Size field** — A wide, comma-formatted input in the control panel (entered in years, with the days equivalent beneath), setting the size of the computational job; longer tasks benefit more from time dilation. See [Understanding the Task Workload Size](#understanding-the-task-workload-size).
+- **Task Workload Size field** — A wide, comma-formatted input in the top bar (entered in years, with the days equivalent beneath), setting the size of the computational job; longer tasks benefit more from time dilation. See [Understanding the Task Workload Size](#understanding-the-task-workload-size).
 - **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). A deep void runs fast (a real advantage); next to a bright star, that star's gravity slows it down, eroding or reversing the gain. This is what drives the *Server Clock Advantage*. Full details (formula, softening, worked example): [Gravitational Field Model](docs/gravitational-field.md).
 - **Metrics dashboard** — Six cards update live, each with a one-line description; time values are shown in years with a days equivalent beneath and a colored ▲/▼:
   - *Distance from Earth* — straight-line distance in parsecs (plus light-years and miles)
-  - *Server Clock Advantage* — how fast the server's clock ticks vs. Earth's (e.g. `1.063× Earth`); >1 (green) = void advantage, <1 (red) = denser region than Earth
+  - *Server Clock Advantage* — how fast the server's clock ticks vs. Earth's (e.g. `1.063× Earth`); >1 (cyan) = void advantage, <1 (red) = denser region than Earth
   - *Earth Compute Time* — Earth time elapsed while the server computes
-  - *Earth Wait Time* — compute time + round-trip light delay
   - *Communication Cost* — the round-trip light delay (the fixed cost the dilation advantage must overcome)
+  - *Earth Wait Time* — compute time + round-trip light delay
   - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost (▲ gain / ▼ loss)
-- **Breakeven workload readout** — Under the Task field once a server is placed: the smallest task whose dilation savings cover the round-trip delay at that location ("none" where the spot has no advantage). Green when your task clears it, red otherwise.
-- **In plain terms panel** — A plain-language summary below the metrics that translates the numbers into relatable units (e.g. *"this job would take ~114,000 years on Earth; offloaded it finishes in ~110,000 years — a net saving of ~4,150 years."*).
+- **Breakeven workload readout** — In the top bar beside the Task field once a server is placed: the smallest task whose dilation savings cover the round-trip delay at that location ("none" where the spot has no advantage). Green when your task clears it, red otherwise.
+- **In plain terms panel** — A plain-language summary below the metrics that translates the numbers into relatable units (e.g. *"this job would take ~114,000 years on Earth; offloaded it finishes in ~110,000 years — a net saving of ~4,150 years."*). A **"Show the math"** toggle reveals the live step-by-step formulas (clock advantage, Earth compute, comm cost, wait, net gain, breakeven) computed from the current placement — see [Efficiency & Breakeven](docs/efficiency-model.md).
 - **Note on scale** — The gravitational dilation is pedagogically **exaggerated** (real interstellar potentials are ~1 part in 10¹³); a documented constant scales it so the contrast between the crowded neighborhood and deep voids is explorable.
 
 #### What it teaches
@@ -172,7 +173,7 @@ Open http://localhost:5173
 
 #### Understanding the Task Workload Size
 
-The **Task Workload Size (hrs)** input in the control panel is the *size of the computational job*, expressed as a duration: how many hours of compute the job requires on whatever machine runs it. (It only affects this Deep-Space mode; the Interplanetary ledger mode ignores it.)
+The **Task Workload Size** input in the top bar is the *size of the computational job*, expressed as a duration: how many hours of compute the job requires on whatever machine runs it. (It only affects this Deep-Space mode; the Interplanetary ledger mode ignores it.)
 
 **What it represents:** Think of it as "this job needs *N* hours of CPU time to finish." A small value like `1` (one hour) is a quick job; a large value like `10,000,000` (≈1,140 years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same amount of compute time on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth. (Internally the physics works in seconds; the field and metric cards just display hours.)
 
@@ -195,13 +196,23 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 <sub><i>The full Deep-Space dashboard: a Cosmic Server deployed in a deep void at 400 pc, with the six-card metrics row (years over days) and the "In plain terms" summary below the map. Annotated walkthrough below.</i></sub>
 
-This capture shows a server deployed at **400 pc** (a deep void) with a **114,155-year** workload (~41.7 million days, set via the *Task Workload Size (yrs)* field in the control panel). Reading the screen:
+This capture shows a server deployed at **400 pc** (a deep void) with a **114,155-year** workload (~41.7 million days, set via the *Task Workload Size (yrs)* field in the top bar). Reading the screen:
 
-- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** below the metrics labels every element.
+- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** in the controls row labels every element.
 - After placing the server, the **Breakeven workload** readout under the Task field shows the smallest task that pays off here, and the metrics row's **Communication Cost** card shows the round-trip light delay.
 - The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), an *Earth Compute Time* of ~107,393 years and *Earth Wait Time* of ~110,005 years, and a **positive Net Gain of ~4,150 years** (green) — offloading wins here. (Each card shows years as the main value with the days equivalent beneath; the model computes in seconds internally.)
 - The **In plain terms** panel below the metrics translates that into relatable units: *running this job on Earth would take ~114,000 years; offloaded to the Cosmic Server the same computation takes ~107,000 years of Earth time plus ~2,600 years of signal round-trip — a total ~110,000-year wait, a net saving of ~4,150 years.*
 - Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the physics models.
+
+#### Show the math
+
+The *In Plain Terms* panel has a **"Show the math"** toggle that expands the live, step-by-step calculation behind the summary — recomputed for the current placement and color-coded to match the metric cards.
+
+> **Heads-up — the clock advantage and Earth compute lines use reciprocal ratios.** *Clock advantage* is `f_server / f_earth` (e.g. `1.0478×`), but *Earth compute* scales the task by the flipped ratio `f_earth / f_server` (e.g. `0.95437`). They're the same number inverted (`0.95437 = 1 / 1.0478`), because `Earth compute = task ÷ advantage` — a faster clock means *less* Earth time passes. See [Efficiency & Breakeven](docs/efficiency-model.md#why-the-clock-ratio-is-f_earth--f_server).
+
+![The "Show the math" panel: live step-by-step formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven, computed for the current placement](docs/images/show-the-math.png)
+
+<sub><i>Every value the dashboard shows is derived here: clock advantage = f_server / f_earth; Earth compute = task × (f_earth / f_server); Earth wait = compute + comm cost; net gain = task − wait; breakeven = comm cost ÷ (1 − f_earth/f_server). Full derivation in [Efficiency & Breakeven](docs/efficiency-model.md).</i></sub>
 
 ---
 

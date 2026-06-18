@@ -20,6 +20,15 @@ class EfficiencyRequest(BaseModel):
     task_seconds: float
 
 
+class DeepestVoidRequest(BaseModel):
+    max_distance_pc: float = 300.0
+
+
+class BestSpotRequest(BaseModel):
+    task_seconds: float
+    max_distance_pc: float = 300.0
+
+
 class EfficiencyResponse(BaseModel):
     earth_compute_time: float
     earth_wait_time: float

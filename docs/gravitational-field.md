@@ -78,7 +78,7 @@ is simply:
 clock_advantage = f_server / f_earth
 ```
 
-`> 1` (green) → the server's clock runs faster than Earth's (a void advantage);
+`> 1` (cyan) → the server's clock runs faster than Earth's (a void advantage);
 `< 1` (red) → it's in a region *denser* than Earth's neighborhood, so it runs
 slower; offloading there can never win (its breakeven is reported as "none").
 

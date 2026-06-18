@@ -49,6 +49,18 @@ Earth time you scale by how Earth's clock compares to the server's:
 A faster server clock (`f_server` larger) shrinks that number — that's the whole
 dilation advantage, in one ratio.
 
+> **The two ratios are reciprocals — don't confuse them.** The dashboard shows
+> the **Server Clock Advantage** as `f_server / f_earth` (e.g. `1.0478×` — "the
+> server ticks 1.0478× faster"), but **Earth Compute Time** scales the task by
+> the *flipped* ratio `f_earth / f_server` (e.g. `0.95437`). These are the same
+> fact inverted: `0.95437 = 1 / 1.0478`, so
+> `Earth Compute = task × (f_earth/f_server) = task ÷ (f_server/f_earth) = task ÷ advantage`.
+> A faster clock means **less** Earth time passes, so you *divide* by the
+> advantage. Using `1.0478×` here instead would give `~104,780 yr` for a
+> 100,000-yr job — the work taking *longer* in Earth time despite the faster
+> clock, which is backwards. The reciprocal is exactly what turns the faster
+> clock into a time *saving*.
+
 ## 3. The breakeven workload
 
 Substitute and rearrange. Net gain is positive only when:
@@ -99,6 +111,36 @@ A server deployed at galactic `(d = 400 pc, l = 30°, b = 40°)` — Cartesian
 | **Net Gain** = task − wait | 1.309×10¹¹ | **~4,150 yrs** (green) |
 | **Breakeven** = latency / (1 − f_earth/f_server) | 1.390×10¹² | **~44,084 yrs** |
 
+**Step by step** — the clock factors `f_earth`, `f_server` come from the
+[Gravitational Field Model](gravitational-field.md); the ratio `f_earth/f_server`
+is unitless, so the arithmetic works directly in years:
+
+```
+Server Clock Advantage = f_server / f_earth
+                       = 0.97949 / 0.92147   = 1.0630×
+
+Earth Compute Time     = task × (f_earth / f_server)        ( = task ÷ advantage )
+                       = 114,155 yr × (0.92147 / 0.97949)
+                       = 114,155 yr × 0.94076               ( = 114,155 ÷ 1.0630 )
+                       ≈ 107,393 yr
+
+Communication Cost     = 2d / c                             ≈ 2,611 yr   (round trip)
+
+Earth Wait Time        = Earth Compute Time + Communication Cost
+                       = 107,393 yr + 2,611 yr             ≈ 110,004 yr
+
+Net Gain               = Task Workload Size − Earth Wait Time
+                       = 114,155 yr − 110,004 yr           ≈ 4,150 yr   (positive → green ▲)
+
+Breakeven              = Communication Cost / (1 − f_earth/f_server)
+                       = 2,611 yr / (1 − 0.94076)
+                       = 2,611 yr / 0.05924                ≈ 44,084 yr
+```
+
+So **Net Gain draws on three on-screen metrics** — Task Workload Size, Earth
+Compute Time (which in turn depends on the Server Clock Advantage), and
+Communication Cost — via `Net Gain = Task − (Earth Compute Time + Communication Cost)`.
+
 Reading it: the void runs 6.3% faster than Earth, so the 114,155-year job
 finishes in ~107,393 Earth-years of compute; add the 2,611-year round trip and
 you wait ~110,004 years — still ~4,150 years *less* than the 114,155 years it
@@ -113,6 +155,25 @@ curl -s -X POST http://localhost:8000/api/physics/efficiency \
   -H 'Content-Type: application/json' \
   -d '{"x":265.37,"y":153.21,"z":257.12,"task_seconds":3599930880000}'
 ```
+
+### Seeing it in the app
+
+You don't have to read the table — the dashboard shows this same breakdown live.
+The *In Plain Terms* panel under the metrics has a **"Show the math"** toggle that
+expands the step-by-step formulas, recomputed for the current placement and
+color-coded to match the metric cards:
+
+![The app's "Show the math" panel showing the live formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven](images/show-the-math.png)
+
+It mirrors this section exactly: `clock advantage = f_server / f_earth`,
+`Earth compute = task × (f_earth / f_server)`, `Earth wait = compute + comm cost`,
+`net gain = task − wait`, and `breakeven = comm cost ÷ (1 − f_earth/f_server)`.
+
+Note the **clock advantage** and **Earth compute** lines use *reciprocal*
+ratios (`f_server/f_earth` vs. `f_earth/f_server`) — see [Why the clock ratio is
+`f_earth / f_server`](#why-the-clock-ratio-is-f_earth--f_server) above. They look
+mismatched at a glance but are the same number flipped, because a faster clock
+means the job finishes in *less* Earth time.
 
 ## 5. Caveats
 

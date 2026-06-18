@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 function Field({ label, hint, tooltip, children }) {
   return (
     <div>
@@ -13,10 +11,11 @@ function Field({ label, hint, tooltip, children }) {
 const inputCls =
   'w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm font-mono text-gray-100 focus:border-cyan-500 focus:outline-none'
 
-export default function ServerPlacer({ onPlaceServer }) {
-  const [distance, setDistance] = useState(10)
-  const [longitude, setLongitude] = useState(0)
-  const [latitude, setLatitude] = useState(0)
+// Controlled by the parent so a map-click placement can update these inputs and
+// the values persist while the popover is closed.
+export default function ServerPlacer({ onPlaceServer, onDone, coords, onCoordsChange }) {
+  const { distance, longitude, latitude } = coords
+  const setField = (key, value) => onCoordsChange({ ...coords, [key]: value })
 
   const handleDeploy = async () => {
     try {
@@ -27,14 +26,14 @@ export default function ServerPlacer({ onPlaceServer }) {
       })
       const coords = await res.json()
       onPlaceServer(coords)
+      onDone?.()
     } catch {
       // silent fail
     }
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-4">
-      <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Deploy Cosmic Server</h3>
+    <div className="space-y-4">
       <p className="text-xs text-gray-500 leading-relaxed">
         Choose where in the void to place a server. Position sets the light-speed
         communication latency; farther is slower.
@@ -46,7 +45,7 @@ export default function ServerPlacer({ onPlaceServer }) {
           tooltip="How far the server sits from Earth, in parsecs. This is the only field that affects communication latency: round-trip delay = 2 × distance ÷ c."
         >
           <input type="number" min="0.1" step="1" value={distance}
-            onChange={e => setDistance(Number(e.target.value))} className={inputCls} />
+            onChange={e => setField('distance', Number(e.target.value))} className={inputCls} />
         </Field>
         <Field
           label="Longitude (°)"
@@ -54,7 +53,7 @@ export default function ServerPlacer({ onPlaceServer }) {
           tooltip="Galactic longitude (0–360°): the compass direction around the galactic plane. Affects placement direction, not distance or latency."
         >
           <input type="number" min="0" max="360" step="1" value={longitude}
-            onChange={e => setLongitude(Number(e.target.value))} className={inputCls} />
+            onChange={e => setField('longitude', Number(e.target.value))} className={inputCls} />
         </Field>
         <Field
           label="Latitude (°)"
@@ -62,7 +61,7 @@ export default function ServerPlacer({ onPlaceServer }) {
           tooltip="Galactic latitude (−90 to 90°): angle above or below the galactic plane. Affects placement direction, not distance or latency."
         >
           <input type="number" min="-90" max="90" step="1" value={latitude}
-            onChange={e => setLatitude(Number(e.target.value))} className={inputCls} />
+            onChange={e => setField('latitude', Number(e.target.value))} className={inputCls} />
         </Field>
       </div>
       <button

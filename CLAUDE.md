@@ -60,7 +60,7 @@ Both servers must run together: the frontend proxies `/api` to the backend
   (Three.js scene), `MetricsDash`, `ServerPlacer`.
 - `frontend/src/components/near-future/` — `NearFutureView`, `LedgerTimeline`
   (Chart.js), `SyncSlider`, `DriftCounter`.
-- `docs/images/` — README screenshots + `time_dilation_v2.gif` banner.
+- `docs/images/` — README screenshots + `time_dilation_banner_v8_50p.gif` banner.
 - `.github/workflows/tests.yml` — CI: backend (uv sync + pytest) and frontend
   (npm ci + vite build).
 
