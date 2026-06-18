@@ -2,8 +2,8 @@
 
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
-> An interactive tool for exploring time dilation       
-> **Can time dilation be used as a computational resource?**
+> An interactive tool for exploring the time dilation between any two reference frames with differing gravitational potentials (General Relativity).
+> ***Can time dilation be used as a computational resource?***
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
@@ -207,6 +207,8 @@ This capture shows a server deployed at **400 pc** (a deep void) with a **114,15
 #### Show the math
 
 The *In Plain Terms* panel has a **"Show the math"** toggle that expands the live, step-by-step calculation behind the summary — recomputed for the current placement and color-coded to match the metric cards.
+
+> **Heads-up — the clock advantage and Earth compute lines use reciprocal ratios.** *Clock advantage* is `f_server / f_earth` (e.g. `1.0478×`), but *Earth compute* scales the task by the flipped ratio `f_earth / f_server` (e.g. `0.95437`). They're the same number inverted (`0.95437 = 1 / 1.0478`), because `Earth compute = task ÷ advantage` — a faster clock means *less* Earth time passes. See [Efficiency & Breakeven](docs/efficiency-model.md#why-the-clock-ratio-is-f_earth--f_server).
 
 ![The "Show the math" panel: live step-by-step formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven, computed for the current placement](docs/images/show-the-math.png)
 
