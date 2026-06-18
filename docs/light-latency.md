@@ -69,16 +69,7 @@ curl -s -X POST http://localhost:8000/api/physics/efficiency \
 # → latency_seconds ≈ 8.235e10
 ```
 
-## 5. The near-future (Interplanetary DevOps) variant 🚧
-
-The parked [Interplanetary DevOps](../README.md#roadmap) mode uses the same
-"information can't outrun light" idea but as a **one-way** delay between Earth and
-Mars: `t_delay = d / c`, with a mid-range `d ≈ 2.25×10⁸ km` giving **~750 s
-(12.5 min)**. There it isn't a compute trade-off but an *event-ordering* problem —
-Earth sees Mars transactions late, scrambling their order until the sync slider
-compensates. (That mode is a work in progress; details are in the README.)
-
-## 6. Caveats
+## 5. Caveats
 
 - **Pure light-travel time.** No relativistic Doppler, no router/processing
   overhead, no signal-attenuation limits — just `2d/c`.
@@ -89,11 +80,10 @@ compensates. (That mode is a work in progress; details are in the README.)
   separate effect handled by the [clock model](gravitational-field.md). They're
   combined only in [Earth Wait Time](efficiency-model.md).
 
-## 7. Code map
+## 6. Code map
 
 | Piece | Location |
 |-------|----------|
 | `latency = 2d/c` | `light_latency` — `backend/app/services/physics.py` |
 | Added into Earth Wait Time | `compute_efficiency` (see [Efficiency Model](efficiency-model.md)) |
-| Near-future Earth–Mars delay | `frontend/src/components/near-future/` (WIP) |
 | API wiring | `efficiency()` in `backend/app/routers/physics.py` |

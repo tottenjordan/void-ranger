@@ -7,7 +7,6 @@
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
-![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?logo=chart.js&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -22,30 +21,27 @@
 
 ## Table of Contents
 
-- [Simulation Modes](#simulation-modes)
+- [Overview](#overview)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
 - [Development](#development)
-- [How Each Mode Works](#how-each-mode-works)
+- [How It Works](#how-it-works)
 - [Glossary](docs/GLOSSARY.md)
 - [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
-- [Roadmap](#roadmap)
 - [Project Structure](#project-structure)
 - [Tests](#tests)
 
-## Simulation Modes
+## Overview
 
-- **Deep-Space Cloud Compute** — Place computational servers in cosmological voids where clocks tick faster than Earth's (weaker gravitational field), then balance the dilation benefit against light-speed communication latency.
-
-- **Interplanetary DevOps** 🚧 *WIP* — Synchronize database ledgers between Earth and Mars, dealing with light-speed delay and micro-time drifts. Adjust a relativistic sync protocol slider to correct transaction ordering in real time. *(Parked while Deep-Space is the focus — see the [Roadmap](#roadmap).)*
+Void Ranger is a single-purpose **Deep-Space Cloud Compute** simulator: place a compute server in a cosmological void — a vast region where the weaker gravitational field makes its clock tick faster than Earth's — then weigh that time-dilation advantage against the light-speed communication latency of reaching it. The deeper the void, the faster the server's clock, but the longer the round-trip signal takes, so the sweet spot depends on the size of the job.
 
 ## Architecture
 
 ```
-React Frontend (Vite + Tailwind + Three.js + Chart.js)
+React Frontend (Vite + Tailwind + Three.js)
   │
   ├── /api/*  →  FastAPI Backend (Python)
   │                ├── POST /api/physics/cartesian    — galactic → Cartesian coords
@@ -114,9 +110,7 @@ npm run dev
 
 Open http://localhost:5173
 
-## How Each Mode Works
-
-### Deep-Space Cloud Compute
+## How It Works
 
 **Concept:** In a far-future scenario, humanity places computational servers in cosmological voids — vast regions of space with negligible gravitational influence. Clocks tick slower in stronger gravitational fields (general relativity), and Earth sits in the gravitational wells of the Sun and Milky Way. A server in a void experiences weaker gravity, so its clock ticks *faster* than Earth's — it can complete days of computation while only hours pass on Earth. The tradeoff: the results must travel back at light speed, and the farther the void, the longer the round-trip delay.
 
@@ -173,7 +167,7 @@ Open http://localhost:5173
 
 #### Understanding the Task Workload Size
 
-The **Task Workload Size** input in the top bar is the *size of the computational job*, expressed as a duration: how many hours of compute the job requires on whatever machine runs it. (It only affects this Deep-Space mode; the Interplanetary ledger mode ignores it.)
+The **Task Workload Size** input in the top bar is the *size of the computational job*, expressed as a duration: how many hours of compute the job requires on whatever machine runs it. It is simply the size of the computational job.
 
 **What it represents:** Think of it as "this job needs *N* hours of CPU time to finish." A small value like `1` (one hour) is a quick job; a large value like `10,000,000` (≈1,140 years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same amount of compute time on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth. (Internally the physics works in seconds; the field and metric cards just display hours.)
 
@@ -213,45 +207,6 @@ The *In Plain Terms* panel has a **"Show the math"** toggle that expands the liv
 ![The "Show the math" panel: live step-by-step formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven, computed for the current placement](docs/images/show-the-math.png)
 
 <sub><i>Every value the dashboard shows is derived here: clock advantage = f_server / f_earth; Earth compute = task × (f_earth / f_server); Earth wait = compute + comm cost; net gain = task − wait; breakeven = comm cost ÷ (1 − f_earth/f_server). Full derivation in [Efficiency & Breakeven](docs/efficiency-model.md).</i></sub>
-
----
-
-### Interplanetary DevOps 🚧 WIP
-
-> 🚧 **Work in progress** — this mode is parked while Deep-Space Cloud Compute is the focus. The details below are preserved for when it resumes; see the [Roadmap](#roadmap).
-
-<details>
-<summary>Show Interplanetary DevOps details</summary>
-
-**Concept:** In a near-future scenario, Earth and Mars each run database ledgers. Transactions originate on both planets, but Mars transactions take ~12.5 minutes (750 seconds) to reach Earth at light speed. Without compensation, Earth sees Mars transactions arriving late, causing ordering conflicts — a transaction that happened first on Mars might appear to happen after a later Earth transaction. The Relativistic Sync Protocol applies timestamp compensation to correct this.
-
-**Features:**
-- **Ledger Timeline Chart** — A Chart.js visualization showing Earth transactions (green) and Mars transactions (orange) plotted over time. Mars transactions are offset by the light-delay window. As you adjust the sync slider, the Mars line smoothly animates to its corrected position.
-- **Light-Delay Zone** — A semi-transparent orange band on the chart represents the time window where Mars transactions are "in flight." The band shrinks as you increase sync compensation, directly visualizing the protocol's effect.
-- **Conflict Markers** — Red dots and bands appear at exact timestamps where transaction ordering breaks down. These disappear as you increase compensation.
-- **Data Drift Counter** — An SVG ring gauge showing accumulated ordering errors as both a count and percentage. Color transitions from green (no errors) through amber to red (high drift, with a glow effect).
-- **Relativistic Sync Protocol Slider** — A gradient-tracked slider from 0% (no compensation) to 100% (full compensation) with tick marks and a dynamic description explaining the physics at each position.
-- **Transaction Replay** — Press Play to watch transactions arrive in real time with a cyan playhead sweeping across the chart. The drift counter updates live as each transaction is processed. Speed controls (1x, 2x, 5x) let you watch at different rates. Pause, resume, or reset at any time.
-
-**What problems does it address?**
-- Demonstrates the real engineering challenge of distributed systems across light-speed delays — the same class of problem that GPS satellites solve today (GPS clocks are corrected for both gravitational and velocity-based time dilation).
-- Shows why naive timestamp comparison fails in interplanetary networks and why protocols must account for propagation delay.
-- Illustrates causality violations: a transaction that "happened first" can arrive second, breaking assumptions that underpin most database consistency models (e.g., last-write-wins).
-
-**Try this:** Start with the slider at 0% and press Play. Watch the drift counter climb as Mars transactions arrive out of order. Pause, drag the slider to 100%, and replay — the conflicts disappear. Now try 50% — partial compensation reduces but doesn't eliminate drift. This is the core tradeoff real mission planners face.
-
-**Example walkthrough** — the ledger timeline with the **Relativistic Sync Protocol at 40%**:
-
-![Interplanetary DevOps mode showing Earth and Mars ledger timelines](docs/images/near-future.png)
-
-<sub><i>The Interplanetary DevOps ledger timeline with the Relativistic Sync Protocol at 40%: Earth transactions (green) and Mars transactions (orange) seen from Earth, the light-delay window, a causality-conflict marker, and the drift gauge. Annotated walkthrough below.</i></sub>
-
-- **Green points** are Earth transactions; **orange points** are Mars transactions as seen from Earth, shifted right by the residual light delay. The faint **orange band** on the left is the light-delay window — it shrinks as you increase compensation.
-- The **red dot** near the top marks a causality conflict (a transaction that arrived out of order). The **ring gauge** on the right reports the drift: 1 error across 50 transactions (2%).
-- The slider description reads *"Partial compensation — ~375s residual delay."* Drag it to 100% and the conflict and drift clear; drag to 0% and they grow.
-- Press **Play** to replay the transactions in real time with a sweeping playhead, at 1x/2x/5x speed.
-
-</details>
 
 ## Physics and Assumptions
 
@@ -322,16 +277,6 @@ $$
 
 The server completes the task in $t_\text{task}$ of its own proper time; the Earth time that elapses meanwhile is $t_\text{task} \cdot (f_\text{earth}/f_\text{server})$. When the server's clock is faster ($f_\text{server} > f_\text{earth}$, i.e. a weaker field) Earth ages less, so the work effectively finishes sooner — but you still wait $t_\text{latency}$ for the round trip. The **clock advantage** reported in the UI is $f_\text{server}/f_\text{earth}$ (>1 = the server runs faster than Earth). A **positive net gain** means offloading beats local execution.
 
-### 5. Interplanetary light delay (Near-Future mode) 🚧 WIP
-
-Earth–Mars one-way signal delay is pure light-travel time (no relativity involved):
-
-$$
-t_\text{delay} = \frac{d_\text{Earth-Mars}}{c}
-$$
-
-With $d_\text{Earth–Mars} = 2.25 \times 10^8\ \text{km}$ (a realistic mid-range distance; the true range is 55–401 million km), this gives **750 s ≈ 12.5 min**. A Mars transaction at timestamp $t$ appears on Earth at $t + t_\text{delay}(1 - \text{syncOffset})$, where the sync slider applies compensation from 0 (none) to 1 (full).
-
 ### Assumptions & Caveats
 
 These are intentional simplifications. They keep the simulation legible, but a physicist should know where it departs from reality:
@@ -346,25 +291,11 @@ These are intentional simplifications. They keep the simulation legible, but a p
 
 5. **Two coordinate systems share one 3D scene.** Catalog stars are placed from equatorial coordinates (RA/Dec), while servers use galactic longitude/latitude. Both produce valid Cartesian points, but their axes are not physically aligned, so a server's position does not correspond to the true galactic-frame location of nearby stars. This is cosmetic — but note the gravitational potential is computed in the same Cartesian frame the stars are stored in, so the relative geometry used for physics is self-consistent.
 
-6. **"Relativistic Sync Protocol" is loosely named (🚧 WIP mode).** The Near-Future mode models *signal-propagation delay* and event-ordering correction (Lamport-clock territory), **not** relativistic time dilation. The genuine (tiny) Earth–Mars clock difference is correctly ignored. The mechanism is "relativistic" only in that it is bounded by $c$.
-
-7. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
+6. **Identical hardware is assumed.** The efficiency model assumes a task costs the same number of compute-seconds wherever it runs, measured in that machine's local clock. Differences in actual server performance are out of scope.
 
 ## TODO
 
 - [ ] **Plot a larger body of stars** — the map currently uses the solar neighborhood of the Milky Way (~8,920 HYG stars, magnitude ≤ 6.5). Expand to a deeper/wider catalog to cover more of the galaxy.
-
-## Roadmap
-
-### 🚧 Interplanetary DevOps (Near-Future Mode) — parked
-
-This mode is implemented and runnable, but **parked** while Deep-Space Cloud Compute is the active focus. Its README sections are collapsed and tagged 🚧 WIP. Outstanding work before it's considered done:
-
-- [ ] Clarify or rename the **"Relativistic Sync Protocol"** — it models signal-propagation delay and event-ordering correction (Lamport-clock territory), not relativistic time dilation.
-- [ ] Add backend/unit tests for the ledger sync, drift counter, and conflict detection.
-- [ ] Make the **Earth–Mars distance and light delay configurable** (currently a fixed ~750 s mid-range value).
-- [ ] Replace the static 50-transaction fixture (`frontend/src/data/near-future-ledger.json`) with generated/realistic data.
-- [ ] Bring the near-future UI to parity with Deep-Space — per-metric descriptions, glossary tie-in, and an "in plain terms" summary.
 
 ## Project Structure
 
@@ -374,18 +305,15 @@ void-ranger/
 │   ├── app/
 │   │   ├── main.py              # FastAPI entry point
 │   │   ├── routers/             # /api/stars, /api/physics/*
-│   │   ├── services/physics.py  # 5 pure relativistic math functions
+│   │   ├── services/physics.py  # pure physics: dilation, latency, efficiency, void search
 │   │   └── models/schemas.py    # Pydantic request/response models
 │   ├── scripts/process_stars.py # HYG CSV → stars.json pipeline
 │   ├── data/stars.json          # 8,920 processed stars
-│   └── tests/                   # 17 unit tests
+│   └── tests/                   # 23 unit tests
 └── frontend/
     └── src/
-        ├── components/
-        │   ├── far-future/      # GalaxyMap, ServerPlacer, MetricsDash
-        │   └── near-future/     # LedgerTimeline, DriftCounter, SyncSlider
-        ├── hooks/useSimulation.js
-        └── data/near-future-ledger.json  # 50 mock transactions
+        └── components/
+            └── far-future/      # GalaxyMap, ServerPlacer, MetricsDash
 ```
 
 ## Tests
