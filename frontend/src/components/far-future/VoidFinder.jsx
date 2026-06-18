@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import CollapsibleCard from './CollapsibleCard'
 
 const inputCls =
   'w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm font-mono text-gray-100 focus:border-cyan-500 focus:outline-none'
@@ -26,8 +27,7 @@ export default function VoidFinder({ onPlaceServer, taskSeconds }) {
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Find a Spot</h3>
+    <CollapsibleCard title="Find a Spot">
       <p className="text-xs text-gray-500 leading-relaxed">
         Let the app search within a radius for a good placement.
       </p>
@@ -60,6 +60,6 @@ export default function VoidFinder({ onPlaceServer, taskSeconds }) {
       >
         {searching ? 'Searching…' : 'Best spot for this task'}
       </button>
-    </div>
+    </CollapsibleCard>
   )
 }
