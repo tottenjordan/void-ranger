@@ -8,7 +8,7 @@ model and the on-screen terms.
 
 | Doc | What's in it |
 |-----|--------------|
-| [Glossary](GLOSSARY.md) | One-line definitions of every on-screen metric and term (both modes), with the quick formula for each. |
+| [Glossary](GLOSSARY.md) | One-line definitions of every on-screen metric and term, with the quick formula for each. |
 | [Gravitational Field Model](gravitational-field.md) | How the gravitational potential — and thus the clock rate — is computed at any coordinate: the softened sum over all catalog stars, the softening length, proximity-to-a-star behavior, masses, and a worked example. |
 | [Efficiency & Breakeven](efficiency-model.md) | The offload-vs-local math: Earth Compute Time, Earth Wait Time, Net Gain/Loss, and the Breakeven workload derivation, with a worked example. |
 | [Light-Speed Latency](light-latency.md) | The round-trip communication delay (`2d/c`), why it limits void-hunting, and a distance→delay table. |

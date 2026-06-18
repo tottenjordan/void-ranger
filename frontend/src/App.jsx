@@ -1,16 +1,13 @@
+import { useState } from 'react'
 import Layout from './components/Layout'
-import NearFutureView from './components/near-future/NearFutureView'
 import FarFutureView from './components/far-future/FarFutureView'
-import useSimulation from './hooks/useSimulation'
 
 export default function App() {
-  const { mode, setMode, taskSeconds, setTaskSeconds } = useSimulation()
+  const [taskSeconds, setTaskSeconds] = useState(31536000) // default: 1 year
 
   return (
-    <Layout mode={mode} onModeChange={setMode}>
-      {mode === 'near-future'
-        ? <NearFutureView />
-        : <FarFutureView taskSeconds={taskSeconds} onTaskSecondsChange={setTaskSeconds} />}
+    <Layout>
+      <FarFutureView taskSeconds={taskSeconds} onTaskSecondsChange={setTaskSeconds} />
     </Layout>
   )
 }

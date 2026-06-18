@@ -5,22 +5,18 @@ Guidance for Claude Code when working in this repository.
 ## What Void Ranger is
 
 An interactive educational web app demonstrating relativistic computing and
-time dilation, with two modes:
+time dilation, with a single mode:
 
 - **Deep-Space Cloud Compute (far-future):** place a compute server in a
   cosmological void (weak gravity → faster local clock) and weigh the
   time-dilation clock advantage against light-speed communication latency.
-- **Interplanetary DevOps (near-future):** an Earth–Mars ledger sync where the
-  ~750 s light delay scrambles event ordering, corrected by a "Relativistic
-  Sync Protocol" slider.
 
 ## Stack
 
 - **Backend:** Python ≥3.11, FastAPI + uvicorn, NumPy/pandas. Managed with
   **`uv`** (not pip) — `pyproject.toml` + `uv.lock`.
 - **Frontend:** React 19 + Vite 6 + Tailwind CSS 4. Three.js (r170) via
-  `@react-three/fiber` 9 / `@react-three/drei` 10 for the galaxy map;
-  Chart.js 4 + `react-chartjs-2` for the ledger timeline.
+  `@react-three/fiber` 9 / `@react-three/drei` 10 for the galaxy map.
 
 ## Commands
 
@@ -58,8 +54,6 @@ Both servers must run together: the frontend proxies `/api` to the backend
   catalog CSV (adds Cartesian x/y/z + estimated mass `m`).
 - `frontend/src/components/far-future/` — `FarFutureView`, `GalaxyMap`
   (Three.js scene), `MetricsDash`, `ServerPlacer`.
-- `frontend/src/components/near-future/` — `NearFutureView`, `LedgerTimeline`
-  (Chart.js), `SyncSlider`, `DriftCounter`.
 - `docs/images/` — README screenshots + `time_dilation_banner_v8_50p.gif` banner.
 - `.github/workflows/tests.yml` — CI: backend (uv sync + pytest) and frontend
   (npm ci + vite build).
@@ -75,9 +69,6 @@ Both servers must run together: the frontend proxies `/api` to the backend
   exaggeration, keep it labeled as such.
 - `earth_compute_time = task_seconds × (f_earth / f_server)`;
   light latency = `2d/c`.
-- Near-future: Mars events are observed `LIGHT_DELAY` (≈750 s) late;
-  `correction = LIGHT_DELAY × syncOffset`, Mars `perceived = timestamp +
-  LIGHT_DELAY − correction`.
 
 ## Conventions & gotchas
 

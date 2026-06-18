@@ -1,8 +1,6 @@
 # Void Ranger Glossary
 
-Quick reference for the terms and metrics used in the two dashboards. Each entry is the term in **bold** with a one-line summary, followed by the detail below it. Formulas are written in plain notation for quick reading; the fully typeset derivations live in the README's [Physics and Assumptions](../README.md#physics-and-assumptions) section.
-
-## Deep-Space Cloud Compute
+Quick reference for the terms and metrics used in the dashboard. Each entry is the term in **bold** with a one-line summary, followed by the detail below it. Formulas are written in plain notation for quick reading; the fully typeset derivations live in the README's [Physics and Assumptions](../README.md#physics-and-assumptions) section.
 
 **Cosmic Server** — the compute server you deploy in a cosmological void, where weak gravity makes its clock tick faster than Earth's.
 
@@ -14,7 +12,7 @@ A purely **visual locator** that makes the server easy to spot in the dense star
 
 **Task Workload Size** — how much compute the job needs, expressed as a duration in hours.
 
-A proxy for job size measured in time rather than FLOPs or rows: "this job needs *N* hours of CPU time." The model assumes the same job costs the same amount of compute time on either machine (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick. The field accepts hours; internally the physics works in seconds (`seconds = hours × 3600`). Only used in Deep-Space mode.
+A proxy for job size measured in time rather than FLOPs or rows: "this job needs *N* hours of CPU time." The model assumes the same job costs the same amount of compute time on either machine (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick. The field accepts hours; internally the physics works in seconds (`seconds = hours × 3600`).
 
 **Distance from Earth** — straight-line Earth↔server separation, shown in parsecs (with light-years and miles).
 
@@ -47,19 +45,3 @@ Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a 
 **Find deepest void / Best spot for this task** — the two auto-placement buttons (with an adjustable search radius).
 
 *Find deepest void* searches the volume within the radius for the **lowest local gravitational potential** — the emptiest pocket, farthest from *all* stars (not the point farthest from Earth), where the clock runs fastest. *Best spot for this task* instead maximizes **net gain** (`task·(1 − f_earth/f_server) − latency`), balancing the void's clock advantage against light-delay latency for the current Task Workload Size. The radius is a latency budget, not a gravity setting. Full write-up: [Void Finding](void-finding.md).
-
-## Interplanetary DevOps 🚧 WIP
-
-> 🚧 **Work in progress** — this mode is parked while Deep-Space Cloud Compute is the focus. See the [Roadmap](../README.md#roadmap).
-
-**Light Delay (Earth–Mars)** — the one-way time for a signal to cross between the planets, ~750 s (12.5 min) at a mid-range distance.
-
-`t_delay = d / c`, with `d ≈ 2.25×10⁸ km` (the true range is 55–401 million km). Because nothing travels faster than light, Earth always *sees* a Mars event this long after it actually happened — the source of all the ordering trouble.
-
-**Relativistic Sync Protocol** — the 0–100% slider that compensates for the light delay to restore correct event ordering.
-
-It subtracts a fraction of the *known* light delay from incoming Mars timestamps: a Mars event at time `t` is placed at `t + t_delay × (1 − syncOffset)`. At 100% the residual delay is zero and the ledger orders correctly; at 0% events land late and scramble. It's loosely named — it models signal-propagation delay and event-ordering correction (Lamport-clock territory), not real relativistic time dilation.
-
-**Drift / Causality Conflict** — an out-of-order transaction caused by the light delay.
-
-When a Mars transaction that truly happened first is *observed* on Earth after a later Earth transaction, merging the two ledgers by arrival time scrambles the real order — breaking last-write-wins and similar consistency assumptions. The ring gauge reports the drift rate (e.g. 1 conflict in 50 transactions = 2%); raising the sync slider clears it.
