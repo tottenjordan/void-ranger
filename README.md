@@ -14,7 +14,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 [![Tests](https://github.com/tottenjordan/void-ranger/actions/workflows/tests.yml/badge.svg)](https://github.com/tottenjordan/void-ranger/actions/workflows/tests.yml)
 
-<img src="docs/images/time_dilation_v5.gif" width="100%" alt="Void Ranger Deep-Space dashboard: deploying a server in a cosmic void and watching the time-dilation metrics update live" />
+<img src="docs/images/time_dilation_banner_v8_50p.gif" width="100%" alt="Void Ranger Deep-Space dashboard: deploying a server in a cosmic void and watching the time-dilation metrics update live" />
 
 <sub><i>The Deep-Space dashboard in action — deploy a compute server in a cosmic void and watch its clock advantage, light-delay, and net time gain update live as the signal pulses between Earth and the server across 8,920 catalog stars.</i></sub>
 
