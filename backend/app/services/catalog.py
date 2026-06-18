@@ -12,8 +12,10 @@ SOLAR_MASS_KG = 1.989e30
 def load_stars() -> list[dict]:
     """Load the processed star catalog once and cache it.
 
-    Each star is {x, y, z, size, m} where x/y/z are parsecs and m is the
-    estimated mass in solar masses.
+    Each star is {x, y, z, size, m, name, desig, mag, con} where x/y/z are
+    parsecs, m is the estimated mass in solar masses, name is the proper name
+    (empty for most stars), desig is the Bayer/Flamsteed-or-catalog fallback,
+    mag is apparent magnitude, and con is the constellation abbreviation.
     """
     with open(DATA_PATH) as f:
         return json.load(f)

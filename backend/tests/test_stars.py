@@ -45,3 +45,19 @@ def test_stars_size_positive():
         data = json.load(f)
     for star in data:
         assert star["size"] >= 0.5
+
+
+def test_stars_have_label_fields():
+    with open(STARS_PATH) as f:
+        data = json.load(f)
+    for star in data[:50]:
+        assert isinstance(star["mag"], (int, float))
+        assert isinstance(star["desig"], str)
+        assert isinstance(star["name"], str)
+
+
+def test_some_stars_have_proper_names():
+    with open(STARS_PATH) as f:
+        data = json.load(f)
+    named = [s for s in data if s.get("name")]
+    assert len(named) >= 100

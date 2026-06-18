@@ -29,6 +29,25 @@ def estimate_mass_solar(lum: float, absmag: float) -> float:
     return max(MASS_MIN_SOLAR, min(MASS_MAX_SOLAR, mass))
 
 
+def _clean(value) -> str:
+    """Trim a catalog cell to a clean string, collapsing internal whitespace."""
+    if value is None or pd.isna(value):
+        return ""
+    return " ".join(str(value).split())
+
+
+def designation(row) -> str:
+    """A non-proper label for a star: Bayer/Flamsteed, else HD/HIP catalog id."""
+    bf = _clean(row.get("bf"))
+    if bf:
+        return bf
+    for col, prefix in (("hd", "HD"), ("hip", "HIP")):
+        val = row.get(col)
+        if val is not None and not pd.isna(val):
+            return f"{prefix} {int(val)}"
+    return ""
+
+
 def process_stars():
     df = pd.read_csv(INPUT_PATH)
 
@@ -47,6 +66,14 @@ def process_stars():
             "z": round(dist * math.sin(dec_rad), 4),
             "size": round(max(0.5, (MAGNITUDE_CUTOFF - row["mag"]) / MAGNITUDE_CUTOFF * 3), 2),
             "m": round(estimate_mass_solar(row.get("lum"), row.get("absmag")), 3),
+            # Labels: `name` is the proper name (only ~4% of stars have one) used
+            # for the always-on labels; `desig` is the Bayer/Flamsteed-or-catalog
+            # fallback shown on hover; `mag` (apparent) ranks brightness; `con`
+            # is the constellation abbreviation.
+            "name": _clean(row.get("proper")),
+            "desig": designation(row),
+            "mag": round(float(row["mag"]), 2),
+            "con": _clean(row.get("con")),
         })
 
     with open(OUTPUT_PATH, "w") as f:
