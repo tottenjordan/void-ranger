@@ -26,14 +26,21 @@ function Swatch({ type, color }) {
   return <span className="inline-block w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
 }
 
-// Plain-language "so what?" translation of the metrics into relatable units.
+// Plain-language "so what?" translation of the metrics into relatable units,
+// with an optional "Show the math" breakdown computed from the live values.
 function PlainSummary({ taskSeconds, metrics }) {
+  const [showMath, setShowMath] = useState(false)
   if (!metrics || metrics.earth_compute_time == null) return null
   const compute = metrics.earth_compute_time
   const wait = metrics.earth_wait_time
   const comm = metrics.latency_seconds
   const net = metrics.net_gain
-  const faster = metrics.clock_advantage > 1
+  const fe = metrics.earth_dilation_factor
+  const fs = metrics.server_dilation_factor
+  const adv = metrics.clock_advantage
+  const ratio = fe / fs
+  const be = metrics.breakeven_task_seconds
+  const faster = adv > 1
   const saves = net >= 0
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
@@ -53,6 +60,22 @@ function PlainSummary({ taskSeconds, metrics }) {
           <>Net result: you <span className="text-red-400 font-medium">lose {relatableDuration(Math.abs(net))}</span> — not worth offloading from here.</>
         )}
       </p>
+      <button
+        onClick={() => setShowMath(m => !m)}
+        className="mt-3 text-[11px] text-cyan-400 hover:text-cyan-300 uppercase tracking-wider"
+      >
+        {showMath ? '▾ Hide the math' : '▸ Show the math'}
+      </button>
+      {showMath && (
+        <div className="mt-2 border-t border-gray-800 pt-3 font-mono text-[11px] text-gray-400 leading-relaxed space-y-1 overflow-x-auto">
+          <div><span className="text-cyan-400">Clock advantage</span> = f_server / f_earth = {fs.toFixed(5)} / {fe.toFixed(5)} = {adv.toFixed(4)}×</div>
+          <div><span className="text-green-400">Earth Compute</span> = task × (f_earth / f_server) = {yearsLabel(taskSeconds)} × {ratio.toFixed(5)} ≈ {yearsLabel(compute)}</div>
+          <div><span className="text-red-400">Comm Cost</span> = 2 × distance ÷ c ≈ {yearsLabel(comm)}</div>
+          <div><span className="text-amber-400">Earth Wait</span> = Earth Compute + Comm Cost ≈ {yearsLabel(wait)}</div>
+          <div><span className={saves ? 'text-green-400' : 'text-red-400'}>Net Gain</span> = task − Earth Wait = {yearsLabel(taskSeconds)} − {yearsLabel(wait)} ≈ {yearsLabel(net)}</div>
+          <div className="text-gray-500">Breakeven = Comm Cost ÷ (1 − f_earth/f_server) ≈ {be == null ? 'none' : yearsLabel(be)}</div>
+        </div>
+      )}
     </div>
   )
 }

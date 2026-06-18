@@ -160,7 +160,7 @@ Open http://localhost:5173
   - *Communication Cost* — the round-trip light delay (the fixed cost the dilation advantage must overcome)
   - *Net Gain/Loss* — whether the dilation benefit outweighs the communication cost (▲ gain / ▼ loss)
 - **Breakeven workload readout** — Under the Task field once a server is placed: the smallest task whose dilation savings cover the round-trip delay at that location ("none" where the spot has no advantage). Green when your task clears it, red otherwise.
-- **In plain terms panel** — A plain-language summary below the metrics that translates the numbers into relatable units (e.g. *"this job would take ~114,000 years on Earth; offloaded it finishes in ~110,000 years — a net saving of ~4,150 years."*).
+- **In plain terms panel** — A plain-language summary below the metrics that translates the numbers into relatable units (e.g. *"this job would take ~114,000 years on Earth; offloaded it finishes in ~110,000 years — a net saving of ~4,150 years."*). A **"Show the math"** toggle reveals the live step-by-step formulas (clock advantage, Earth compute, comm cost, wait, net gain, breakeven) computed from the current placement — see [Efficiency & Breakeven](docs/efficiency-model.md).
 - **Note on scale** — The gravitational dilation is pedagogically **exaggerated** (real interstellar potentials are ~1 part in 10¹³); a documented constant scales it so the contrast between the crowded neighborhood and deep voids is explorable.
 
 #### What it teaches
