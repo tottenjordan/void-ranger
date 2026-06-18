@@ -1,12 +1,11 @@
 import { useState } from 'react'
-import CollapsibleCard from './CollapsibleCard'
 
 const inputCls =
   'w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm font-mono text-gray-100 focus:border-cyan-500 focus:outline-none'
 
 // Auto-placement card: searches the backend for a good spot and drops the server
 // there (the parent's onPlaceServer handles metrics + camera fly-to).
-export default function VoidFinder({ onPlaceServer, taskSeconds }) {
+export default function VoidFinder({ onPlaceServer, taskSeconds, onDone }) {
   const [radius, setRadius] = useState(300)
   const [searching, setSearching] = useState(false)
 
@@ -18,16 +17,17 @@ export default function VoidFinder({ onPlaceServer, taskSeconds }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      onPlaceServer(await res.json())
+      const coords = await res.json()
+      setSearching(false) // clear before onDone (which may unmount this card)
+      onPlaceServer(coords)
+      onDone?.()
     } catch {
-      // silent fail
-    } finally {
       setSearching(false)
     }
   }
 
   return (
-    <CollapsibleCard title="Find a Spot">
+    <div className="space-y-3">
       <p className="text-xs text-gray-500 leading-relaxed">
         Let the app search within a radius for a good placement.
       </p>
@@ -60,6 +60,6 @@ export default function VoidFinder({ onPlaceServer, taskSeconds }) {
       >
         {searching ? 'Searching…' : 'Best spot for this task'}
       </button>
-    </CollapsibleCard>
+    </div>
   )
 }

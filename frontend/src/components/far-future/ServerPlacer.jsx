@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import CollapsibleCard from './CollapsibleCard'
 
 function Field({ label, hint, tooltip, children }) {
   return (
@@ -14,7 +13,7 @@ function Field({ label, hint, tooltip, children }) {
 const inputCls =
   'w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm font-mono text-gray-100 focus:border-cyan-500 focus:outline-none'
 
-export default function ServerPlacer({ onPlaceServer }) {
+export default function ServerPlacer({ onPlaceServer, onDone }) {
   const [distance, setDistance] = useState(10)
   const [longitude, setLongitude] = useState(0)
   const [latitude, setLatitude] = useState(0)
@@ -28,13 +27,14 @@ export default function ServerPlacer({ onPlaceServer }) {
       })
       const coords = await res.json()
       onPlaceServer(coords)
+      onDone?.()
     } catch {
       // silent fail
     }
   }
 
   return (
-    <CollapsibleCard title="Deploy Cosmic Server">
+    <div className="space-y-4">
       <p className="text-xs text-gray-500 leading-relaxed">
         Choose where in the void to place a server. Position sets the light-speed
         communication latency; farther is slower.
@@ -75,6 +75,6 @@ export default function ServerPlacer({ onPlaceServer }) {
       <p className="text-[10px] text-gray-600 leading-tight">
         Tip: you can also click anywhere in the galaxy map to place a server.
       </p>
-    </CollapsibleCard>
+    </div>
   )
 }

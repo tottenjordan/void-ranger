@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import GalaxyMap from './GalaxyMap'
 import ServerPlacer from './ServerPlacer'
 import VoidFinder from './VoidFinder'
+import Popover from './Popover'
 import MetricsDash from './MetricsDash'
 import { daysLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration } from '../../utils/format'
 
@@ -56,20 +57,17 @@ function PlainSummary({ taskSeconds, metrics }) {
   )
 }
 
+// Thin one-line legend across the bottom; each item's full description is on hover.
 function MapLegend() {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider mb-2">Map Key</h3>
-      <div className="grid grid-cols-1 gap-y-1.5">
-        {LEGEND_ITEMS.map(item => (
-          <div key={item.label} className="flex items-start gap-2">
-            <span className="mt-1"><Swatch type={item.swatch} color={item.color} /></span>
-            <p className="text-[11px] text-gray-400 leading-tight">
-              <span className="text-gray-200 font-medium">{item.label}</span> — {item.desc}
-            </p>
-          </div>
-        ))}
-      </div>
+    <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+      <span className="text-[11px] text-gray-500 uppercase tracking-wider mr-1">Map Key</span>
+      {LEGEND_ITEMS.map(item => (
+        <span key={item.label} className="flex items-center gap-1.5" title={item.desc}>
+          <Swatch type={item.swatch} color={item.color} />
+          <span className="text-[11px] text-gray-300">{item.label}</span>
+        </span>
+      ))}
     </div>
   )
 }
@@ -96,7 +94,7 @@ function BreakevenLine({ breakeven, taskSeconds }) {
   )
 }
 
-function TaskField({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition }) {
+function TopBar({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition, onPlaceServer }) {
   // The field is entered in YEARS (decimals allowed). Local text holds the raw
   // keystrokes while editing so decimals can be typed without the value being
   // reformatted mid-entry; it's re-grouped with commas on blur. taskSeconds is
@@ -104,7 +102,7 @@ function TaskField({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition
   const [text, setText] = useState(() => yearsInput(taskSeconds))
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-2">
+    <div className="bg-gray-900 border border-gray-800 rounded-xl px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 relative z-40">
       <label
         className="text-xs text-gray-400 uppercase tracking-wider whitespace-nowrap"
         title="Workload size: compute-years the job needs, measured on the running machine's own clock."
@@ -122,10 +120,17 @@ function TaskField({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition
           if (y !== null) onTaskSecondsChange(Math.round(y * 31536000))
         }}
         onBlur={() => setText(yearsInput(taskSeconds))} // re-group with commas when done
-        className="w-full sm:w-48 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-lg font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
+        className="w-32 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-base font-mono text-gray-100 focus:border-cyan-500 focus:outline-none"
       />
       <span className="text-[11px] font-mono text-gray-300 whitespace-nowrap">{daysLabel(taskSeconds)}</span>
       <BreakevenLine breakeven={breakeven} taskSeconds={taskSeconds} />
+      <span className="h-5 w-px bg-gray-700 hidden sm:block" />
+      <Popover label="Deploy Cosmic Server">
+        {close => <ServerPlacer onPlaceServer={onPlaceServer} onDone={close} />}
+      </Popover>
+      <Popover label="Find a Spot">
+        {close => <VoidFinder taskSeconds={taskSeconds} onPlaceServer={onPlaceServer} onDone={close} />}
+      </Popover>
       <span className="text-[11px] font-mono text-gray-400 sm:ml-auto whitespace-nowrap" title="Current Cosmic Server coordinates (parsecs).">
         <span className="text-gray-500">Server: </span>
         {serverPosition
@@ -183,15 +188,10 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
 
   return (
     <div className="space-y-4">
-      <TaskField taskSeconds={taskSeconds} onTaskSecondsChange={onTaskSecondsChange}
+      <TopBar taskSeconds={taskSeconds} onTaskSecondsChange={onTaskSecondsChange}
         breakeven={metrics ? metrics.breakeven_task_seconds : undefined}
-        serverPosition={serverPosition} />
+        serverPosition={serverPosition} onPlaceServer={placeServer} />
       <GalaxyMap stars={stars} serverPosition={serverPosition} onPlaceServer={placeServer} />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
-        <ServerPlacer onPlaceServer={placeServer} />
-        <VoidFinder onPlaceServer={placeServer} taskSeconds={taskSeconds} />
-        <MapLegend />
-      </div>
       {metrics && (
         <MetricsDash
           distancePc={serverPosition
@@ -205,6 +205,7 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
         />
       )}
       <PlainSummary taskSeconds={taskSeconds} metrics={metrics} />
+      <MapLegend />
     </div>
   )
 }
