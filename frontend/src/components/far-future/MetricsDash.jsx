@@ -114,6 +114,14 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         desc="How much Earth time passes while the server completes the task."
       />
       <MetricCard
+        label="Communication Cost"
+        value={yearsLabel(animComm)}
+        subValue={daysLabel(animComm)}
+        color="text-red-400 hover:shadow-red-500/10"
+        tooltip="Round-trip light-speed delay between Earth and the server. This is the fixed time cost that the dilation advantage must overcome."
+        desc="Round-trip light-speed delay to the server and back."
+      />
+      <MetricCard
         label="Earth Wait Time"
         value={yearsLabel(animWait)}
         subValue={daysLabel(animWait)}
@@ -121,14 +129,6 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
         color="text-amber-400 hover:shadow-amber-500/10"
         tooltip="Total time an Earth observer waits: the compute time plus round-trip light-speed communication latency to the Cosmic Server and back."
         desc="Compute time + round-trip light delay."
-      />
-      <MetricCard
-        label="Communication Cost"
-        value={yearsLabel(animComm)}
-        subValue={daysLabel(animComm)}
-        color="text-red-400 hover:shadow-red-500/10"
-        tooltip="Round-trip light-speed delay between Earth and the server. This is the fixed time cost that the dilation advantage must overcome."
-        desc="Round-trip light-speed delay to the server and back."
       />
       <MetricCard
         label={animGain >= 0 ? 'Net Gain' : 'Net Loss'}
