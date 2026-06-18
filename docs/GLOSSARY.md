@@ -10,6 +10,10 @@ The premise of the mode: escape Earth's gravitational well into near-empty space
 
 A purely **visual locator** that makes the server easy to spot in the dense star field — think of it as a "you placed it here" highlight on the cyan sphere at its center. It does **not** represent a physical orbit or any physics: the server isn't orbiting a star or planet, and the ring's size and rotation carry no meaning. It exists only so the server doesn't get lost among the 8,920 catalog stars.
 
+**Star labels** — the names drawn on the map for the brightest stars in view, plus the hover tooltip for any star.
+
+To stay readable, only the **up to 8 brightest stars with proper names** inside the current view are labeled at once (the set re-evaluates as you orbit/zoom). **Hovering** any star — even the ~96% with no proper name — shows a tooltip with its name or catalog designation (Bayer/Flamsteed, else HD/HIP), constellation, distance in parsecs, and apparent magnitude. Names and magnitudes come from the HYG catalog; labels are purely informational and carry no physics.
+
 **Task Workload Size** — how much compute the job needs, expressed as a duration in hours.
 
 A proxy for job size measured in time rather than FLOPs or rows: "this job needs *N* hours of CPU time." The model assumes the same job costs the same amount of compute time on either machine (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick. The field accepts hours; internally the physics works in seconds (`seconds = hours × 3600`).
