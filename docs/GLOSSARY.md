@@ -44,6 +44,10 @@ Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a 
 
 `breakeven = comm_cost / (1 − f_earth/f_server)`. It depends only on the placement, not the current task size. Below it, the fixed latency dominates (net loss); above it, the dilation savings win. It reads **green** once your Task Workload Size clears it, **red** otherwise, and **"none"** where the spot has no time advantage (`advantage ≤ 1`), since no job size could ever win there. (Deep dive: [Efficiency & Breakeven](efficiency-model.md).)
 
+**Find deepest void / Best spot for this task** — the two auto-placement buttons (with an adjustable search radius).
+
+*Find deepest void* searches the volume within the radius for the **lowest local gravitational potential** — the emptiest pocket, farthest from *all* stars (not the point farthest from Earth), where the clock runs fastest. *Best spot for this task* instead maximizes **net gain** (`task·(1 − f_earth/f_server) − latency`), balancing the void's clock advantage against light-delay latency for the current Task Workload Size. The radius is a latency budget, not a gravity setting. Full write-up: [Void Finding](void-finding.md).
+
 ## Interplanetary DevOps 🚧 WIP
 
 > 🚧 **Work in progress** — this mode is parked while Deep-Space Cloud Compute is the focus. See the [Roadmap](../README.md#roadmap).

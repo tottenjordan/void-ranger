@@ -29,7 +29,7 @@
 - [Development](#development)
 - [How Each Mode Works](#how-each-mode-works)
 - [Glossary](docs/GLOSSARY.md)
-- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md)
+- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Roadmap](#roadmap)
@@ -134,6 +134,7 @@ Open http://localhost:5173
 - **Server placement (click vs. drag)** — A **single click** on the map places or moves the server; a **click-and-drag** rotates the view and leaves the server where it is. Or enter galactic coordinates (distance, longitude, latitude) in the form for precise 3D placement.
 - **Collapsible control panel** — The control panel (Task field, breakeven readout, server placement) collapses to a thin rail via an arrow, letting the 3D map widen.
 - **Camera fly-to** — The camera automatically frames both Earth and the server when you place one.
+- **Auto-find a spot** — Two one-click finders that search within an adjustable radius: **Find deepest void** (the emptiest pocket — lowest local gravity, fastest clock) and **Best spot for this task** (maximizes net gain, balancing the clock advantage against light-delay latency for your current Task Workload Size). How it works: [Void Finding](docs/void-finding.md).
 
 #### What's on the map
 
