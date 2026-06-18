@@ -143,6 +143,22 @@ Open http://localhost:5173
 - **Distance dimension line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), labeled with the straight-line Earth↔server distance in parsecs. The offset is deliberate (not a glitch) and **scales with distance** (≈18%, with a small floor), so far placements sit noticeably higher above the red comm line.
 - **Map Key** — A legend below the metrics row explaining every on-screen element.
 
+#### Find deepest void
+
+![Animated demo: clicking Find deepest void and the camera flying to the emptiest pocket of space where the server's clock runs fastest](docs/images/find-deepest-v1.gif)
+
+<sub><i>One click on **Find deepest void** searches the volume within the radius for the emptiest pocket — the point farthest from <em>all</em> catalog stars (lowest gravitational potential) — and drops the server there.</i></sub>
+
+**Find deepest void** hunts for the location with the **lowest local gravity** inside your search radius — the emptiest gap between stars, *not* simply the point farthest from Earth. Weaker gravity means a faster clock, so this maximizes the raw **Server Clock Advantage** regardless of task size. (It ignores latency, so a very deep void can still be a net loss for small jobs — that's what *Best spot for this task* accounts for.) How it works: [Void Finding](docs/void-finding.md).
+
+#### Best spot for this task
+
+![Animated demo: clicking Best spot for this task and the camera flying to the placement that maximizes net time saved for the current workload](docs/images/find-best-for-task-v1.gif)
+
+<sub><i>**Best spot for this task** balances a void's clock advantage against the light-delay latency of reaching it for your current Task Workload Size, then places the server where the net time saved is greatest.</i></sub>
+
+**Best spot for this task** maximizes **Net Gain** for your *current* Task Workload Size — it weighs a void's clock advantage against the round-trip light delay of reaching it. Bigger tasks justify deeper, farther voids (more compute to amortize the latency); smaller tasks favor closer spots. Change the Task Workload Size and the best spot can move. How it works: [Void Finding](docs/void-finding.md).
+
 #### Set the workload & read the results
 - **Task Workload Size field** — A wide, comma-formatted input in the top bar (entered in years, with the days equivalent beneath), setting the size of the computational job; longer tasks benefit more from time dilation. See [Understanding the Task Workload Size](#understanding-the-task-workload-size).
 - **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). A deep void runs fast (a real advantage); next to a bright star, that star's gravity slows it down, eroding or reversing the gain. This is what drives the *Server Clock Advantage*. Full details (formula, softening, worked example): [Gravitational Field Model](docs/gravitational-field.md).
