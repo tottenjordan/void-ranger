@@ -327,7 +327,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
 
   if (!webglAvailable()) {
     return (
-      <div className="w-full h-[500px] rounded-xl border border-gray-800 flex items-center justify-center p-6">
+      <div className="w-full h-[440px] rounded-xl border border-gray-800 flex items-center justify-center p-6">
         <div className="max-w-md text-sm text-gray-400 space-y-3">
           <p className="text-gray-300 font-medium">The 3D galaxy map needs WebGL, which this browser can't currently create.</p>
           <p>To enable it in Chrome:</p>
@@ -343,7 +343,7 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
   }
 
   return (
-    <div className="relative w-full h-[500px] rounded-xl border border-gray-800 overflow-hidden">
+    <div className="relative w-full h-[440px] rounded-xl border border-gray-800 overflow-hidden">
       <div className="absolute top-2 left-3 z-10 text-[10px] font-mono text-gray-500 pointer-events-none">
         Click to place a server · drag to orbit · scroll to zoom
       </div>
