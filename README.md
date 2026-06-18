@@ -2,7 +2,7 @@
 
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
-> An interactive application demonstrating the effects and complexity of relativistic computing.  
+> An interactive tool for exploring time dilation       
 > **Can time dilation be used as a computational resource?**
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
