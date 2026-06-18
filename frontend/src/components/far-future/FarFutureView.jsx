@@ -39,14 +39,14 @@ function PlainSummary({ taskSeconds, metrics }) {
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
       <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">In plain terms</p>
       <p className="text-sm text-gray-300 leading-relaxed">
-        Running this job <span className="text-gray-100 font-medium">on Earth</span> would take{' '}
-        <span className="font-mono text-amber-300">{relatableDuration(taskSeconds)}</span>. Offloaded to the{' '}
-        <span className="text-cyan-300 font-medium">Cosmic Server</span>, the same computation takes{' '}
-        <span className="font-mono text-cyan-300">{relatableDuration(compute)}</span> of Earth time
+        Running this job <span className="text-green-400 font-medium">on Earth</span> would take{' '}
+        <span className="font-mono text-green-400">{relatableDuration(taskSeconds)}</span>. Offloaded to the{' '}
+        <span className="text-cyan-400 font-medium">Cosmic Server</span>, the same computation takes{' '}
+        <span className="font-mono text-green-400">{relatableDuration(compute)}</span> of Earth time
         (its clock runs {faster ? 'faster' : 'slower'} than ours), plus{' '}
-        <span className="font-mono text-amber-300">{relatableDuration(comm)}</span> waiting for the round-trip
+        <span className="font-mono text-red-400">{relatableDuration(comm)}</span> waiting for the round-trip
         signal — a total wait of{' '}
-        <span className="font-mono text-amber-300">{relatableDuration(wait)}</span>.{' '}
+        <span className="font-mono text-amber-400">{relatableDuration(wait)}</span>.{' '}
         {saves ? (
           <>Net result: you <span className="text-green-400 font-medium">save {relatableDuration(Math.abs(net))}</span> versus computing at home.</>
         ) : (

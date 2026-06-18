@@ -154,7 +154,7 @@ Open http://localhost:5173
 - **Position-dependent server gravity** — The server's clock rate is computed from the **local gravitational potential of nearby catalog stars** (masses estimated from luminosity). A deep void runs fast (a real advantage); next to a bright star, that star's gravity slows it down, eroding or reversing the gain. This is what drives the *Server Clock Advantage*. Full details (formula, softening, worked example): [Gravitational Field Model](docs/gravitational-field.md).
 - **Metrics dashboard** — Six cards update live, each with a one-line description; time values are shown in years with a days equivalent beneath and a colored ▲/▼:
   - *Distance from Earth* — straight-line distance in parsecs (plus light-years and miles)
-  - *Server Clock Advantage* — how fast the server's clock ticks vs. Earth's (e.g. `1.063× Earth`); >1 (green) = void advantage, <1 (red) = denser region than Earth
+  - *Server Clock Advantage* — how fast the server's clock ticks vs. Earth's (e.g. `1.063× Earth`); >1 (cyan) = void advantage, <1 (red) = denser region than Earth
   - *Earth Compute Time* — Earth time elapsed while the server computes
   - *Earth Wait Time* — compute time + round-trip light delay
   - *Communication Cost* — the round-trip light delay (the fixed cost the dilation advantage must overcome)

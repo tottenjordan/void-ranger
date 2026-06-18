@@ -20,7 +20,7 @@ A proxy for job size measured in time rather than FLOPs or rows: "this job needs
 
 Computed as `d = √(x² + y² + z²)`. It's the single input to communication latency (`2d/c`); it does **not** affect the clock rate. `1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi`.
 
-**Server Clock Advantage** — how fast the Cosmic Server's clock ticks relative to Earth's; `>1` (green) is a void advantage, `<1` (red) means it sits in a denser region than Earth.
+**Server Clock Advantage** — how fast the Cosmic Server's clock ticks relative to Earth's; `>1` (cyan) is a void advantage, `<1` (red) means it sits in a denser region than Earth.
 
 Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a location's clock rate and `Φ` is the gravitational potential there (the softened sum of `−G·Mᵢ/r` over all catalog stars). Earth sits in the dense solar neighborhood, so `f_earth < 1` (slow clock); a deep void has `Φ → 0`, so `f_server → 1` (fast). `1.063×` means the server ticks 6.3% faster than Earth, so it finishes a job in less Earth time: `earth_compute = task ÷ advantage`. Real interstellar dilation is ~1 part in 10¹³ (invisible), so a `GRAVITY_EXAGGERATION` constant scales it into a visible few-percent effect — relative comparisons between placements are faithful; the absolute magnitude is not. For the full model (how proximity to other stars affects this, softening, and a worked example), see the [Gravitational Field Model](gravitational-field.md).
 
