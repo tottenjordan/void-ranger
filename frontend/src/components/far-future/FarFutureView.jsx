@@ -4,7 +4,7 @@ import ServerPlacer from './ServerPlacer'
 import VoidFinder from './VoidFinder'
 import Popover from './Popover'
 import MetricsDash from './MetricsDash'
-import { daysLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration } from '../../utils/format'
+import { daysLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration, cartesianToGalactic } from '../../utils/format'
 
 const LEGEND_ITEMS = [
   { swatch: 'dot', color: '#22c55e', label: 'Earth', desc: 'Deep in the gravity well of our dense solar-neighborhood.' },
@@ -94,7 +94,7 @@ function BreakevenLine({ breakeven, taskSeconds }) {
   )
 }
 
-function TopBar({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition, onPlaceServer }) {
+function TopBar({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition, onPlaceServer, deployCoords, onDeployCoordsChange }) {
   // The field is entered in YEARS (decimals allowed). Local text holds the raw
   // keystrokes while editing so decimals can be typed without the value being
   // reformatted mid-entry; it's re-grouped with commas on blur. taskSeconds is
@@ -126,7 +126,8 @@ function TopBar({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition, o
       <BreakevenLine breakeven={breakeven} taskSeconds={taskSeconds} />
       <span className="h-5 w-px bg-gray-700 hidden sm:block" />
       <Popover label="Deploy Cosmic Server">
-        {close => <ServerPlacer onPlaceServer={onPlaceServer} onDone={close} />}
+        {close => <ServerPlacer onPlaceServer={onPlaceServer} onDone={close}
+          coords={deployCoords} onCoordsChange={onDeployCoordsChange} />}
       </Popover>
       <Popover label="Find a Spot">
         {close => <VoidFinder taskSeconds={taskSeconds} onPlaceServer={onPlaceServer} onDone={close} />}
@@ -146,6 +147,9 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
   const [serverPosition, setServerPosition] = useState(null)
   const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
+  // Galactic coords shown in the Deploy form; kept here so a map-click placement
+  // updates them and they survive the popover closing/reopening.
+  const [deployCoords, setDeployCoords] = useState({ distance: 10, longitude: 0, latitude: 0 })
 
   useEffect(() => {
     fetch('/api/stars')
@@ -156,6 +160,8 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
 
   const placeServer = useCallback(async (coords) => {
     setServerPosition(coords)
+    // Sync the Deploy form to wherever the server landed (map click, finder, etc.).
+    setDeployCoords(cartesianToGalactic(coords.x, coords.y, coords.z))
     try {
       const res = await fetch('/api/physics/efficiency', {
         method: 'POST',
@@ -190,7 +196,8 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
     <div className="space-y-4">
       <TopBar taskSeconds={taskSeconds} onTaskSecondsChange={onTaskSecondsChange}
         breakeven={metrics ? metrics.breakeven_task_seconds : undefined}
-        serverPosition={serverPosition} onPlaceServer={placeServer} />
+        serverPosition={serverPosition} onPlaceServer={placeServer}
+        deployCoords={deployCoords} onDeployCoordsChange={setDeployCoords} />
       <GalaxyMap stars={stars} serverPosition={serverPosition} onPlaceServer={placeServer} />
       {metrics && (
         <MetricsDash
