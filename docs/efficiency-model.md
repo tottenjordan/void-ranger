@@ -99,6 +99,36 @@ A server deployed at galactic `(d = 400 pc, l = 30°, b = 40°)` — Cartesian
 | **Net Gain** = task − wait | 1.309×10¹¹ | **~4,150 yrs** (green) |
 | **Breakeven** = latency / (1 − f_earth/f_server) | 1.390×10¹² | **~44,084 yrs** |
 
+**Step by step** — the clock factors `f_earth`, `f_server` come from the
+[Gravitational Field Model](gravitational-field.md); the ratio `f_earth/f_server`
+is unitless, so the arithmetic works directly in years:
+
+```
+Server Clock Advantage = f_server / f_earth
+                       = 0.97949 / 0.92147   = 1.0630×
+
+Earth Compute Time     = task × (f_earth / f_server)        ( = task ÷ advantage )
+                       = 114,155 yr × (0.92147 / 0.97949)
+                       = 114,155 yr × 0.94076               ( = 114,155 ÷ 1.0630 )
+                       ≈ 107,393 yr
+
+Communication Cost     = 2d / c                             ≈ 2,611 yr   (round trip)
+
+Earth Wait Time        = Earth Compute Time + Communication Cost
+                       = 107,393 yr + 2,611 yr             ≈ 110,004 yr
+
+Net Gain               = Task Workload Size − Earth Wait Time
+                       = 114,155 yr − 110,004 yr           ≈ 4,150 yr   (positive → green ▲)
+
+Breakeven              = Communication Cost / (1 − f_earth/f_server)
+                       = 2,611 yr / (1 − 0.94076)
+                       = 2,611 yr / 0.05924                ≈ 44,084 yr
+```
+
+So **Net Gain draws on three on-screen metrics** — Task Workload Size, Earth
+Compute Time (which in turn depends on the Server Clock Advantage), and
+Communication Cost — via `Net Gain = Task − (Earth Compute Time + Communication Cost)`.
+
 Reading it: the void runs 6.3% faster than Earth, so the 114,155-year job
 finishes in ~107,393 Earth-years of compute; add the 2,611-year round trip and
 you wait ~110,004 years — still ~4,150 years *less* than the 114,155 years it
