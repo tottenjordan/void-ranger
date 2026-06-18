@@ -1,4 +1,4 @@
-import { useRef, useMemo, useEffect } from 'react'
+import { useRef, useMemo, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, PointMaterial, Float, Sparkles, Grid, Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
@@ -7,8 +7,83 @@ import { humanDuration } from '../../utils/format'
 const PARSEC_KM = 3.086e13
 const C_KM_S = 299792.458
 
+// How many bright named stars to persistently label at once.
+const MAX_LABELS = 8
+
+// Persistent labels for the brightest named stars currently inside the camera
+// frustum. Rendered as a child of StarField's rotating group, so the labels
+// share the group's transform and track the points without per-frame syncing.
+function StarLabels({ stars, spinRef }) {
+  const { camera } = useThree()
+  const [shownIndices, setShownIndices] = useState([])
+
+  // Precompute the named subset once (local positions + magnitude).
+  const named = useMemo(
+    () =>
+      stars
+        .map((s, i) => ({ i, s }))
+        .filter(({ s }) => s.name)
+        .map(({ i, s }) => ({ i, s, pos: new THREE.Vector3(s.x, s.y, s.z), mag: s.mag })),
+    [stars],
+  )
+
+  // Reused temporaries — avoid per-frame allocations in the hot path.
+  const frustum = useRef(new THREE.Frustum())
+  const projScreenMatrix = useRef(new THREE.Matrix4())
+  const worldTmp = useRef(new THREE.Vector3())
+  const elapsed = useRef(0)
+  const lastKey = useRef('')
+
+  useFrame((_, delta) => {
+    if (!spinRef.current) return
+    // Throttle to ~4 Hz; frustum culling every frame is wasteful.
+    elapsed.current += delta
+    if (elapsed.current < 0.25) return
+    elapsed.current = 0
+
+    projScreenMatrix.current.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+    frustum.current.setFromProjectionMatrix(projScreenMatrix.current)
+
+    const matrixWorld = spinRef.current.matrixWorld
+    const picked = []
+    for (const entry of named) {
+      worldTmp.current.copy(entry.pos).applyMatrix4(matrixWorld)
+      if (frustum.current.containsPoint(worldTmp.current)) picked.push(entry)
+    }
+    picked.sort((a, b) => a.mag - b.mag) // brightest (lowest mag) first
+    const top = picked.slice(0, MAX_LABELS)
+
+    // Only setState when the chosen set actually changed.
+    const key = top.map(p => p.i).join(',')
+    if (key !== lastKey.current) {
+      lastKey.current = key
+      setShownIndices(top.map(p => p.i))
+    }
+  })
+
+  return (
+    <>
+      {shownIndices.map(i => {
+        const s = stars[i]
+        return (
+          <Html
+            key={i}
+            position={[s.x, s.y, s.z]}
+            style={{ pointerEvents: 'none', transform: 'translate(-50%, -140%)' }}
+          >
+            <span className="text-[10px] font-mono text-gray-200/90 bg-gray-950/70 px-1 py-0.5 rounded whitespace-nowrap">
+              {s.name}
+            </span>
+          </Html>
+        )
+      })}
+    </>
+  )
+}
+
 function StarField({ stars }) {
-  const ref = useRef()
+  const spinRef = useRef()
+  const [hoveredIndex, setHoveredIndex] = useState(null)
 
   const { positions, colors } = useMemo(() => {
     const positions = new Float32Array(stars.length * 3)
@@ -30,24 +105,54 @@ function StarField({ stars }) {
   }, [stars])
 
   useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 0.005
+    if (spinRef.current) spinRef.current.rotation.y += delta * 0.005
   })
 
+  const handlePointerMove = (e) => {
+    e.stopPropagation()
+    if (e.index != null) setHoveredIndex(e.index)
+  }
+
+  const handlePointerOut = () => setHoveredIndex(null)
+
+  const hovered = hoveredIndex != null ? stars[hoveredIndex] : null
+  const hoveredDistance = hovered
+    ? Math.sqrt(hovered.x ** 2 + hovered.y ** 2 + hovered.z ** 2)
+    : 0
+
   return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" array={positions} count={stars.length} itemSize={3} />
-        <bufferAttribute attach="attributes-color" array={colors} count={stars.length} itemSize={3} />
-      </bufferGeometry>
-      <PointMaterial
-        size={1.2}
-        sizeAttenuation
-        vertexColors
-        transparent
-        opacity={0.85}
-        depthWrite={false}
-      />
-    </points>
+    <group ref={spinRef}>
+      <points onPointerMove={handlePointerMove} onPointerOut={handlePointerOut}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" array={positions} count={stars.length} itemSize={3} />
+          <bufferAttribute attach="attributes-color" array={colors} count={stars.length} itemSize={3} />
+        </bufferGeometry>
+        <PointMaterial
+          size={1.2}
+          sizeAttenuation
+          vertexColors
+          transparent
+          opacity={0.85}
+          depthWrite={false}
+        />
+      </points>
+      <StarLabels stars={stars} spinRef={spinRef} />
+      {hovered && (
+        <Html
+          position={[hovered.x, hovered.y, hovered.z]}
+          style={{ pointerEvents: 'none', transform: 'translate(-50%, -115%)' }}
+        >
+          <div className="flex flex-col items-center whitespace-nowrap">
+            <span className="text-sm font-bold font-mono text-gray-100 bg-gray-950/80 px-2 py-0.5 rounded">
+              {hovered.name || hovered.desig}
+            </span>
+            <span className="text-[10px] font-mono text-gray-400 bg-gray-950/70 px-1.5 py-0.5 rounded mt-0.5">
+              {hovered.con} · {hoveredDistance.toFixed(1)} pc · mag {hovered.mag}
+            </span>
+          </div>
+        </Html>
+      )}
+    </group>
   )
 }
 
@@ -347,7 +452,10 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
       <div className="absolute top-2 left-3 z-10 text-[10px] font-mono text-gray-500 pointer-events-none">
         Click to place a server · drag to orbit · scroll to zoom
       </div>
-      <Canvas camera={{ position: [0, 200, 400], fov: 60 }}>
+      <Canvas
+        camera={{ position: [0, 200, 400], fov: 60 }}
+        raycaster={{ params: { Points: { threshold: 1.5 } } }}
+      >
         <BackgroundSphere />
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 100, 0]} intensity={0.2} color="#1e3a5f" />
