@@ -141,6 +141,7 @@ Open http://localhost:5173
 - **Orbit marker (orbit-ring)** — A decorative cyan ring with drifting sparkles around the Cosmic Server, marking its position so it's easy to spot among the 8,920 stars. A **visual locator only** — not a real orbit, and it carries no physics.
 - **Light-speed communication line** — A dashed **red** line from Earth to the server, carrying an animated **red signal pulse** on the round trip; its label shows the round-trip travel time (RTT).
 - **Distance dimension line** — A separate dashed **violet** line, offset parallel above the comm line (architectural-dimension style, so the two never overlap), labeled with the straight-line Earth↔server distance in parsecs. The offset is deliberate (not a glitch) and **scales with distance** (≈18%, with a small floor), so far placements sit noticeably higher above the red comm line.
+- **Star labels** — The map auto-labels the **brightest named stars currently in view** (up to 8, e.g. Sirius, Vega, Arcturus) — the set updates as you orbit and zoom, so a region's notable stars surface without cluttering the field. **Hover any star** (named or not) for a tooltip with its name or catalog designation, constellation, distance, and apparent magnitude.
 - **Map Key** — A legend below the metrics row explaining every on-screen element.
 
 #### Find deepest void
