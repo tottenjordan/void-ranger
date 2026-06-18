@@ -49,6 +49,18 @@ Earth time you scale by how Earth's clock compares to the server's:
 A faster server clock (`f_server` larger) shrinks that number — that's the whole
 dilation advantage, in one ratio.
 
+> **The two ratios are reciprocals — don't confuse them.** The dashboard shows
+> the **Server Clock Advantage** as `f_server / f_earth` (e.g. `1.0478×` — "the
+> server ticks 1.0478× faster"), but **Earth Compute Time** scales the task by
+> the *flipped* ratio `f_earth / f_server` (e.g. `0.95437`). These are the same
+> fact inverted: `0.95437 = 1 / 1.0478`, so
+> `Earth Compute = task × (f_earth/f_server) = task ÷ (f_server/f_earth) = task ÷ advantage`.
+> A faster clock means **less** Earth time passes, so you *divide* by the
+> advantage. Using `1.0478×` here instead would give `~104,780 yr` for a
+> 100,000-yr job — the work taking *longer* in Earth time despite the faster
+> clock, which is backwards. The reciprocal is exactly what turns the faster
+> clock into a time *saving*.
+
 ## 3. The breakeven workload
 
 Substitute and rearrange. Net gain is positive only when:
@@ -156,6 +168,12 @@ color-coded to match the metric cards:
 It mirrors this section exactly: `clock advantage = f_server / f_earth`,
 `Earth compute = task × (f_earth / f_server)`, `Earth wait = compute + comm cost`,
 `net gain = task − wait`, and `breakeven = comm cost ÷ (1 − f_earth/f_server)`.
+
+Note the **clock advantage** and **Earth compute** lines use *reciprocal*
+ratios (`f_server/f_earth` vs. `f_earth/f_server`) — see [Why the clock ratio is
+`f_earth / f_server`](#why-the-clock-ratio-is-f_earth--f_server) above. They look
+mismatched at a glance but are the same number flipped, because a faster clock
+means the job finishes in *less* Earth time.
 
 ## 5. Caveats
 
