@@ -144,6 +144,19 @@ curl -s -X POST http://localhost:8000/api/physics/efficiency \
   -d '{"x":265.37,"y":153.21,"z":257.12,"task_seconds":3599930880000}'
 ```
 
+### Seeing it in the app
+
+You don't have to read the table — the dashboard shows this same breakdown live.
+The *In Plain Terms* panel under the metrics has a **"Show the math"** toggle that
+expands the step-by-step formulas, recomputed for the current placement and
+color-coded to match the metric cards:
+
+![The app's "Show the math" panel showing the live formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven](images/show-the-math.png)
+
+It mirrors this section exactly: `clock advantage = f_server / f_earth`,
+`Earth compute = task × (f_earth / f_server)`, `Earth wait = compute + comm cost`,
+`net gain = task − wait`, and `breakeven = comm cost ÷ (1 − f_earth/f_server)`.
+
 ## 5. Caveats
 
 - **Identical hardware is assumed.** The model assumes the same job costs the same

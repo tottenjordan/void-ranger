@@ -204,6 +204,14 @@ This capture shows a server deployed at **400 pc** (a deep void) with a **114,15
 - The **In plain terms** panel below the metrics translates that into relatable units: *running this job on Earth would take ~114,000 years; offloaded to the Cosmic Server the same computation takes ~107,000 years of Earth time plus ~2,600 years of signal round-trip — a total ~110,000-year wait, a net saving of ~4,150 years.*
 - Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the physics models.
 
+#### Show the math
+
+The *In Plain Terms* panel has a **"Show the math"** toggle that expands the live, step-by-step calculation behind the summary — recomputed for the current placement and color-coded to match the metric cards.
+
+![The "Show the math" panel: live step-by-step formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven, computed for the current placement](docs/images/show-the-math.png)
+
+<sub><i>Every value the dashboard shows is derived here: clock advantage = f_server / f_earth; Earth compute = task × (f_earth / f_server); Earth wait = compute + comm cost; net gain = task − wait; breakeven = comm cost ÷ (1 − f_earth/f_server). Full derivation in [Efficiency & Breakeven](docs/efficiency-model.md).</i></sub>
+
 ---
 
 ### Interplanetary DevOps 🚧 WIP
