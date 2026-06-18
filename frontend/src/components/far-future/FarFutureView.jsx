@@ -96,7 +96,7 @@ function BreakevenLine({ breakeven, taskSeconds }) {
   )
 }
 
-function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
+function TaskField({ taskSeconds, onTaskSecondsChange, breakeven, serverPosition }) {
   // The field is entered in YEARS (decimals allowed). Local text holds the raw
   // keystrokes while editing so decimals can be typed without the value being
   // reformatted mid-entry; it's re-grouped with commas on blur. taskSeconds is
@@ -126,27 +126,12 @@ function TaskField({ taskSeconds, onTaskSecondsChange, breakeven }) {
       />
       <span className="text-[11px] font-mono text-gray-300 whitespace-nowrap">{daysLabel(taskSeconds)}</span>
       <BreakevenLine breakeven={breakeven} taskSeconds={taskSeconds} />
-      <span className="text-[11px] italic text-gray-500 sm:ml-auto">
-        processing time for a program on a given server
+      <span className="text-[11px] font-mono text-gray-400 sm:ml-auto whitespace-nowrap" title="Current Cosmic Server coordinates (parsecs).">
+        <span className="text-gray-500">Server: </span>
+        {serverPosition
+          ? `(${serverPosition.x.toFixed(1)}, ${serverPosition.y.toFixed(1)}, ${serverPosition.z.toFixed(1)}) pc`
+          : 'not placed'}
       </span>
-    </div>
-  )
-}
-
-// Compact card showing the current placement (or a hint before one is set).
-function ServerPositionCard({ serverPosition }) {
-  return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-      <h3 className="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Server Position</h3>
-      {serverPosition ? (
-        <p className="text-sm font-mono text-gray-300 mt-2">
-          ({serverPosition.x.toFixed(1)}, {serverPosition.y.toFixed(1)}, {serverPosition.z.toFixed(1)}) pc
-        </p>
-      ) : (
-        <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-          No server placed yet — click the map, deploy coordinates, or find a spot.
-        </p>
-      )}
     </div>
   )
 }
@@ -199,15 +184,13 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
   return (
     <div className="space-y-4">
       <TaskField taskSeconds={taskSeconds} onTaskSecondsChange={onTaskSecondsChange}
-        breakeven={metrics ? metrics.breakeven_task_seconds : undefined} />
+        breakeven={metrics ? metrics.breakeven_task_seconds : undefined}
+        serverPosition={serverPosition} />
       <GalaxyMap stars={stars} serverPosition={serverPosition} onPlaceServer={placeServer} />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         <ServerPlacer onPlaceServer={placeServer} />
         <VoidFinder onPlaceServer={placeServer} taskSeconds={taskSeconds} />
-        <div className="space-y-4">
-          <ServerPositionCard serverPosition={serverPosition} />
-          <MapLegend />
-        </div>
+        <MapLegend />
       </div>
       {metrics && (
         <MetricsDash
