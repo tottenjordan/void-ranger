@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -18,15 +20,22 @@ class EfficiencyRequest(BaseModel):
     y: float
     z: float
     task_seconds: float
+    scale: Literal["solar", "cosmic"] = "solar"
 
 
 class DeepestVoidRequest(BaseModel):
+    # max_distance_pc is the search radius in the scale's length unit:
+    # parsecs for "solar", megaparsecs for "cosmic".
     max_distance_pc: float = 300.0
+    scale: Literal["solar", "cosmic"] = "solar"
 
 
 class BestSpotRequest(BaseModel):
     task_seconds: float
+    # max_distance_pc is the search radius in the scale's length unit:
+    # parsecs for "solar", megaparsecs for "cosmic".
     max_distance_pc: float = 300.0
+    scale: Literal["solar", "cosmic"] = "solar"
 
 
 class EfficiencyResponse(BaseModel):

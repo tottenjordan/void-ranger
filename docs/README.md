@@ -14,6 +14,7 @@ model and the on-screen terms.
 | [Light-Speed Latency](light-latency.md) | The round-trip communication delay (`2d/c`), why it limits void-hunting, and a distance→delay table. |
 | [Void Finding](void-finding.md) | How the app auto-locates good placements: what "low gravity" really means (sum over all stars, not distance from Earth), the search methods, and what the **Find deepest void** / **Best spot** buttons do. |
 | [Scaling the Universe](scaling-the-universe.md) | Options for growing beyond the solar neighborhood — bigger star/galaxy catalogs (HYG, Gaia, GLADE+), the data/rendering/physics trade-offs, GCP fit, and the chosen cosmic-web direction. |
+| [Cosmic Web scale](cosmic-web.md) | The galaxy-scale mode (2MRS, megaparsecs): catalog, the scale-parameterized physics, real cosmic voids, latency in millions of years, and caveats. |
 
 ## How they fit together
 

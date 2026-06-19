@@ -29,9 +29,9 @@ async def to_cartesian(req: GalacticCoordsRequest):
 
 @router.post("/api/physics/efficiency", response_model=EfficiencyResponse)
 async def efficiency(req: EfficiencyRequest):
-    f_earth = earth_dilation_factor()
-    f_server = server_dilation_factor(req.x, req.y, req.z)
-    latency = light_latency(req.x, req.y, req.z)
+    f_earth = earth_dilation_factor(req.scale)
+    f_server = server_dilation_factor(req.x, req.y, req.z, req.scale)
+    latency = light_latency(req.x, req.y, req.z, req.scale)
     result = compute_efficiency(req.task_seconds, f_earth, f_server, latency)
     return {
         **result,
@@ -45,9 +45,9 @@ async def efficiency(req: EfficiencyRequest):
 
 @router.post("/api/physics/best-void", response_model=CartesianResponse)
 async def best_void(req: DeepestVoidRequest):
-    return find_deepest_void(req.max_distance_pc)
+    return find_deepest_void(req.max_distance_pc, req.scale)
 
 
 @router.post("/api/physics/best-spot", response_model=CartesianResponse)
 async def best_spot(req: BestSpotRequest):
-    return find_best_spot(req.task_seconds, req.max_distance_pc)
+    return find_best_spot(req.task_seconds, req.max_distance_pc, req.scale)

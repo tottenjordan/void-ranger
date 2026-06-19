@@ -49,3 +49,21 @@ Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a 
 **Find deepest void / Best spot for this task** — the two auto-placement buttons (with an adjustable search radius).
 
 *Find deepest void* searches the volume within the radius for the **lowest local gravitational potential** — the emptiest pocket, farthest from *all* stars (not the point farthest from Earth), where the clock runs fastest. *Best spot for this task* instead maximizes **net gain** (`task·(1 − f_earth/f_server) − latency`), balancing the void's clock advantage against light-delay latency for the current Task Workload Size. The radius is a latency budget, not a gravity setting. Full write-up: [Void Finding](void-finding.md).
+
+## Cosmic Web scale
+
+**Scale toggle** — the top-bar switch between **Solar Neighborhood** (stars, parsecs) and **Cosmic Web** (galaxies, megaparsecs).
+
+Both run the *same* model — place a node in a void, weigh the clock advantage against light-delay latency — just zoomed out by ~a million. Switching swaps the catalog, the distance unit (pc ↔ Mpc), and the gravity sources (stars ↔ galaxies). Full write-up: [The Cosmic Web scale](cosmic-web.md).
+
+**Galaxy (Cosmic Web)** — a point in the galaxy field, from the 2MASS Redshift Survey (2MRS).
+
+~43,500 galaxies positioned by Hubble distance (`d = cz / H0`, `H0 = 70`); ~120 Mpc median, reaching a few hundred Mpc. Mass is a crude K-band stellar-mass proxy. 18 famous galaxies (Andromeda, Centaurus A, …) are anchored at literature distances and labeled by name; hovering any other shows its 2MASX designation, distance, and magnitude.
+
+**Megaparsec (Mpc)** — the Cosmic Web distance unit; 1 Mpc ≈ 3.26 million light-years ≈ 10⁶ pc.
+
+At these distances round-trip latency `2d/c` is enormous (~327 million years at 50 Mpc, ~1.3 billion at 200 Mpc), so only huge jobs in *nearby* voids ever net a gain — the trade-off the dashboard exists to show.
+
+**Cosmic void** — a genuinely under-dense region of the cosmic web (few galaxies, weak gravity), where a node's clock runs fastest.
+
+Unlike the loose "gap between nearby stars" at solar scale, these are *real* voids in large-scale structure. *Find deepest void* at this scale points at one. The gravitational-redshift difference between voids and galaxy clusters is a real, measured effect — so the cosmic scale uses a much smaller exaggeration than the stellar scale.

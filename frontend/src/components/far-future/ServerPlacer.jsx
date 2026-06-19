@@ -13,7 +13,7 @@ const inputCls =
 
 // Controlled by the parent so a map-click placement can update these inputs and
 // the values persist while the popover is closed.
-export default function ServerPlacer({ onPlaceServer, onDone, coords, onCoordsChange }) {
+export default function ServerPlacer({ onPlaceServer, onDone, coords, onCoordsChange, unit = 'pc' }) {
   const { distance, longitude, latitude } = coords
   const setField = (key, value) => onCoordsChange({ ...coords, [key]: value })
 
@@ -40,9 +40,9 @@ export default function ServerPlacer({ onPlaceServer, onDone, coords, onCoordsCh
       </p>
       <div className="grid grid-cols-3 gap-3">
         <Field
-          label="Distance (pc)"
-          hint="Parsecs from Earth (1 pc ≈ 3.26 ly). Drives round-trip latency."
-          tooltip="How far the server sits from Earth, in parsecs. This is the only field that affects communication latency: round-trip delay = 2 × distance ÷ c."
+          label={`Distance (${unit})`}
+          hint={`Distance from origin in ${unit}. Drives round-trip latency.`}
+          tooltip={`How far the server sits from the origin, in ${unit}. This is the only field that affects communication latency: round-trip delay = 2 × distance ÷ c.`}
         >
           <input type="number" min="0.1" step="1" value={distance}
             onChange={e => setField('distance', Number(e.target.value))} className={inputCls} />

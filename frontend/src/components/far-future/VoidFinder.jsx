@@ -1,12 +1,14 @@
 import { useState } from 'react'
+import { SCALE_UI } from './FarFutureView'
 
 const inputCls =
   'w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm font-mono text-gray-100 focus:border-cyan-500 focus:outline-none'
 
 // Auto-placement card: searches the backend for a good spot and drops the server
 // there (the parent's onPlaceServer handles metrics + camera fly-to).
-export default function VoidFinder({ onPlaceServer, taskSeconds, onDone }) {
-  const [radius, setRadius] = useState(300)
+export default function VoidFinder({ onPlaceServer, taskSeconds, onDone, scale = 'solar' }) {
+  const ui = SCALE_UI[scale]
+  const [radius, setRadius] = useState(ui.defaultRadius)
   const [searching, setSearching] = useState(false)
 
   const findSpot = async (endpoint, body) => {
@@ -36,7 +38,7 @@ export default function VoidFinder({ onPlaceServer, taskSeconds, onDone }) {
           className="block text-xs text-gray-400 mb-1"
           title="Caps how far from Earth the search looks. The cap is a latency budget — it does not change the gravity; the search evaluates every star's pull to find the emptiest pocket."
         >
-          Search radius (pc)
+          Search radius ({ui.unit})
         </label>
         <input type="number" min="1" step="10" value={radius}
           onChange={e => setRadius(Number(e.target.value))} className={inputCls} />
@@ -45,7 +47,7 @@ export default function VoidFinder({ onPlaceServer, taskSeconds, onDone }) {
         </p>
       </div>
       <button
-        onClick={() => findSpot('/api/physics/best-void', { max_distance_pc: radius })}
+        onClick={() => findSpot('/api/physics/best-void', { max_distance_pc: radius, scale })}
         disabled={searching}
         title="Find the lowest-gravity spot within the radius — the emptiest pocket, farthest from all stars, where the clock runs fastest."
         className="w-full bg-gray-800 hover:bg-gray-700 border border-cyan-700 text-cyan-300 font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
@@ -53,7 +55,7 @@ export default function VoidFinder({ onPlaceServer, taskSeconds, onDone }) {
         {searching ? 'Searching…' : 'Find deepest void'}
       </button>
       <button
-        onClick={() => findSpot('/api/physics/best-spot', { task_seconds: taskSeconds, max_distance_pc: radius })}
+        onClick={() => findSpot('/api/physics/best-spot', { task_seconds: taskSeconds, max_distance_pc: radius, scale })}
         disabled={searching}
         title="Find the spot that maximizes net gain — balances the void's clock advantage against light-delay latency for your current Task Workload Size."
         className="w-full bg-gray-800 hover:bg-gray-700 border border-green-700 text-green-300 font-medium py-2 rounded-lg transition-colors disabled:opacity-50"

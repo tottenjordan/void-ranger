@@ -128,3 +128,57 @@ def test_best_spot_beats_a_reference_point_for_a_big_task():
         return task * (1 - f_e / f_s) - light_latency(x, y, z)
 
     assert net(s["x"], s["y"], s["z"]) >= net(30.0, 0.0, 0.0)
+
+
+# --- Cosmic scale -----------------------------------------------------------
+
+def test_cosmic_earth_dilation_factor_finite_in_unit_interval():
+    fe = earth_dilation_factor("cosmic")
+    assert math.isfinite(fe)
+    assert 0.0 < fe <= 1.0
+
+
+def test_cosmic_deepest_void_within_radius_with_advantage():
+    from app.services.physics import find_deepest_void, server_dilation_factor
+    v = find_deepest_void(max_distance_pc=100.0, scale="cosmic")  # radius in Mpc
+    d = (v["x"] ** 2 + v["y"] ** 2 + v["z"] ** 2) ** 0.5
+    assert d <= 100.0 + 1e-6
+    adv = (server_dilation_factor(v["x"], v["y"], v["z"], "cosmic")
+           / earth_dilation_factor("cosmic"))
+    assert adv > 1.0
+
+
+def test_cosmic_advantage_in_calibrated_band():
+    # The calibrated cosmic exaggeration targets a modest 1.03-1.10 edge.
+    from app.services.physics import find_deepest_void, server_dilation_factor
+    v = find_deepest_void(max_distance_pc=100.0, scale="cosmic")
+    adv = (server_dilation_factor(v["x"], v["y"], v["z"], "cosmic")
+           / earth_dilation_factor("cosmic"))
+    assert 1.03 <= adv <= 1.10
+
+
+def test_cosmic_compute_efficiency_positive_for_big_task():
+    from app.services.physics import find_deepest_void, server_dilation_factor
+    v = find_deepest_void(max_distance_pc=100.0, scale="cosmic")
+    f_earth = earth_dilation_factor("cosmic")
+    f_server = server_dilation_factor(v["x"], v["y"], v["z"], "cosmic")
+    latency = light_latency(v["x"], v["y"], v["z"], "cosmic")
+    task = 1e22  # huge cosmic-scale task to clear the enormous Mpc latency
+    result = compute_efficiency(task, f_earth, f_server, latency)
+    assert math.isfinite(result["net_gain"])
+    assert result["net_gain"] > 0
+
+
+def test_solar_scale_regression_matches_default():
+    # Explicit regression: scale="solar" must equal the historical behavior.
+    from app.services.physics import find_deepest_void, server_dilation_factor
+    v_default = find_deepest_void(300.0)
+    v_solar = find_deepest_void(300.0, scale="solar")
+    assert v_default == v_solar
+    # Deterministic and advantage > 1 as before.
+    assert find_deepest_void(300.0, scale="solar") == v_solar
+    adv = (server_dilation_factor(v_solar["x"], v_solar["y"], v_solar["z"], "solar")
+           / earth_dilation_factor("solar"))
+    assert adv > 1.0
+    # solar earth factor matches the no-arg default.
+    assert earth_dilation_factor("solar") == earth_dilation_factor()
