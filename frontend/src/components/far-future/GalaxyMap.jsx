@@ -81,7 +81,7 @@ function StarLabels({ stars, spinRef }) {
   )
 }
 
-function StarField({ stars }) {
+function StarField({ stars, unit }) {
   const spinRef = useRef()
   const [hoveredIndex, setHoveredIndex] = useState(null)
 
@@ -147,7 +147,7 @@ function StarField({ stars }) {
               {hovered.name || hovered.desig}
             </span>
             <span className="text-[10px] font-mono text-gray-400 bg-gray-950/70 px-1.5 py-0.5 rounded mt-0.5">
-              {hovered.con} · {hoveredDistance.toFixed(1)} pc · mag {hovered.mag}
+              {hovered.con ? `${hovered.con} · ` : ''}{hoveredDistance.toFixed(1)} {unit} · mag {hovered.mag}
             </span>
           </div>
         </Html>
@@ -156,7 +156,7 @@ function StarField({ stars }) {
   )
 }
 
-function EarthMarker() {
+function EarthMarker({ originLabel }) {
   return (
     <group position={[0, 0, 0]}>
       <mesh>
@@ -167,7 +167,7 @@ function EarthMarker() {
           so it stays clear of the object at any zoom). */}
       <Html position={[0, 2, 0]} style={{ pointerEvents: 'none', transform: 'translate(-50%, -120%)' }}>
         <span className="text-sm font-bold font-mono text-green-400 bg-gray-950/80 px-2 py-0.5 rounded whitespace-nowrap">
-          Earth
+          {originLabel}
         </span>
       </Html>
     </group>
@@ -236,7 +236,7 @@ function CommLine({ serverPosition }) {
 // A dimension line (architectural style) showing the straight-line Earth↔server
 // distance. Drawn parallel to and offset above the comm line so the two never
 // overlap, with the distance label at its midpoint.
-function DistanceLine({ serverPosition }) {
+function DistanceLine({ serverPosition, unit }) {
   const { points, mid, offset } = useMemo(() => {
     const sx = serverPosition?.x ?? 0
     const sy = serverPosition?.y ?? 0
@@ -264,7 +264,7 @@ function DistanceLine({ serverPosition }) {
       />
       <Html position={mid} center style={{ pointerEvents: 'none' }}>
         <span className="text-[10px] font-bold font-mono text-violet-300 bg-gray-950/80 px-1.5 py-0.5 rounded whitespace-nowrap">
-          {distPc.toFixed(1)} pc
+          {distPc.toFixed(1)} {unit}
         </span>
       </Html>
     </group>
@@ -412,7 +412,7 @@ function webglAvailable() {
 
 const CLICK_DRAG_THRESHOLD_PX = 5
 
-export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
+export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit = 'pc', originLabel = 'Earth' }) {
   const pointerDown = useRef(null)
 
   const handlePointerDown = (e) => {
@@ -460,11 +460,11 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer }) {
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 100, 0]} intensity={0.2} color="#1e3a5f" />
         <Stars radius={800} depth={200} count={3000} factor={2} fade speed={0.3} saturation={0.1} />
-        <StarField stars={stars} />
+        <StarField stars={stars} unit={unit} />
         <GravityWell />
-        <EarthMarker />
+        <EarthMarker originLabel={originLabel} />
         <CommLine serverPosition={serverPosition} />
-        <DistanceLine serverPosition={serverPosition} />
+        <DistanceLine serverPosition={serverPosition} unit={unit} />
         <ServerMarker position={serverPosition} />
         <Grid
           cellSize={50}

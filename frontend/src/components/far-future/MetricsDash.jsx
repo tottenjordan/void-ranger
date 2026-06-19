@@ -63,9 +63,16 @@ function milesInWords(miles) {
   return `${Math.round(miles).toLocaleString()} miles`
 }
 
-function DistanceSub({ pc }) {
-  const ly = pc * LY_PER_PC
-  const miles = pc * MILES_PER_PC
+// Secondary distance readout. For the solar scale the raw value is in pc, so we
+// show light-years + miles. For the cosmic scale the value is in Mpc; the same
+// pc→ly factor converts Mpc→Mly (millions of light-years), a tidy light-travel hint.
+function DistanceSub({ value, unit }) {
+  if (unit === 'Mpc') {
+    const mly = value * LY_PER_PC // Mpc × 3.262 = Mly
+    return <span className="block">≈ {mly.toFixed(1)} Mly light-travel</span>
+  }
+  const ly = value * LY_PER_PC
+  const miles = value * MILES_PER_PC
   const lyStr = ly < 10000 ? ly.toFixed(2) : ly.toExponential(2)
   return (
     <>
@@ -75,7 +82,7 @@ function DistanceSub({ pc }) {
   )
 }
 
-export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTime, earthWaitTime, communicationCost, netGain }) {
+export default function MetricsDash({ distancePc, unit = 'pc', originLabel = 'Earth', clockAdvantage, earthComputeTime, earthWaitTime, communicationCost, netGain }) {
   const animDistance = useAnimatedValue(distancePc ?? 0)
   const animAdvantage = useAnimatedValue(clockAdvantage ?? 1)
   const animCompute = useAnimatedValue(earthComputeTime ?? 0)
@@ -90,12 +97,12 @@ export default function MetricsDash({ distancePc, clockAdvantage, earthComputeTi
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <MetricCard
-        label="Distance from Earth"
-        value={`${animDistance.toFixed(2)} pc`}
-        sub={<DistanceSub pc={animDistance} />}
+        label={`Distance from ${originLabel}`}
+        value={`${animDistance.toFixed(2)} ${unit}`}
+        sub={<DistanceSub value={animDistance} unit={unit} />}
         color="text-violet-300 hover:shadow-violet-500/10"
-        tooltip="Straight-line distance from Earth to the Cosmic Server. Shown in parsecs, light-years, and miles (1 pc ≈ 3.26 ly ≈ 1.92×10¹³ mi). This sets the round-trip communication latency."
-        desc="Straight-line Earth↔server distance; sets the round-trip latency."
+        tooltip={`Straight-line distance from ${originLabel} to the Cosmic Server, in ${unit}. This sets the round-trip communication latency.`}
+        desc={`Straight-line ${originLabel}↔server distance; sets the round-trip latency.`}
       />
       <MetricCard
         label="Server Clock Advantage"
