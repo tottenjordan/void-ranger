@@ -44,14 +44,17 @@ It runs at **two scales**, switched with a toggle in the top bar: **Solar Neighb
 ## Architecture
 
 ```
-React Frontend (Vite + Tailwind + Three.js)
+React Frontend (Vite + Tailwind + Three.js) — Solar Neighborhood / Cosmic Web scales
   │
   ├── /api/*  →  FastAPI Backend (Python)
   │                ├── POST /api/physics/cartesian    — galactic → Cartesian coords
-  │                ├── POST /api/physics/efficiency   — dilation + latency metrics + breakeven task size
-  │                └── GET  /api/stars                — processed HYG star catalog (with mass)
+  │                ├── POST /api/physics/efficiency   — dilation + latency metrics + breakeven (scale: solar|cosmic)
+  │                ├── POST /api/physics/best-void     — deepest-void search (scale-aware)
+  │                ├── POST /api/physics/best-spot     — max net-gain placement (scale-aware)
+  │                ├── GET  /api/stars                — HYG star catalog (solar scale; mass + names)
+  │                └── GET  /api/galaxies             — 2MRS galaxy catalog (cosmic scale)
   │
-  └── Star data  ←  HYG Database (8,920 stars w/ mass estimates, processed from v41)
+  └── Catalogs  ←  HYG (8,920 stars, parsecs) · 2MRS (43,510 galaxies, megaparsecs)
 ```
 
 ## Prerequisites
@@ -87,6 +90,19 @@ python scripts/process_stars.py
 ```
 
 The actively maintained HYG source is at https://codeberg.org/astronexus/hyg.
+
+### Process Galaxy Data (one-time, Cosmic Web scale)
+
+The processed `galaxies.json` is included in the repo. To regenerate it, fetch the
+**2MASS Redshift Survey** (VizieR `J/ApJS/199/26`) — `astroquery` is installed
+with `uv sync --all-extras`:
+
+```bash
+# Pull 2MRS from VizieR and process into galaxies.json (~43,500 galaxies, Mpc)
+uv run python scripts/process_galaxies.py
+```
+
+See [The Cosmic Web scale](docs/cosmic-web.md) for the catalog and physics details.
 
 ### Frontend
 
@@ -183,13 +199,13 @@ Open http://localhost:5173
 - Provides a hands-on way to explore the Schwarzschild metric without equations.
 - Illustrates a key asymmetry: Earth's gravitational well slows our clocks, and escaping it (into a void) is computationally advantageous — the opposite of the sci-fi trope of "computing near a black hole."
 
-**Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances even though the server's clock advantage is constant. Now increase the Task Workload Size into the hundreds of millions of hours — at what distance does the dilation benefit finally overcome the latency cost?
+**Try this:** Place a server at 1 parsec, note the Net Gain/Loss, then move it to 100 parsecs. Watch how the latency dominates at large distances even though the server's clock advantage is constant. Now increase the Task Workload Size into the hundreds of thousands of years — at what distance does the dilation benefit finally overcome the latency cost?
 
 #### Understanding the Task Workload Size
 
-The **Task Workload Size** input in the top bar is the *size of the computational job*, expressed as a duration: how many hours of compute the job requires on whatever machine runs it. It is simply the size of the computational job.
+The **Task Workload Size** input in the top bar is the *size of the computational job*, expressed as a duration: how many **years** of compute the job requires on whatever machine runs it.
 
-**What it represents:** Think of it as "this job needs *N* hours of CPU time to finish." A small value like `1` (one hour) is a quick job; a large value like `10,000,000` (≈1,140 years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same amount of compute time on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth. (Internally the physics works in seconds; the field and metric cards just display hours.)
+**What it represents:** Think of it as "this job needs *N* years of CPU time to finish." A small value like `1` (one year) is a modest job; a large value like `1,000,000` (a million years) is a massive batch computation. It is a proxy for workload size measured in time rather than FLOPs or rows. The model assumes the **same job costs the same amount of compute time on either machine** (identical hardware), each measured in that machine's *own* clock — what differs is how fast those clocks tick relative to Earth. (Internally the physics works in seconds; the field is entered in years and the metric cards show years with a days equivalent beneath.)
 
 **Why it's the key lever:** Task size determines whether offloading to a Cosmic Server actually pays off. From the efficiency formula:
 
@@ -200,7 +216,7 @@ $$
 - The **dilation benefit** grows linearly with task size. A faster-ticking Cosmic Server saves a *percentage* of the runtime (~5% with the default well), so the bigger the job, the more absolute time saved.
 - The **latency cost** is fixed — it depends only on distance, not job size. You pay the same round-trip light delay whether the job is tiny or enormous.
 
-So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{earth}/f_\text{server})$ — below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. The dashboard computes this value for the clicked location and shows it as the **Breakeven workload** under the Task field (green once your task size clears it, red otherwise; "none" where the spot has no time advantage). This is why the walkthrough screenshot needs an enormous task (hundreds of millions of hours) to show a positive net gain at a deep-void distance — a one-hour job out there would be a massive net loss.
+So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{earth}/f_\text{server})$ — below it, the fixed communication overhead dominates and offloading is a net loss; above it, the dilation savings overtake the latency and you come out ahead. The dashboard computes this value for the clicked location and shows it as the **Breakeven workload** under the Task field (green once your task size clears it, red otherwise; "none" where the spot has no time advantage). This is why the walkthrough screenshot needs an enormous task (~114,000 years) to show a positive net gain at a deep-void distance — a one-year job out there would be a massive net loss.
 
 **Real-world analogy:** It is the same calculus as deciding whether to ship a job to a distant data center. The network round-trip is a fixed tax, so it is only worth paying if the job is big enough that the remote machine's advantage (here, a faster clock; in reality, cheaper or faster hardware) outweighs the transit cost. Small jobs stay local; large jobs justify the trip.
 
@@ -227,6 +243,12 @@ The *In Plain Terms* panel has a **"Show the math"** toggle that expands the liv
 ![The "Show the math" panel: live step-by-step formulas for clock advantage, Earth compute time, communication cost, Earth wait time, net gain, and breakeven, computed for the current placement](docs/images/show-the-math.png)
 
 <sub><i>Every value the dashboard shows is derived here: clock advantage = f_server / f_earth; Earth compute = task × (f_earth / f_server); Earth wait = compute + comm cost; net gain = task − wait; breakeven = comm cost ÷ (1 − f_earth/f_server). Full derivation in [Efficiency & Breakeven](docs/efficiency-model.md).</i></sub>
+
+#### Cosmic Web scale
+
+The top-bar **Solar Neighborhood ↔ Cosmic Web** toggle swaps the whole dashboard to a galaxy-scale universe: ~43,500 galaxies from the 2MASS Redshift Survey out to a few hundred **megaparsecs**, with distances and the search radius in Mpc. Everything else is the same — place a node, read the metrics, run the finders — but now **"Find deepest void" targets real cosmic voids**, and the brightest *named* galaxies (Andromeda, Centaurus A, Sombrero, …) are labeled while hovering any galaxy shows its catalog designation, distance, and magnitude.
+
+Because round-trip latency at these distances is enormous (hundreds of millions to billions of years), most placements correctly read as a net loss — only a huge job in a *nearby* void comes out ahead, which is exactly the trade-off the simulator exists to show. The physics is the same weak-field model with a galaxy catalog and a much smaller exaggeration (void-vs-cluster dilation is a real effect). Full write-up: [The Cosmic Web scale](docs/cosmic-web.md).
 
 ## Physics and Assumptions
 
@@ -315,7 +337,9 @@ These are intentional simplifications. They keep the simulation legible, but a p
 
 ## TODO
 
-- [ ] **Plot a larger body of stars** — the map currently uses the solar neighborhood of the Milky Way (~8,920 HYG stars, magnitude ≤ 6.5). Expand to a deeper/wider catalog to cover more of the galaxy.
+- [x] **Reach beyond the solar neighborhood** — added the **Cosmic Web** scale (~43,500 2MRS galaxies, megaparsecs). See [The Cosmic Web scale](docs/cosmic-web.md).
+- [ ] **Cosmic Web big-data (Phase 2)** — scale from 2MRS to **GLADE+** (~22.5M galaxies) via a GCP pipeline (BigQuery → GCS/CDN binary LOD tiles + a precomputed potential grid + octree streaming). Design: [Scaling the Universe](docs/scaling-the-universe.md).
+- [ ] **Deeper star catalog** — the Solar Neighborhood scale uses ~8,920 HYG stars (magnitude ≤ 6.5). Relax the cut / switch to AT-HYG for a denser local field.
 
 ## Project Structure
 
@@ -323,17 +347,28 @@ These are intentional simplifications. They keep the simulation legible, but a p
 void-ranger/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI entry point
-│   │   ├── routers/             # /api/stars, /api/physics/*
-│   │   ├── services/physics.py  # pure physics: dilation, latency, efficiency, void search
-│   │   └── models/schemas.py    # Pydantic request/response models
-│   ├── scripts/process_stars.py # HYG CSV → stars.json pipeline
-│   ├── data/stars.json          # 8,920 processed stars
-│   └── tests/                   # 23 unit tests
-└── frontend/
-    └── src/
-        └── components/
-            └── far-future/      # GalaxyMap, ServerPlacer, MetricsDash
+│   │   ├── main.py                  # FastAPI entry point + router wiring
+│   │   ├── routers/                 # stars.py (/api/stars, /api/galaxies), physics.py (/api/physics/*)
+│   │   ├── services/
+│   │   │   ├── physics.py           # scale-parameterized physics: dilation, latency, efficiency, void search
+│   │   │   └── catalog.py           # cached star/galaxy catalog loaders
+│   │   └── models/schemas.py        # Pydantic request/response models
+│   ├── scripts/
+│   │   ├── process_stars.py         # HYG CSV → stars.json (solar scale)
+│   │   └── process_galaxies.py      # 2MRS via VizieR → galaxies.json (cosmic scale)
+│   ├── data/
+│   │   ├── stars.json               # 8,920 stars (parsecs)
+│   │   └── galaxies.json            # 43,510 galaxies (megaparsecs)
+│   └── tests/                       # 36 unit tests (physics, stars, galaxies)
+├── frontend/
+│   └── src/
+│       ├── App.jsx                  # renders Layout + FarFutureView
+│       ├── components/Layout.jsx    # header/shell
+│       ├── components/far-future/   # FarFutureView (scale toggle), GalaxyMap, MetricsDash,
+│       │                            #   ServerPlacer, VoidFinder, Popover
+│       └── utils/format.js          # year/day + unit formatting helpers
+└── docs/                            # GLOSSARY + deep dives: gravitational-field, efficiency-model,
+                                     #   light-latency, void-finding, cosmic-web, scaling-the-universe
 ```
 
 ## Tests
