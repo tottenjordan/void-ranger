@@ -3,7 +3,8 @@
 <h1 align="center">🌀 a matter of time ⌛</h1>
 
 > An interactive tool for exploring the time dilation between any two reference frames with differing gravitational potentials (General Relativity).
-> ***Can time dilation be used as a computational resource?***
+> ***Can time dilation be used as a computational resource?*** So far, I don't think so.   
+>                          ...but what if?
 
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Three.js](https://img.shields.io/badge/Three.js-r170-000000?logo=three.js&logoColor=white)
