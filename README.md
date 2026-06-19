@@ -28,7 +28,7 @@
 - [Development](#development)
 - [How It Works](#how-it-works)
 - [Glossary](docs/GLOSSARY.md)
-- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md)
+- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md) · [Cosmic Web scale](docs/cosmic-web.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Project Structure](#project-structure)
@@ -37,6 +37,8 @@
 ## Overview
 
 Void Ranger is a single-purpose **Deep-Space Cloud Compute** simulator: place a compute server in a cosmological void — a vast region where the weaker gravitational field makes its clock tick faster than Earth's — then weigh that time-dilation advantage against the light-speed communication latency of reaching it. The deeper the void, the faster the server's clock, but the longer the round-trip signal takes, so the sweet spot depends on the size of the job.
+
+It runs at **two scales**, switched with a toggle in the top bar: **Solar Neighborhood** (~8,920 stars within a few hundred parsecs) and **Cosmic Web** (~43,500 galaxies out to hundreds of megaparsecs, where the void finder targets *real* cosmic voids). Same physics, zoomed out by ~a million. See [The Cosmic Web scale](docs/cosmic-web.md).
 
 ## Architecture
 

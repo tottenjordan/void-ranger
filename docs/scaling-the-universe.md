@@ -118,3 +118,13 @@ helps.** Rationale: C maximizes *reach* (observable-universe scale), is the most
 compelling teaching story, makes the physics more honest, and — via GLADE+ —
 doubles as the big-data visualization goal. Implementation details live in the
 Option-C plan.
+
+## Status
+
+- ✅ **Phase 1 — Cosmic-web MVP on 2MRS (shipped):** a Solar Neighborhood ↔
+  Cosmic Web scale toggle backed by ~43,500 2MRS galaxies, scale-parameterized
+  physics, and the void finder targeting real cosmic voids. See
+  [The Cosmic Web scale](cosmic-web.md).
+- ⏳ **Phase 2 — GLADE+ big-data on GCP (planned):** scale to 22.5 M galaxies via
+  a BigQuery → GCS/CDN binary-tile pipeline with a precomputed potential grid and
+  octree LOD streaming (built GCP-ready, deployed later).
