@@ -86,7 +86,7 @@ curl -L -o data/hygdata_v41.csv \
   "https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/CURRENT/hygdata_v41.csv"
 
 # Process into stars.json (8,920 stars at magnitude ≤ 6.5)
-python scripts/process_stars.py
+uv run python scripts/process_stars.py
 ```
 
 The actively maintained HYG source is at https://codeberg.org/astronexus/hyg.
