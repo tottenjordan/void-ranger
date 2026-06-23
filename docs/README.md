@@ -39,6 +39,11 @@ where you place the server (x, y, z)
 All the math lives in [`backend/app/services/physics.py`](../backend/app/services/physics.py);
 each deep dive ends with a "code map" pointing at the exact functions.
 
+## Plans
+
+Numbered implementation plans (goals, tasks, status) live in
+[`plans/`](plans/) — see the [plans index](plans/README.md).
+
 ## Images
 
 [`images/`](images/) holds the README banner GIFs and dashboard screenshots.
