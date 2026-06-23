@@ -224,7 +224,7 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 ![Deep-Space Cloud Compute mode showing a Cosmic Server deployed in the star field](docs/images/far-future.png)
 
-<sub><i>The full Deep-Space dashboard: a Cosmic Server deployed in a deep void at 400 pc, with the six-card metrics row (years over days) and the "In plain terms" summary below the map. Annotated walkthrough below.</i></sub>
+<sub><i>The full Deep-Space dashboard (Solar Neighborhood scale): a Cosmic Server deployed in a deep void at 400 pc, the brightest stars labeled in the field, the six-card metrics row (years over days), and the "In plain terms" summary below the map. Annotated walkthrough below.</i></sub>
 
 This capture shows a server deployed at **400 pc** (a deep void) with a **114,155-year** workload (~41.7 million days, set via the *Task Workload Size (yrs)* field in the top bar). Reading the screen:
 
@@ -245,6 +245,10 @@ The *In Plain Terms* panel has a **"Show the math"** toggle that expands the liv
 <sub><i>Every value the dashboard shows is derived here: clock advantage = f_server / f_earth; Earth compute = task × (f_earth / f_server); Earth wait = compute + comm cost; net gain = task − wait; breakeven = comm cost ÷ (1 − f_earth/f_server). Full derivation in [Efficiency & Breakeven](docs/efficiency-model.md).</i></sub>
 
 #### Cosmic Web scale
+
+![Cosmic Web scale: the galaxy field from the 2MASS Redshift Survey forming the filamentary cosmic web, with a compute node placed ~169 Mpc out and metrics in megaparsecs and billions of years](docs/images/cosmic-web.png)
+
+<sub><i>The **Cosmic Web** scale: ~43,500 2MRS galaxies tracing the filamentary cosmic web, with a node placed ~169 Mpc away. Named galaxies (Andromeda, Centaurus A, …) are labeled; distances are in Mpc and the round trip runs to billions of years — so this placement is correctly a net loss.</i></sub>
 
 The top-bar **Solar Neighborhood ↔ Cosmic Web** toggle swaps the whole dashboard to a galaxy-scale universe: ~43,500 galaxies from the 2MASS Redshift Survey out to a few hundred **megaparsecs**, with distances and the search radius in Mpc. Everything else is the same — place a node, read the metrics, run the finders — but now **"Find deepest void" targets real cosmic voids**, and the brightest *named* galaxies (Andromeda, Centaurus A, Sombrero, …) are labeled while hovering any galaxy shows its catalog designation, distance, and magnitude.
 
