@@ -222,17 +222,16 @@ So there is a **break-even task size** — $t_\text{latency} / (1 - f_\text{eart
 
 #### Example Walkthrough
 
-![Deep-Space Cloud Compute mode showing a Cosmic Server deployed in the star field](docs/images/far-future.png)
+![Cosmic Web scale: a compute node deployed ~150 Mpc out among the 2MRS galaxies forming the filamentary cosmic web, with the six-card metrics row showing a positive net gain](docs/images/far-future.png)
 
-<sub><i>The full Deep-Space dashboard (Solar Neighborhood scale): a Cosmic Server deployed in a deep void at 400 pc, the brightest stars labeled in the field, the six-card metrics row (years over days), and the "In plain terms" summary below the map. Annotated walkthrough below.</i></sub>
+<sub><i>The full dashboard at the **Cosmic Web** scale: a compute node ~150 Mpc out among the 2MRS galaxies (the filamentary cosmic web), the named galaxies labeled, the six-card metrics row (years over days), and the "In plain terms" summary below the map. Annotated walkthrough below.</i></sub>
 
-This capture shows a server deployed at **400 pc** (a deep void) with a **114,155-year** workload (~41.7 million days, set via the *Task Workload Size (yrs)* field in the top bar). Reading the screen:
+This capture is the **Cosmic Web** scale (top-bar toggle) with a **100-billion-year** workload placed where *Best spot for this task* puts it — a void **~150 Mpc** out. (At megaparsec distances offloading only pays off for an astronomically large job — that's the lesson.) Reading the screen:
 
-- The **green marker** at the center is Earth, wrapped in **amber gravity-well shells** (the field that slows Earth's clock). The **cyan sphere** with an orbit ring is the deployed **Cosmic Server**, labeled with its RTT. A dashed **red communication line** carries a **red signal pulse** on the round trip; a parallel **violet distance line** marks the separation. A **Map Key** in the controls row labels every element.
-- After placing the server, the **Breakeven workload** readout under the Task field shows the smallest task that pays off here, and the metrics row's **Communication Cost** card shows the round-trip light delay.
-- The **metrics row** shows the result: *Distance* 400 pc, a *Server Clock Advantage* of **1.063× Earth** (the void's weak gravity makes the server's clock run faster), an *Earth Compute Time* of ~107,393 years and *Earth Wait Time* of ~110,005 years, and a **positive Net Gain of ~4,150 years** (green) — offloading wins here. (Each card shows years as the main value with the days equivalent beneath; the model computes in seconds internally.)
-- The **In plain terms** panel below the metrics translates that into relatable units: *running this job on Earth would take ~114,000 years; offloaded to the Cosmic Server the same computation takes ~107,000 years of Earth time plus ~2,600 years of signal round-trip — a total ~110,000-year wait, a net saving of ~4,150 years.*
-- Move the server next to a bright star and the Clock Advantage drops below 1.0× (red) — its local gravity now slows it *below* Earth's rate, turning the gain into a loss. That's the void-vs-mass tradeoff the physics models.
+- The bright **galaxy field** is the 2MASS Redshift Survey tracing the **filamentary cosmic web**; the **cyan sphere** is the deployed node, with a dashed **red communication line** back to Earth at the origin and the brightest **named galaxies** (Andromeda, Centaurus A, …) labeled. A **Map Key** in the controls row labels every element.
+- The **metrics row** shows the result: *Distance* 150.00 Mpc, a *Server Clock Advantage* of **1.081× Earth** (the void's weak galaxy field runs the clock faster), an *Earth Compute Time* of ~92.5 billion years, a *Communication Cost* of ~979 million years, an *Earth Wait Time* of ~93.5 billion years, and a **positive Net Gain of ~6.55 billion years** (green ▲) — offloading wins. (Each card shows years as the main value with the days equivalent beneath; the model computes in seconds internally.)
+- The **In plain terms** panel translates that into words: *running this job on Earth would take 100 billion years; offloaded the same computation takes ~92.5 billion years of Earth compute plus ~979 million years of signal round-trip — a ~93.5-billion-year wait, a net saving of ~6.55 billion years.*
+- **Why such a huge job?** At megaparsec distances the round-trip light delay is ~a billion years, so the breakeven workload is enormous — only a job measured in *tens of billions of years* clears it. Smaller jobs (or farther voids) read as a net loss; *Best spot for this task* finds the placement that maximizes net gain for whatever size you set. (Drop to the Solar Neighborhood scale and the same trade-off plays out with parsecs and thousands of years.)
 
 #### Show the math
 
@@ -245,10 +244,6 @@ The *In Plain Terms* panel has a **"Show the math"** toggle that expands the liv
 <sub><i>Every value the dashboard shows is derived here: clock advantage = f_server / f_earth; Earth compute = task × (f_earth / f_server); Earth wait = compute + comm cost; net gain = task − wait; breakeven = comm cost ÷ (1 − f_earth/f_server). Full derivation in [Efficiency & Breakeven](docs/efficiency-model.md).</i></sub>
 
 #### Cosmic Web scale
-
-![Cosmic Web scale: the galaxy field from the 2MASS Redshift Survey forming the filamentary cosmic web, with a compute node placed ~169 Mpc out and metrics in megaparsecs and billions of years](docs/images/cosmic-web.png)
-
-<sub><i>The **Cosmic Web** scale: ~43,500 2MRS galaxies tracing the filamentary cosmic web, with a node placed ~169 Mpc away. Named galaxies (Andromeda, Centaurus A, …) are labeled; distances are in Mpc and the round trip runs to billions of years — so this placement is correctly a net loss.</i></sub>
 
 The top-bar **Solar Neighborhood ↔ Cosmic Web** toggle swaps the whole dashboard to a galaxy-scale universe: ~43,500 galaxies from the 2MASS Redshift Survey out to a few hundred **megaparsecs**, with distances and the search radius in Mpc. Everything else is the same — place a node, read the metrics, run the finders — but now **"Find deepest void" targets real cosmic voids**, and the brightest *named* galaxies (Andromeda, Centaurus A, Sombrero, …) are labeled while hovering any galaxy shows its catalog designation, distance, and magnitude.
 
