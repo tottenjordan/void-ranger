@@ -29,6 +29,53 @@ def _center(lo: float, hi: float, n: int, i: int) -> float:
     return lo + (i + 0.5) * (hi - lo) / n
 
 
+# --- Auto-derived deepfield exaggeration (Task 1) ---------------------------
+
+def test_deepfield_exaggeration_auto_derived_hits_target(tmp_path, monkeypatch):
+    from app.services.catalog import DEEPFIELD_GRID_DIR_ENV, _deepfield_grid_dir
+    from app.services.physics import (
+        DEEPFIELD_TARGET_ADVANTAGE,
+        C_M_S,
+        _deepfield_exaggeration_for,
+        _grid_potential_at,
+        gravitational_dilation,
+    )
+
+    # 4x4x4 grid spanning +/-100 Mpc (well inside CALIB_RADIUS=300). Uniform high
+    # background potential with one clearly-deepest interior void voxel so the
+    # origin interpolation (Phi_earth) stays well above Phi_void and Earth is far
+    # from max_well_depth saturation (cap guard does not trigger).
+    n = 4
+    vals = np.full((n, n, n), 5.0e9, dtype=np.float32)
+    vals[2, 2, 2] = 1.0e9  # the void (smallest potential), within 300 Mpc
+    np.save(tmp_path / "grid.npy", vals)
+    (tmp_path / "grid.json").write_text(json.dumps({
+        "bounds": [-100.0, -100.0, -100.0, 100.0, 100.0, 100.0],
+        "shape": [n, n, n],
+        "unit": "Mpc",
+    }))
+    monkeypatch.setenv(DEEPFIELD_GRID_DIR_ENV, str(tmp_path))
+
+    # Independent closed-form expectation, computed exactly as the helper does:
+    # Phi_earth = interpolated potential at origin; Phi_void = min within ball.
+    k = 2.0 / C_M_S ** 2
+    phi_earth = float(_grid_potential_at(np.array([[0.0, 0.0, 0.0]]), "deepfield")[0])
+    phi_void = float(vals.min())  # whole grid is within 300 Mpc -> global min
+    a2 = DEEPFIELD_TARGET_ADVANTAGE ** 2
+    expected_ex = (a2 - 1.0) / (k * (a2 * phi_earth - phi_void))
+
+    # Sanity: Earth must be well under the saturation cap so the guard is inert.
+    assert expected_ex * k * phi_earth < 0.9 * 0.7
+
+    ex = _deepfield_exaggeration_for(_deepfield_grid_dir())
+    assert ex == pytest.approx(expected_ex, rel=1e-6)
+
+    # Feeding the void's Phi through dilation reproduces the target advantage.
+    f_void = gravitational_dilation(phi_void, "deepfield")
+    f_earth = gravitational_dilation(phi_earth, "deepfield")
+    assert f_void / f_earth == pytest.approx(DEEPFIELD_TARGET_ADVANTAGE, rel=1e-3)
+
+
 # --- Loader -----------------------------------------------------------------
 
 def test_grid_loads_shape_dtype_bounds():
