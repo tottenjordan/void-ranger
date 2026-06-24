@@ -35,6 +35,14 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY app ./app
 COPY data ./data
 
+# The built React SPA, baked in so one Cloud Run service serves UI + API from a
+# single origin (UI at /, API at /api/*). 30_serve.sh `run` mode stages
+# frontend/dist -> backend/web before the build (the build context is backend/),
+# so backend/web ALWAYS exists at build time on that path; FastAPI serves it via
+# WEB_DIR (defaults to /app/web). Deep Field tiles are NOT here — they load from
+# GCS via VITE_ASSET_BASE_URL baked into the build.
+COPY web ./web
+
 # Finish installing the project itself into the env.
 RUN uv sync --frozen --no-dev
 
