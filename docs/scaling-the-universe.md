@@ -125,6 +125,11 @@ Option-C plan.
   Cosmic Web scale toggle backed by ~43,500 2MRS galaxies, scale-parameterized
   physics, and the void finder targeting real cosmic voids. See
   [The Cosmic Web scale](cosmic-web.md).
-- ⏳ **Phase 2 — GLADE+ big-data on GCP (planned):** scale to 22.5 M galaxies via
-  a BigQuery → GCS/CDN binary-tile pipeline with a precomputed potential grid and
-  octree LOD streaming (built GCP-ready, deployed later).
+- ✅ **Phase 2 — GLADE+ big-data Deep Field (shipped):** a third **Deep Field**
+  scale on **GLADE+** (~22.5 M galaxies) — binary octree LOD tiles streamed into
+  the point cloud and a precomputed 3-D potential grid that makes the void search
+  **O(voxels)**, independent of catalog size. Built by a GCP-ready pipeline
+  (GLADE+ → GCS → BigQuery → tiles/grid → GCS/Cloud CDN) and runnable locally
+  from committed sample assets; full GCP provisioning is a separate, documented,
+  user-run suite. See [The Deep Field scale](deep-field.md). Implemented per plan
+  [003](plans/003-cosmic-web-phase-2-deep-field.md).

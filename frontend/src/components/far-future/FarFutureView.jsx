@@ -6,9 +6,22 @@ import Popover from './Popover'
 import MetricsDash from './MetricsDash'
 import { daysLabel, yearsLabel, yearsInput, parseYearsInput, relatableDuration, cartesianToGalactic } from '../../utils/format'
 
-// Per-scale UI config. The 3D scene constants are intentionally shared across
-// scales (galaxy Mpc coords span the same numeric range as star pc coords), so
-// only units, nouns, the catalog endpoint, defaults and labels differ here.
+// Per-scale UI config. Units, nouns, the catalog endpoint, defaults and labels
+// differ per scale. Each entry also carries a `scene` object with the 3D scene
+// constants consumed by <GalaxyMap>. Solar and cosmic deliberately share the
+// same scene numbers (galaxy Mpc coords span the same numeric range as star pc
+// coords); Deep Field uses a larger volume for the ±500 Mpc cube.
+export const SHARED_SCENE = {
+  cameraPosition: [0, 200, 400],
+  bgRadius: 900,
+  starsRadius: 800,
+  starsDepth: 200,
+  gridCellSize: 50,
+  gridSectionSize: 200,
+  gridFadeDistance: 600,
+  pickPlaneSize: 2000,
+}
+
 export const SCALE_UI = {
   solar: {
     unit: 'pc',
@@ -17,6 +30,7 @@ export const SCALE_UI = {
     endpoint: '/api/stars',
     defaultRadius: 300,
     toggleLabel: 'Solar Neighborhood',
+    scene: SHARED_SCENE,
   },
   cosmic: {
     unit: 'Mpc',
@@ -29,6 +43,34 @@ export const SCALE_UI = {
     endpoint: '/api/galaxies',
     defaultRadius: 150,
     toggleLabel: 'Cosmic Web',
+    scene: SHARED_SCENE,
+  },
+  deepfield: {
+    unit: 'Mpc',
+    originLabel: 'Earth',
+    objectNoun: 'galaxy',
+    // Deep Field has NO catalog API: galaxies stream as LOD tiles in 2E.2 from
+    // assetBase, not from /api/*. A null endpoint tells the catalog effect to
+    // skip the fetch.
+    endpoint: null,
+    defaultRadius: 300,
+    toggleLabel: 'Deep Field',
+    // Base URL for streamed LOD tiles (overridable for a production CDN via the
+    // VITE_ASSET_BASE_URL env var). Consumed by the streamer in 2E.2.
+    assetBase: import.meta.env.VITE_ASSET_BASE_URL ?? '/deepfield',
+    // Larger scene for the ±500 Mpc volume (corner distance ≈ 866; default
+    // deploy radius 300) so the cube fits the frame and the pick-plane covers
+    // all clickable space.
+    scene: {
+      cameraPosition: [0, 350, 700],
+      bgRadius: 1600,
+      starsRadius: 1400,
+      starsDepth: 400,
+      gridCellSize: 100,
+      gridSectionSize: 500,
+      gridFadeDistance: 1200,
+      pickPlaneSize: 4000,
+    },
   },
 }
 
@@ -143,8 +185,9 @@ function BreakevenLine({ breakeven, taskSeconds }) {
   )
 }
 
-// Two-button segmented control that switches the whole dashboard between the
-// solar-neighborhood and cosmic-web scales (cyan = active, like the old mode toggle).
+// Segmented control that switches the dashboard between the configured map
+// scales (cyan = active). Data-driven over SCALE_UI, so it renders one button
+// per registered scale.
 function ScaleToggle({ scale, onScaleChange }) {
   return (
     <div className="inline-flex rounded-lg border border-gray-700 overflow-hidden">
@@ -239,6 +282,14 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
     setServerPosition(null)
     setMetrics(null)
     setDeployCoords(defaultDeployCoords())
+    // Deep Field has no catalog endpoint — its galaxies stream as LOD tiles
+    // (2E.2). Skip the /api fetch and start with an empty field; markers, grid
+    // and the deploy form still work in the interim.
+    if (SCALE_UI[scale].endpoint == null) {
+      setStars([])
+      setLoading(false)
+      return
+    }
     fetch(SCALE_UI[scale].endpoint)
       .then(res => res.json())
       .then(data => { setStars(data); setLoading(false) })
@@ -290,7 +341,8 @@ export default function FarFutureView({ taskSeconds, onTaskSecondsChange }) {
         deployCoords={deployCoords} onDeployCoordsChange={setDeployCoords}
         scale={scale} onScaleChange={setScale} />
       <GalaxyMap stars={stars} serverPosition={serverPosition} onPlaceServer={placeServer}
-        unit={ui.unit} originLabel={ui.originLabel} />
+        unit={ui.unit} originLabel={ui.originLabel}
+        scene={ui.scene} scale={scale} assetBase={ui.assetBase} />
       {metrics && (
         <MetricsDash
           distancePc={serverPosition

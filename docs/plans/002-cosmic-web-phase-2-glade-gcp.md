@@ -1,6 +1,6 @@
 # 002 — Cosmic Web Phase 2: GLADE+ big-data on Google Cloud
 
-**Status:** 📐 **Superseded — expanded into [003](003-cosmic-web-phase-2-deep-field.md)** (the task-by-task, executable plan). This file is the original high-level sketch, kept for history. Depends on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
+**Status:** 📐 **Superseded — expanded into [003](003-cosmic-web-phase-2-deep-field.md)** (the task-by-task, executable plan), which is now **largely implemented** as the **Deep Field** scale (GLADE+ LOD tiles + precomputed potential grid, O(voxels) void search; see [The Deep Field scale](../deep-field.md)). This file is the original high-level sketch, kept for history. Depends on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
 
 **Goal:** Scale the Cosmic Web from ~45 k 2MRS galaxies to **GLADE+ (~22.5 M
 galaxies)** as a real big-data visualization — streamed by level-of-detail and

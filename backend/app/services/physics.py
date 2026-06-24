@@ -5,7 +5,13 @@ from typing import Callable
 
 import numpy as np
 
-from app.services.catalog import load_galaxy_arrays, load_star_arrays
+from app.services.catalog import (
+    _deepfield_grid_dir,
+    _load_grid,
+    load_galaxy_arrays,
+    load_potential_grid,
+    load_star_arrays,
+)
 
 C = 299_792.458          # speed of light in km/s
 C_M_S = C * 1000         # speed of light in m/s
@@ -36,6 +42,17 @@ MAX_WELL_DEPTH = 0.7     # cap so the dilation factor stays real and sane
 # collapses to ~1.0, so the value must stay in this lower window.
 COSMIC_EXAGGERATION = 1.0e5
 
+# Deepfield exaggeration, calibrated (Task 2D.1) so the deepest void within
+# 300 Mpc of the committed N=48 sample grid gives a clock_advantage of ~1.060
+# over Earth (a visible but modest edge, in the target 1.05-1.10 band). The
+# deepfield scale reads a precomputed potential grid (RAW J/kg) rather than a
+# catalog, so its potentials live on a different magnitude than cosmic's catalog
+# sums and need their own factor. Calibration sweep
+# (find_deepest_void(300, scale="deepfield")):
+#   exa=5e5 -> adv 1.035,  exa=7e5 -> adv 1.051,  exa=8e5 -> adv 1.060,
+#   exa=1.0e6 -> adv 1.079,  exa=1.2e6 -> adv 1.100.
+DEEPFIELD_EXAGGERATION = 8.0e5
+
 
 @dataclass(frozen=True)
 class ScaleConfig:
@@ -52,7 +69,9 @@ class ScaleConfig:
     softening_m: float
     exaggeration: float
     max_well_depth: float
-    load: Callable[[], tuple]
+    # Catalog loader -> (xs, ys, zs, masses_kg). None for grid-backed scales
+    # (deepfield), which read a precomputed potential grid instead of a catalog.
+    load: Callable[[], tuple] | None
 
 
 SCALES: dict[str, ScaleConfig] = {
@@ -71,6 +90,16 @@ SCALES: dict[str, ScaleConfig] = {
         exaggeration=COSMIC_EXAGGERATION,
         max_well_depth=MAX_WELL_DEPTH,
         load=load_galaxy_arrays,
+    ),
+    # Grid-backed scale: local_potential / searches read load_potential_grid
+    # instead of a catalog, so load is None (nothing should call it here).
+    "deepfield": ScaleConfig(
+        length_m=MPC_M,
+        length_km=MPC_KM,
+        softening_m=0.5 * MPC_M,
+        exaggeration=DEEPFIELD_EXAGGERATION,
+        max_well_depth=MAX_WELL_DEPTH,
+        load=None,
     ),
 }
 
@@ -112,6 +141,9 @@ def local_potential(x: float, y: float, z: float, scale: str = "solar") -> float
     singularities. Larger = deeper in the field.
     """
     cfg = _scale(scale)
+    if cfg.load is None:
+        # Grid-backed scale (deepfield): read the precomputed potential grid.
+        return float(_grid_potential_at(np.array([[x, y, z]]), scale)[0])
     xs, ys, zs, masses_kg = cfg.load()
     dx = (x - xs) * cfg.length_m
     dy = (y - ys) * cfg.length_m
@@ -213,6 +245,110 @@ def _potential_at(pts: np.ndarray, scale: str = "solar") -> np.ndarray:
     return out
 
 
+def _grid_potential_at(pts: np.ndarray, scale: str = "deepfield") -> np.ndarray:
+    """Trilinearly-interpolated potential (J/kg) at each point, from the grid.
+
+    pts is (N, 3) in Mpc (a single (3,) is accepted too): pts[:,0]=x->ix,
+    pts[:,1]=y->iy, pts[:,2]=z->iz, indexing grid[iz, iy, ix]. Each coordinate
+    maps to a fractional VOXEL-CENTER index along its axis,
+
+        center(i) = lo + (i + 0.5) * (hi - lo) / n
+        => frac    = (coord - lo) / (hi - lo) * n - 0.5
+
+    and we interpolate among the 8 surrounding voxel centers. The fractional
+    index is clamped to [0, n-1], so points outside the cube (or in the
+    half-voxel margin past the outermost centers) take the nearest edge voxel
+    value — no extrapolation, no NaN. Replaces the catalog-sum potential for the
+    deepfield scale.
+    """
+    grid = load_potential_grid(scale)
+    values = grid.values
+    minx, miny, minz, maxx, maxy, maxz = grid.bounds
+    nz, ny, nx = grid.shape
+
+    pts = np.atleast_2d(np.asarray(pts, dtype=np.float64))
+
+    def _frac_index(coord: np.ndarray, lo: float, hi: float, n: int) -> np.ndarray:
+        f = (coord - lo) / (hi - lo) * n - 0.5
+        return np.clip(f, 0.0, n - 1)
+
+    fx = _frac_index(pts[:, 0], minx, maxx, nx)
+    fy = _frac_index(pts[:, 1], miny, maxy, ny)
+    fz = _frac_index(pts[:, 2], minz, maxz, nz)
+
+    ix0 = np.clip(np.floor(fx).astype(int), 0, nx - 1)
+    iy0 = np.clip(np.floor(fy).astype(int), 0, ny - 1)
+    iz0 = np.clip(np.floor(fz).astype(int), 0, nz - 1)
+    ix1 = np.minimum(ix0 + 1, nx - 1)
+    iy1 = np.minimum(iy0 + 1, ny - 1)
+    iz1 = np.minimum(iz0 + 1, nz - 1)
+
+    tx = fx - ix0
+    ty = fy - iy0
+    tz = fz - iz0
+
+    vals = values.astype(np.float64)
+
+    # Trilinear blend over the 8 corners (grid indexed [iz, iy, ix]).
+    c000 = vals[iz0, iy0, ix0]
+    c001 = vals[iz0, iy0, ix1]
+    c010 = vals[iz0, iy1, ix0]
+    c011 = vals[iz0, iy1, ix1]
+    c100 = vals[iz1, iy0, ix0]
+    c101 = vals[iz1, iy0, ix1]
+    c110 = vals[iz1, iy1, ix0]
+    c111 = vals[iz1, iy1, ix1]
+
+    c00 = c000 * (1 - tx) + c001 * tx
+    c01 = c010 * (1 - tx) + c011 * tx
+    c10 = c100 * (1 - tx) + c101 * tx
+    c11 = c110 * (1 - tx) + c111 * tx
+
+    c0 = c00 * (1 - ty) + c01 * ty
+    c1 = c10 * (1 - ty) + c11 * ty
+
+    return c0 * (1 - tz) + c1 * tz
+
+
+@lru_cache(maxsize=4)
+def _voxel_centers_for(grid_dir) -> tuple[np.ndarray, np.ndarray]:
+    """Cached (centers, values) for the grid in a resolved directory.
+
+    Keyed on the resolved grid_dir (not the scale string) so a
+    DEEPFIELD_GRID_DIR override yields fresh centers — mirroring catalog's
+    _load_grid. centers is (n_voxels, 3) in Mpc (x, y, z) and values is
+    (n_voxels,) of the stored potential magnitude (J/kg), aligned row-for-row.
+    """
+    grid = _load_grid(grid_dir)
+    minx, miny, minz, maxx, maxy, maxz = grid.bounds
+    nz, ny, nx = grid.shape
+
+    def _centers(lo: float, hi: float, n: int) -> np.ndarray:
+        return lo + (np.arange(n) + 0.5) * (hi - lo) / n
+
+    cx = _centers(minx, maxx, nx)
+    cy = _centers(miny, maxy, ny)
+    cz = _centers(minz, maxz, nz)
+    # grid indexed [iz, iy, ix]; match the flatten order of values.ravel().
+    zz, yy, xx = np.meshgrid(cz, cy, cx, indexing="ij")
+    centers = np.column_stack([xx.ravel(), yy.ravel(), zz.ravel()])
+    values = np.asarray(grid.values, dtype=np.float64).ravel()
+    return centers, values
+
+
+def _grid_voxel_centers(scale: str = "deepfield") -> tuple[np.ndarray, np.ndarray]:
+    """(centers, values) for a grid scale, flattened over voxels.
+
+    Resolves the grid directory here (so a DEEPFIELD_GRID_DIR env change is
+    honored) and delegates to a cache keyed on that directory — the same pattern
+    as catalog.load_potential_grid. Built once per grid so the O(voxels)
+    searches don't rebuild the coordinate arrays per call.
+    """
+    if scale != "deepfield":
+        raise ValueError(f"no potential grid for scale: {scale!r}")
+    return _voxel_centers_for(_deepfield_grid_dir())
+
+
 def _dilation_array(potential: np.ndarray, scale: str = "solar") -> np.ndarray:
     """Vectorized clock factor for an array of potential magnitudes."""
     cfg = _scale(scale)
@@ -244,7 +380,23 @@ def find_deepest_void(max_distance_pc: float = 300.0, scale: str = "solar") -> d
     solar, megaparsecs for cosmic). Minimizes the full catalog potential, i.e.
     the point farthest from *all* massive bodies (an empty pocket) — not the
     point farthest from Earth.
+
+    Deepfield is grid-backed: it scans the grid's voxel centers within the
+    latency-budget ball and returns the argmin-potential center. O(voxels),
+    independent of catalog size.
     """
+    if _scale(scale).load is None:
+        centers, values = _grid_voxel_centers(scale)
+        d2 = (centers ** 2).sum(axis=1)
+        mask = d2 <= max_distance_pc ** 2
+        if not mask.any():
+            # No voxel inside the radius; fall back to the nearest voxel center.
+            mask = np.zeros(len(centers), dtype=bool)
+            mask[int(np.argmin(d2))] = True
+        idx = np.flatnonzero(mask)
+        best = centers[idx[int(np.argmin(values[idx]))]]
+        return {"x": float(best[0]), "y": float(best[1]), "z": float(best[2])}
+
     step = max_distance_pc / 12.0
     pts = _ball_points(max_distance_pc, step)
     best = pts[int(np.argmin(_potential_at(pts, scale)))]
@@ -259,9 +411,27 @@ def find_best_spot(task_seconds: float, max_distance_pc: float = 300.0,
     max_distance_pc is the search radius in the scale's length unit.
     net_gain = task * (1 - f_earth/f_server) - latency; balances the void's clock
     advantage against round-trip light latency.
+
+    Deepfield is grid-backed: per voxel center within the latency-budget ball it
+    computes net = task*(1 - f_earth/f_server) - 2d/c and returns the argmax-net
+    center. O(voxels), independent of catalog size.
     """
     cfg = _scale(scale)
     f_earth = earth_dilation_factor(scale)
+
+    if cfg.load is None:
+        centers, values = _grid_voxel_centers(scale)
+        d = np.sqrt((centers ** 2).sum(axis=1))
+        mask = d <= max_distance_pc
+        if not mask.any():
+            mask = np.zeros(len(centers), dtype=bool)
+            mask[int(np.argmin(d))] = True
+        idx = np.flatnonzero(mask)
+        f_server = _dilation_array(values[idx], scale)
+        latency = (2 * d[idx] * cfg.length_km) / C
+        net_gain = task_seconds * (1 - f_earth / f_server) - latency
+        best = centers[idx[int(np.argmax(net_gain))]]
+        return {"x": float(best[0]), "y": float(best[1]), "z": float(best[2])}
 
     def net(pts: np.ndarray) -> np.ndarray:
         f_server = _dilation_array(_potential_at(pts, scale), scale)

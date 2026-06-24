@@ -29,7 +29,7 @@
 - [Development](#development)
 - [How It Works](#how-it-works)
 - [Glossary](docs/GLOSSARY.md)
-- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md) · [Cosmic Web scale](docs/cosmic-web.md)
+- [Deep dives](docs/README.md): [Gravitational Field Model](docs/gravitational-field.md) · [Efficiency & Breakeven](docs/efficiency-model.md) · [Light-Speed Latency](docs/light-latency.md) · [Void Finding](docs/void-finding.md) · [Cosmic Web scale](docs/cosmic-web.md) · [Deep Field scale](docs/deep-field.md)
 - [Physics and Assumptions](#physics-and-assumptions)
 - [TODO](#todo)
 - [Project Structure](#project-structure)
@@ -39,23 +39,41 @@
 
 Void Ranger is a single-purpose **Deep-Space Cloud Compute** simulator: place a compute server in a cosmological void — a vast region where the weaker gravitational field makes its clock tick faster than Earth's — then weigh that time-dilation advantage against the light-speed communication latency of reaching it. The deeper the void, the faster the server's clock, but the longer the round-trip signal takes, so the sweet spot depends on the size of the job.
 
-It runs at **two scales**, switched with a toggle in the top bar: **Solar Neighborhood** (~8,920 stars within a few hundred parsecs) and **Cosmic Web** (~43,500 galaxies out to hundreds of megaparsecs, where the void finder targets *real* cosmic voids). Same physics, zoomed out by ~a million. See [The Cosmic Web scale](docs/cosmic-web.md).
+It runs at **three scales**, switched with a toggle in the top bar:
+
+- **Solar Neighborhood** — ~8,920 stars within a few hundred parsecs (the HYG catalog, served as one JSON and drawn as a single point cloud).
+- **Cosmic Web** — ~43,500 galaxies out to hundreds of megaparsecs (2MRS, one ~7 MB JSON), where the void finder targets *real* cosmic voids. See [The Cosmic Web scale](docs/cosmic-web.md).
+- **Deep Field** — **GLADE+** (~22.5 M galaxies), megaparsecs: a real big-data visualization that streams binary level-of-detail tiles and reads a precomputed potential grid, so the void search is O(voxels) regardless of catalog size. GCP-ready, but runs locally from committed sample assets. See [The Deep Field scale](docs/deep-field.md).
+
+Same physics at every scale, zoomed out by ~a million from stars to galaxies.
 
 ## Architecture
 
 ```
-React Frontend (Vite + Tailwind + Three.js) — Solar Neighborhood / Cosmic Web scales
+React Frontend (Vite + Tailwind + Three.js) — Solar Neighborhood / Cosmic Web / Deep Field scales
   │
   ├── /api/*  →  FastAPI Backend (Python)
   │                ├── POST /api/physics/cartesian    — galactic → Cartesian coords
-  │                ├── POST /api/physics/efficiency   — dilation + latency metrics + breakeven (scale: solar|cosmic)
-  │                ├── POST /api/physics/best-void     — deepest-void search (scale-aware)
+  │                ├── POST /api/physics/efficiency   — dilation + latency metrics + breakeven (scale: solar|cosmic|deepfield)
+  │                ├── POST /api/physics/best-void     — deepest-void search (scale-aware; O(voxels) grid path for deepfield)
   │                ├── POST /api/physics/best-spot     — max net-gain placement (scale-aware)
   │                ├── GET  /api/stars                — HYG star catalog (solar scale; mass + names)
   │                └── GET  /api/galaxies             — 2MRS galaxy catalog (cosmic scale)
   │
-  └── Catalogs  ←  HYG (8,920 stars, parsecs) · 2MRS (43,510 galaxies, megaparsecs)
+  ├── Catalogs (API)  ←  HYG (8,920 stars, parsecs) · 2MRS (43,510 galaxies, megaparsecs)
+  │
+  └── Static assets  ←  Deep Field: GLADE+ binary LOD tiles + potential grid
+                          served from GCS / Cloud CDN in prod, or the committed
+                          frontend/public/deepfield/ sample in dev
+                          (base URL via VITE_ASSET_BASE_URL, default /deepfield)
 ```
+
+At the **Deep Field** scale the frontend streams GLADE+ tiles directly from a
+static asset base (no `/api/*` round-trip), and the backend's physics/void-search
+read a small precomputed potential grid instead of summing 22.5 M galaxies — so
+the API stays tiny. The tiles + grid are built by an offline, GCP-ready pipeline
+(GLADE+ → GCS → BigQuery → tiles/grid → GCS/Cloud CDN); see
+[The Deep Field scale](docs/deep-field.md).
 
 ## Prerequisites
 
@@ -296,7 +314,9 @@ $$
 
 where $\epsilon$ is a softening length ($0.1\ \text{pc}$) that keeps the potential finite if a server is placed right on top of a star. **Earth's** factor $f_\text{earth}$ is this evaluated at the origin — the dense solar neighborhood, so Earth's clock runs slow. The **server's** factor $f_\text{server}$ is evaluated at its placement: in a deep void $\Phi \to 0$ and $f_\text{server} \to 1$ (fast); near other stars $\Phi$ deepens and $f_\text{server}$ drops, eroding or reversing the advantage. This is the "place it in a void, not next to a star" physics.
 
-> **Exaggeration:** real interstellar potentials produce dilation of ~1 part in $10^{13}$ — invisible. The code multiplies $2\Phi/c^2$ by a documented constant (`GRAVITY_EXAGGERATION`) so the spread between the crowded solar neighborhood and deep voids becomes a visible few-to-tens-of-percent effect, and caps the well depth so the factor stays real.
+> **Exaggeration:** real interstellar potentials produce dilation of ~1 part in $10^{13}$ — invisible. The code multiplies $2\Phi/c^2$ by a documented constant (`GRAVITY_EXAGGERATION`) so the spread between the crowded solar neighborhood and deep voids becomes a visible few-to-tens-of-percent effect, and caps the well depth so the factor stays real. The cosmic and Deep Field scales use their own (much smaller) exaggerations via the `SCALES` registry.
+
+> **Deep Field (grid-backed potential):** at the Deep Field scale the potential $\Phi$ is not summed over 22.5 M GLADE+ galaxies at query time — it is read from a **precomputed voxel grid** (raw J/kg, trilinearly interpolated), making the deepest-void search O(voxels) regardless of catalog size. The grid stores the *raw* potential; the teaching exaggeration (`DEEPFIELD_EXAGGERATION = 8.0e5`) is applied **once** in `gravitational_dilation` (never baked into the grid), calibrated so the deepest void's clock advantage ≈ **1.060**, inside the documented **1.05–1.10** teaching band. Like the solar/cosmic exaggerations, it is a labeled teaching device — relative contrast is faithful, absolute magnitude is not. See [The Deep Field scale](docs/deep-field.md).
 
 ### 3a. Stellar mass estimate (mass–luminosity relation)
 
@@ -337,7 +357,7 @@ These are intentional simplifications. They keep the simulation legible, but a p
 ## TODO
 
 - [x] **Reach beyond the solar neighborhood** — added the **Cosmic Web** scale (~43,500 2MRS galaxies, megaparsecs). See [The Cosmic Web scale](docs/cosmic-web.md).
-- [ ] **Cosmic Web big-data (Phase 2)** — scale from 2MRS to **GLADE+** (~22.5M galaxies) via a GCP pipeline (BigQuery → GCS/CDN binary LOD tiles + a precomputed potential grid + octree streaming). Design: [Scaling the Universe](docs/scaling-the-universe.md).
+- [x] **Cosmic Web big-data (Phase 2)** — added the **Deep Field** scale: **GLADE+** (~22.5M galaxies) streamed as binary LOD tiles with a precomputed potential grid (O(voxels) void search), built by a GCP-ready pipeline (GLADE+ → GCS → BigQuery → tiles/grid → GCS/CDN) and runnable locally from committed samples. See [The Deep Field scale](docs/deep-field.md).
 - [ ] **Deeper star catalog** — the Solar Neighborhood scale uses ~8,920 HYG stars (magnitude ≤ 6.5). Relax the cut / switch to AT-HYG for a denser local field.
 
 ## Project Structure

@@ -52,9 +52,9 @@ Computed as `advantage = f_server / f_earth`, where `f = √(1 + 2Φ/c²)` is a 
 
 ## Cosmic Web scale
 
-**Scale toggle** — the top-bar switch between **Solar Neighborhood** (stars, parsecs) and **Cosmic Web** (galaxies, megaparsecs).
+**Scale toggle** — the top-bar switch between **Solar Neighborhood** (stars, parsecs), **Cosmic Web** (2MRS galaxies, megaparsecs), and **Deep Field** (GLADE+ galaxies, megaparsecs).
 
-Both run the *same* model — place a node in a void, weigh the clock advantage against light-delay latency — just zoomed out by ~a million. Switching swaps the catalog, the distance unit (pc ↔ Mpc), and the gravity sources (stars ↔ galaxies). Full write-up: [The Cosmic Web scale](cosmic-web.md).
+All three run the *same* model — place a node in a void, weigh the clock advantage against light-delay latency. Switching swaps the catalog, the distance unit (pc ↔ Mpc), and the gravity sources (stars ↔ galaxies). The Deep Field additionally streams binary LOD tiles instead of one JSON and reads a precomputed potential grid. Full write-ups: [The Cosmic Web scale](cosmic-web.md) · [The Deep Field scale](deep-field.md).
 
 **Galaxy (Cosmic Web)** — a point in the galaxy field, from the 2MASS Redshift Survey (2MRS).
 
@@ -67,3 +67,25 @@ At these distances round-trip latency `2d/c` is enormous (~327 million years at 
 **Cosmic void** — a genuinely under-dense region of the cosmic web (few galaxies, weak gravity), where a node's clock runs fastest.
 
 Unlike the loose "gap between nearby stars" at solar scale, these are *real* voids in large-scale structure. *Find deepest void* at this scale points at one. The gravitational-redshift difference between voids and galaxy clusters is a real, measured effect — so the cosmic scale uses a much smaller exaggeration than the stellar scale.
+
+## Deep Field scale
+
+**GLADE+** — the ~22.5-million-galaxy catalog behind the Deep Field scale (VizieR `VII/291`).
+
+Only rows with a usable luminosity distance (`d_L ≤ 500 Mpc`) are kept, so the rendered 3-D set is smaller than the full 23.2 M rows. Galaxies are ranked by apparent brightness (W1, else B, else K) so coarse tiles show the prominent ones first. Full write-up: [The Deep Field scale](deep-field.md).
+
+**LOD tile** — a "level of detail" chunk of the galaxy field: a headerless little-endian Float32 `.bin` of interleaved `x,y,z` in Mpc (12 bytes/galaxy).
+
+The frontend streams these instead of one big JSON: coarse tiles load first, finer tiles refine on zoom. Points within a tile are brightness-ordered, so any prefix is a valid downsample. Point count = `byteLength / 12`.
+
+**Octree / octant** — the spatial tree the tiles are organized into: each node's cube is recursively split into 8 **octants** (children), so the streamer can load only the regions in view at the needed detail.
+
+Node ids encode the path: root `"0"`, a child appends its octant digit `0..7`. The tree is *sparse* — only non-empty octants are listed in the manifest.
+
+**Voxel grid (potential grid)** — a precomputed 3-D array of the gravitational potential (J/kg) on a regular cube of cells (**voxels**), shape `(nz, ny, nx)`.
+
+It lets the backend read the local potential anywhere in the ±500 Mpc cube without re-summing 22.5 M galaxies, so the Deep Field's *Find deepest void* / *Best spot* are **O(voxels)** — independent of catalog size. The grid stores the *raw* potential; the teaching exaggeration is applied once in the dilation model.
+
+**Trilinear interpolation** — how a value at an arbitrary point is read from the voxel grid: a weighted blend of the 8 surrounding voxel centers along x, y, and z.
+
+It makes the gridded potential continuous everywhere in the cube (points past the outermost voxel centers clamp to the nearest edge — no extrapolation, no NaN).

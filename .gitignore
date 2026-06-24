@@ -6,5 +6,6 @@ __pycache__/
 .pytest_cache/
 backend/data/hygdata_v41.csv
 backend/data/hyg_v42.csv.gz
+backend/data/deepfield_build/
 .env
 .env.local

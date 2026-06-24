@@ -1,16 +1,21 @@
 # The Cosmic Web scale
 
-Void Ranger has two **scales**, switched by the toggle in the top bar:
+Void Ranger has three **scales**, switched by the toggle in the top bar:
 
 - **Solar Neighborhood** — ~8,920 stars within ~560 pc (the default; see the
   [Gravitational Field Model](gravitational-field.md)).
 - **Cosmic Web** — ~43,500 galaxies out to a few hundred **megaparsecs**, where
   "place a compute node in a void" plays out among real galaxies and cosmic
-  voids.
+  voids. *(This doc.)*
+- **Deep Field** — **GLADE+** (~22.5 M galaxies), megaparsecs: the same cosmic
+  premise as a big-data visualization, streamed as binary LOD tiles with a
+  precomputed potential grid (O(voxels) void search). See
+  [The Deep Field scale](deep-field.md).
 
-Same premise at both scales: weaker local gravity → a faster clock → a job
+Same premise at every scale: weaker local gravity → a faster clock → a job
 finishes in less home time, traded off against light-speed latency. The cosmic
-scale just zooms out by a factor of ~a million (parsecs → megaparsecs).
+scale just zooms out by a factor of ~a million (parsecs → megaparsecs); the Deep
+Field keeps these megaparsec units and scales the *catalog* up by ~500×.
 
 ## The catalog (2MRS)
 
