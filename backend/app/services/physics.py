@@ -179,13 +179,27 @@ def gravitational_dilation(potential: float, scale: str = "solar") -> float:
 
 
 @lru_cache(maxsize=None)
+def _catalog_earth_factor(scale: str) -> float:
+    return gravitational_dilation(local_potential(0.0, 0.0, 0.0, scale), scale)
+
+
+@lru_cache(maxsize=4)
+def _deepfield_earth_factor(grid_dir) -> float:
+    return gravitational_dilation(local_potential(0.0, 0.0, 0.0, "deepfield"), "deepfield")
+
+
 def earth_dilation_factor(scale: str = "solar") -> float:
     """Earth's clock factor: it sits at the origin, deep in the dense
     neighborhood, so its clock runs slow relative to a distant void.
 
-    Cached per scale (the cache key includes the scale argument).
+    Cached per scale for catalog scales; for the grid-backed deepfield scale the
+    cache is keyed on the resolved grid directory so a DEEPFIELD_GRID_DIR
+    override (e.g. swapping to the full-catalog grid) recomputes rather than
+    serving the first grid's stale Earth factor.
     """
-    return gravitational_dilation(local_potential(0.0, 0.0, 0.0, scale), scale)
+    if _scale(scale).load is None:
+        return _deepfield_earth_factor(_deepfield_grid_dir())
+    return _catalog_earth_factor(scale)
 
 
 def server_dilation_factor(x: float, y: float, z: float, scale: str = "solar") -> float:
