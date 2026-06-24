@@ -26,7 +26,12 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# App source (and data the API reads at runtime, e.g. the grid sidecar).
+# App source + the data the API reads at runtime. data/samples/deepfield/grid is
+# the committed N=48 SAMPLE grid (the in-image default the backend loads when
+# DEEPFIELD_GRID_DIR is unset). 30_serve.sh `run` mode additionally stages the
+# full-catalog grid into data/deepfield_prod/grid (fetched from GCS) and sets
+# DEEPFIELD_GRID_DIR to it, so production serves physics from the full grid; the
+# exaggeration is auto-derived per grid, so no rebuild/tuning is needed.
 COPY app ./app
 COPY data ./data
 

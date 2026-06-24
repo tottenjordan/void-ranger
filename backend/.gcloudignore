@@ -1,0 +1,14 @@
+# Keep the Cloud Run `--source backend/` build context lean (30_serve.sh run).
+# Denylist: anything NOT matched here is uploaded, so app/, data/samples/,
+# data/stars.json, data/galaxies.json, the staged data/deepfield_prod/grid,
+# pyproject.toml and uv.lock all ride along.
+.git/
+.gitignore
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+.venv/
+tests/
+# Local full-catalog build artifacts (multi-GB); the prod grid is fetched from
+# GCS and staged into data/deepfield_prod/grid by 30_serve.sh instead.
+data/deepfield_build/

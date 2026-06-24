@@ -158,7 +158,7 @@ EOF
 # ---------------------------------------------------------------------------
 serve_run() {
   require_vars SERVICE_NAME APP_ORIGIN
-  require_cmd gcloud
+  require_cmd gcloud gsutil
   banner "30_serve (run) — deploy FastAPI backend to Cloud Run"
 
   dockerfile="${GCP_DIR}/Dockerfile"
@@ -173,12 +173,41 @@ serve_run() {
     die "a Dockerfile already exists at ${staged_dockerfile}; refusing to overwrite.
   Remove it or deploy manually with that one."
   fi
+
+  # Stage the FULL-catalog potential grid from GCS so the backend serves
+  # deepfield physics from it (DEEPFIELD_GRID_DIR below). It rides into the image
+  # via the Dockerfile's `COPY data ./data`. If the grid isn't in the bucket yet
+  # (run ./20_build_assets.sh first), fall back to the committed sample grid that
+  # is already baked into the image — the container still boots, just on the
+  # coarser sample. The deepfield exaggeration is auto-derived per grid, so the
+  # full grid self-calibrates to the teaching band with no manual tuning.
+  staged_grid_parent="${BACKEND_DIR}/data/deepfield_prod"
+  staged_grid_dir="${staged_grid_parent}/grid"
+  deepfield_env=""
+
+  # Clean up both staged paths on exit (Dockerfile + full grid dir).
+  # shellcheck disable=SC2064  # expand paths now, intentionally
+  trap "rm -f '${staged_dockerfile}'; rm -rf '${staged_grid_parent}'" EXIT
+
   cp "${dockerfile}" "${staged_dockerfile}"
-  # shellcheck disable=SC2064  # expand staged_dockerfile now, intentionally
-  trap "rm -f '${staged_dockerfile}'" EXIT
+
+  rm -rf "${staged_grid_parent}"
+  mkdir -p "${staged_grid_dir}"
+  if gsutil -q stat "${GS_ASSET_BASE}/grid/grid.npy" 2>/dev/null \
+     && gsutil -q stat "${GS_ASSET_BASE}/grid/grid.json" 2>/dev/null; then
+    info "staging full-catalog grid from ${GS_ASSET_BASE}/grid for the backend"
+    gsutil -q cp "${GS_ASSET_BASE}/grid/grid.npy"  "${staged_grid_dir}/grid.npy"
+    gsutil -q cp "${GS_ASSET_BASE}/grid/grid.json" "${staged_grid_dir}/grid.json"
+    deepfield_env=",DEEPFIELD_GRID_DIR=/app/data/deepfield_prod/grid"
+  else
+    warn "full grid not found at ${GS_ASSET_BASE}/grid — backend will use the committed sample grid (run ./20_build_assets.sh to publish the full grid)"
+    rm -rf "${staged_grid_parent}"
+  fi
 
   # Deploy from backend/ source; Cloud Build builds the staged Dockerfile. CORS
   # origin passed as an env var so the FastAPI app can allow the deployed frontend.
+  # When the full grid was staged, DEEPFIELD_GRID_DIR points the backend at it;
+  # otherwise it's unset and the backend loads the in-image committed sample grid.
   info "deploying ${SERVICE_NAME} to Cloud Run in ${REGION}"
   gcloud run deploy "${SERVICE_NAME}" \
     --project "${PROJECT_ID}" \
@@ -186,7 +215,7 @@ serve_run() {
     --source "${BACKEND_DIR}" \
     --allow-unauthenticated \
     --labels "${LABEL_EQ}" \
-    --set-env-vars "APP_ORIGIN=${APP_ORIGIN}"
+    --set-env-vars "APP_ORIGIN=${APP_ORIGIN}${deepfield_env}"
   # Note: the container listens on Cloud Run's injected $PORT (Dockerfile CMD),
   # so we don't pass --port; Cloud Run defaults to 8080, which the image honors.
 
@@ -197,6 +226,7 @@ serve_run() {
   cat <<EOF
   Cloud Run service URL:  ${run_url}
   Health check:           ${run_url}/api/stars   (or your API root)
+  Deepfield grid:         ${deepfield_env:+full catalog (DEEPFIELD_GRID_DIR set)}${deepfield_env:-committed sample (in-image default)}
 EOF
 }
 
