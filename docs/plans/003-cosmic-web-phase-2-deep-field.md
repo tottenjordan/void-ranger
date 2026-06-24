@@ -1,6 +1,6 @@
 # 003 — Cosmic Web Phase 2: Deep Field (GLADE+ big-data on GCP)
 
-**Status:** 🚧 **In progress** — backend + pipeline (2A–2D) **and** frontend (2E) **complete**; docs (2F), GCP suite (2G) **remaining**. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
+**Status:** ✅ **Implemented** — all tasks 2A–2G complete on branch `feat/deepfield-phase2` (not yet pushed). Remaining: the end-to-end Playwright smoke (Verification §4) and opening the PR. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `executing-plans` skill to implement this plan task-by-task.
 
@@ -8,7 +8,7 @@
 
 Executed subagent-driven (each task: implementer → spec review → code-quality review → fix loop) on branch `feat/deepfield-phase2`. Not pushed. Full backend suite: **73 passing**.
 
-**✅ Completed (committed):**
+**✅ Completed (committed):** _(each task: implementer → spec review → code-quality review → fix loop; reviews caught real issues — scene-constant dedup, LOD per-tick allocs/thrash, and a `pipefail` SIGPIPE abort in `20_build_assets.sh` — all fixed)_
 - **2A.1** — GLADE+ schema doc + deterministic sampler (`backend/scripts/glade/{README.md,sample_glade.py}` + committed `glade_sample.csv.gz`). _(commit `5c5d8c5`, pre-session)_
 - **2B.1** — Octree LOD tile builder `backend/scripts/glade/build_tiles.py` + `test_tiles.py` (per-axis exact partition; endianness round-trip). _(`05c6750`)_
 - **2B.2** — Sample tileset committed to `frontend/public/deepfield/tiles/` (root + 2 levels, 408 KB). _(`7fe9699`)_
@@ -19,9 +19,12 @@ Executed subagent-driven (each task: implementer → spec review → code-qualit
 - **2E.1** — Frontend: `deepfield` entry in `SCALE_UI` + per-scale `scene` constants (single source `SHARED_SCENE`, consumed by `GalaxyMap`) + `assetBase` (`VITE_ASSET_BASE_URL ?? '/deepfield'`) + 3-way toggle; catalog fetch skipped for deepfield. _(`dd7135d`)_
 - **2E.2** — Octree LOD streaming renderer `DeepField.jsx` + `GalaxyMap` scale dispatch: streams `manifest.json` + LE-Float32 `.bin` tiles into `<points>`, throttled (4 Hz) bounding-sphere frustum/zoom walk with refine/coarsen **hysteresis**, 300 k point cap (warn on drop), AbortController/mounted-ref cleanup, decode cache + in-flight de-dupe, lightweight Mpc hover; solar/cosmic `StarField` path untouched. _(`3f2499b`)_
 
+- **2F.1** — Docs: new `docs/deep-field.md`; README "three scales" + Deep Field subsection + static-assets architecture + Physics note; `docs/scaling-the-universe.md` (Phase 2 shipped); `docs/cosmic-web.md` + `docs/GLOSSARY.md` (three scales + Deep Field terms); plans 002/README status. _(`33aef4d`)_
+- **2G** — Reproducible GCP provisioning suite `backend/scripts/glade/gcp/` (`_lib.sh`, `config.env.example`, `cors.json`, `00_setup.sh`, `10_load_bigquery.sh`, `20_build_assets.sh`, `30_serve.sh`+`Dockerfile`, `99_teardown.sh`, `DEPLOY.md`); idempotent, `bash -n`-clean, parameterized by `config.env`; user-run, not CI. BigQuery→builders path **materializes `glade_usable` to CSV.gz and feeds `--in`** (no `google-cloud-bigquery` dep → no `uv.lock` churn). _(`8120e54`)_
+
 **📋 Remaining:**
-- **2F.1** — Docs: `docs/deep-field.md`, README "three scales" + Deep Field subsection, `docs/scaling-the-universe.md` (Phase 2 done), plans 002/README status.
-- **2G** — Reproducible GCP provisioning suite `backend/scripts/glade/gcp/` (`config.env.example`, `cors.json`, `00_setup.sh`, `10_load_bigquery.sh`, `20_build_assets.sh`, `30_serve.sh`+`Dockerfile`, `99_teardown.sh`, `DEPLOY.md`); idempotent, `bash -n`-clean; user-run, not CI.
+- **End-to-end Playwright smoke** (Verification §4): toggle to Deep Field → tiles stream → place a node → grid-backed metrics populate → toggle back unchanged → screenshot. Not yet run.
+- **Open the PR** for `feat/deepfield-phase2`.
 
 **Key locked decisions (carry forward):**
 - Grid stores **raw** potential (J/kg); the deepfield **exaggeration lives in `SCALES`** and is applied once in `gravitational_dilation` (uniform with solar/cosmic) — avoids double-exaggeration. `build_grid.py --exaggeration` defaults to 1.0.
