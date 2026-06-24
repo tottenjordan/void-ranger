@@ -74,7 +74,6 @@ EXAGGERATION_DEFAULT = 1.0   # RAW grid; deepfield exaggeration lives in SCALES 
 G = 6.674e-11        # gravitational constant (m^3 kg^-1 s^-2)
 MPC_M = 3.086e22     # m per megaparsec
 M_SUN_KG = 1.989e30  # kg per solar mass
-C_M_S = 299_792.458 * 1000  # speed of light in m/s (verify-only)
 
 
 def load_sample(path: Path) -> pd.DataFrame:
