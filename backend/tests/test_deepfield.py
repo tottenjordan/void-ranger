@@ -210,14 +210,14 @@ def test_find_deepest_void_deepfield_inside_cube_and_beats_earth():
     assert f_server / f_earth > 1.0
 
 
-def test_find_deepest_void_deepfield_advantage_in_provisional_band():
-    # Provisional calibration only — the TIGHT 1.05-1.10 band is asserted in
-    # 2D.1. Here we just guard that the advantage lands in a sane, visible band.
+def test_find_deepest_void_deepfield_advantage_in_calibrated_band():
+    # Final calibration (Task 2D.1): the deepest-void clock advantage must land
+    # in the tight 1.05-1.10 target band (DEEPFIELD_EXAGGERATION = 8.0e5 -> ~1.060).
     pt = find_deepest_void(DEEPFIELD_SEARCH_R, scale="deepfield")
     f_server = server_dilation_factor(pt["x"], pt["y"], pt["z"], "deepfield")
     f_earth = earth_dilation_factor("deepfield")
     adv = f_server / f_earth
-    assert 1.03 < adv < 1.15
+    assert 1.05 <= adv <= 1.10
 
 
 def test_find_deepest_void_deepfield_deterministic():
@@ -325,3 +325,92 @@ _BEST_ORIGIN = {
 def test_catalog_searches_unchanged(scale, expected_void, expected_best):
     assert find_deepest_void(100.0, scale=scale) == expected_void
     assert find_best_spot(1e9, 100.0, scale=scale) == expected_best
+
+
+# --- Deepfield API surface (Task 2D.1) --------------------------------------
+# Exercise the real FastAPI router end-to-end via TestClient: the deepfield
+# scale must flow through the schema Literal and produce finite grid-backed
+# physics. No /api/galaxies-style JSON exists for deepfield — galaxies are
+# tiles; the API only does physics via the grid.
+
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+client = TestClient(app)
+
+
+def test_api_efficiency_deepfield_returns_finite_metrics():
+    # A sample void-ish point inside the ±500 Mpc cube; huge task to clear the
+    # enormous cosmological round-trip latency.
+    payload = {
+        "x": -93.75,
+        "y": -31.25,
+        "z": -281.25,
+        "task_seconds": 1e19,
+        "scale": "deepfield",
+    }
+    resp = client.post("/api/physics/efficiency", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    for field in (
+        "earth_compute_time",
+        "earth_wait_time",
+        "net_gain",
+        "latency_seconds",
+        "earth_dilation_factor",
+        "server_dilation_factor",
+        "clock_advantage",
+        "breakeven_task_seconds",
+    ):
+        assert field in data
+        assert np.isfinite(data[field]), f"{field} not finite: {data[field]!r}"
+    # Grid-backed dilation factors are physical, server beats Earth in the void.
+    assert 0.0 < data["earth_dilation_factor"] <= 1.0
+    assert 0.0 < data["server_dilation_factor"] <= 1.0
+    assert data["clock_advantage"] > 1.0
+
+
+def test_api_best_void_deepfield_finite_coords_in_cube():
+    payload = {"max_distance_pc": DEEPFIELD_SEARCH_R, "scale": "deepfield"}
+    resp = client.post("/api/physics/best-void", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    for axis in ("x", "y", "z"):
+        assert np.isfinite(data[axis])
+        assert -500.0 <= data[axis] <= 500.0
+
+
+def test_api_best_spot_deepfield_finite_coords_in_cube():
+    payload = {
+        "task_seconds": 1e19,
+        "max_distance_pc": DEEPFIELD_SEARCH_R,
+        "scale": "deepfield",
+    }
+    resp = client.post("/api/physics/best-spot", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    for axis in ("x", "y", "z"):
+        assert np.isfinite(data[axis])
+        assert -500.0 <= data[axis] <= 500.0
+
+
+def test_api_schema_accepts_deepfield_rejects_bad_scale():
+    # The new Literal accepts "deepfield" ...
+    ok = client.post(
+        "/api/physics/best-void",
+        json={"max_distance_pc": DEEPFIELD_SEARCH_R, "scale": "deepfield"},
+    )
+    assert ok.status_code == 200
+    # ... but an unknown scale is a 422 validation error.
+    bad = client.post(
+        "/api/physics/best-void",
+        json={"max_distance_pc": DEEPFIELD_SEARCH_R, "scale": "nope"},
+    )
+    assert bad.status_code == 422
+
+
+def test_earth_dilation_factor_deepfield_finite_in_unit_interval():
+    fe = earth_dilation_factor("deepfield")
+    assert np.isfinite(fe)
+    assert 0.0 < fe <= 1.0

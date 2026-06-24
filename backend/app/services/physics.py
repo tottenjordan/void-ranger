@@ -42,14 +42,16 @@ MAX_WELL_DEPTH = 0.7     # cap so the dilation factor stays real and sane
 # collapses to ~1.0, so the value must stay in this lower window.
 COSMIC_EXAGGERATION = 1.0e5
 
-# Deepfield exaggeration. The deepfield scale reads a precomputed potential grid
-# (RAW J/kg) rather than a catalog, so its potentials live on a different
-# magnitude than cosmic's catalog sums and need their own factor. Provisional
-# value chosen so the deepest void within 300 Mpc of the committed N=48 sample
-# grid lands at clock_advantage ~1.06 (in the visible 1.05-1.10 target band):
+# Deepfield exaggeration, calibrated (Task 2D.1) so the deepest void within
+# 300 Mpc of the committed N=48 sample grid gives a clock_advantage of ~1.060
+# over Earth (a visible but modest edge, in the target 1.05-1.10 band). The
+# deepfield scale reads a precomputed potential grid (RAW J/kg) rather than a
+# catalog, so its potentials live on a different magnitude than cosmic's catalog
+# sums and need their own factor. Calibration sweep
+# (find_deepest_void(300, scale="deepfield")):
 #   exa=5e5 -> adv 1.035,  exa=7e5 -> adv 1.051,  exa=8e5 -> adv 1.060,
 #   exa=1.0e6 -> adv 1.079,  exa=1.2e6 -> adv 1.100.
-DEEPFIELD_EXAGGERATION = 8.0e5  # provisional; final calibration in 2D.1
+DEEPFIELD_EXAGGERATION = 8.0e5
 
 
 @dataclass(frozen=True)
