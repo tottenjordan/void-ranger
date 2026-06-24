@@ -1,0 +1,5 @@
+# Your filled-in config holds project-specific values — never commit it.
+config.env
+
+# Temp CORS file injected with the real origin (created at runtime by 00_setup.sh).
+cors.*.tmp

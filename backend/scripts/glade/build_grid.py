@@ -90,8 +90,10 @@ def load_bq() -> pd.DataFrame:
     server-side; that path is wired by the Phase 2G GCP provisioning suite.
     """
     raise NotImplementedError(
-        "--source bq is wired by the Phase 2G GCP provisioning suite; "
-        "use --source sample (default) for local/CI builds."
+        "--source bq is not a Python BigQuery client: the Phase 2G GCP suite "
+        "materializes the glade_usable view to a CSV.gz and feeds it here via "
+        "--in (see scripts/glade/gcp/20_build_assets.sh). Use --source sample "
+        "(default) with --in for local/CI builds."
     )
 
 

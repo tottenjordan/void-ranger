@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["${APP_ORIGIN}"],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Range", "Cache-Control"],
+    "maxAgeSeconds": 3600
+  }
+]
