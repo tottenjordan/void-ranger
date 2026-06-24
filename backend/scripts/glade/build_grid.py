@@ -136,6 +136,24 @@ def voxel_centers(r_max: float, n: int) -> np.ndarray:
     return -r_max + (np.arange(n, dtype=np.float64) + 0.5) * width
 
 
+def _potential_for_points(pts_m, sx, sy, sz, masses_kg, soft_sq, chunk):
+    """Sum the softened Newtonian potential at each point (row of pts_m).
+
+    Pure, serial reduction over ALL galaxies in array order. Returns a
+    float64 ndarray of length len(pts_m). Math is identical to the original
+    in-line loop; this is a structural extraction only.
+    """
+    out = np.empty(len(pts_m), dtype=np.float64)
+    for i in range(0, len(pts_m), chunk):
+        c = pts_m[i:i + chunk]
+        dx = c[:, 0:1] - sx[None, :]
+        dy = c[:, 1:2] - sy[None, :]
+        dz = c[:, 2:3] - sz[None, :]
+        r = np.sqrt(dx * dx + dy * dy + dz * dz + soft_sq)
+        out[i:i + len(c)] = np.sum(G * masses_kg[None, :] / r, axis=1)
+    return out
+
+
 def build_grid(xyz_mpc: np.ndarray, mass_msun: np.ndarray, r_max: float,
                n: int, softening_mpc: float, exaggeration: float) -> np.ndarray:
     """Voxelize the cube and sum the softened galaxy potential per voxel center.
@@ -157,15 +175,8 @@ def build_grid(xyz_mpc: np.ndarray, mass_msun: np.ndarray, r_max: float,
     gz, gy, gx = np.meshgrid(centers_m, centers_m, centers_m, indexing="ij")
     pts = np.column_stack([gx.ravel(), gy.ravel(), gz.ravel()])  # (n^3, 3) m, x/y/z
 
-    out = np.empty(len(pts), dtype=np.float64)
     CHUNK = 256
-    for i in range(0, len(pts), CHUNK):
-        c = pts[i:i + CHUNK]
-        dx = c[:, 0:1] - sx[None, :]
-        dy = c[:, 1:2] - sy[None, :]
-        dz = c[:, 2:3] - sz[None, :]
-        r = np.sqrt(dx * dx + dy * dy + dz * dz + soft_sq)
-        out[i:i + len(c)] = np.sum(G * masses_kg[None, :] / r, axis=1)
+    out = _potential_for_points(pts, sx, sy, sz, masses_kg, soft_sq, CHUNK)
 
     out *= exaggeration
     return out.reshape(n, n, n).astype(np.float32)  # [iz, iy, ix]
