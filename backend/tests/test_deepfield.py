@@ -16,7 +16,13 @@ from app.services.catalog import (
     DEEPFIELD_GRID_DIR_ENV,
     load_potential_grid,
 )
-from app.services.physics import _grid_potential_at
+from app.services.physics import (
+    _grid_potential_at,
+    earth_dilation_factor,
+    find_best_spot,
+    find_deepest_void,
+    server_dilation_factor,
+)
 
 
 def _center(lo: float, hi: float, n: int, i: int) -> float:
@@ -172,3 +178,150 @@ def test_grid_potential_at_handles_multiple_points():
     out = _grid_potential_at(pts, "deepfield")
     assert out.shape == (3,)
     assert np.all(np.isfinite(out))
+
+
+# --- Grid-based void / best-spot search (Task 2C.3) -------------------------
+# The deepfield branch reads the cached potential grid (no catalog), restricts
+# voxel centers to the latency-budget ball, and returns the argmin-potential /
+# argmax-net voxel center. O(voxels), vectorized, deterministic.
+
+DEEPFIELD_SEARCH_R = 300.0  # Mpc latency-budget radius for deepfield searches
+
+
+def _r_max() -> float:
+    """The committed sample's cube half-extent (Mpc)."""
+    minx, miny, minz, maxx, maxy, maxz = load_potential_grid("deepfield").bounds
+    return max(maxx, maxy, maxz)
+
+
+def test_find_deepest_void_deepfield_inside_cube_and_beats_earth():
+    pt = find_deepest_void(DEEPFIELD_SEARCH_R, scale="deepfield")
+    r = _r_max()
+    # Inside the ±R_MAX cube.
+    assert -r <= pt["x"] <= r
+    assert -r <= pt["y"] <= r
+    assert -r <= pt["z"] <= r
+    # Inside the latency-budget ball.
+    d = (pt["x"] ** 2 + pt["y"] ** 2 + pt["z"] ** 2) ** 0.5
+    assert d <= DEEPFIELD_SEARCH_R + 1e-6
+    # The server's clock there beats Earth's.
+    f_server = server_dilation_factor(pt["x"], pt["y"], pt["z"], "deepfield")
+    f_earth = earth_dilation_factor("deepfield")
+    assert f_server / f_earth > 1.0
+
+
+def test_find_deepest_void_deepfield_advantage_in_provisional_band():
+    # Provisional calibration only — the TIGHT 1.05-1.10 band is asserted in
+    # 2D.1. Here we just guard that the advantage lands in a sane, visible band.
+    pt = find_deepest_void(DEEPFIELD_SEARCH_R, scale="deepfield")
+    f_server = server_dilation_factor(pt["x"], pt["y"], pt["z"], "deepfield")
+    f_earth = earth_dilation_factor("deepfield")
+    adv = f_server / f_earth
+    assert 1.03 < adv < 1.15
+
+
+def test_find_deepest_void_deepfield_deterministic():
+    a = find_deepest_void(DEEPFIELD_SEARCH_R, scale="deepfield")
+    b = find_deepest_void(DEEPFIELD_SEARCH_R, scale="deepfield")
+    assert a == b
+
+
+def test_find_deepest_void_deepfield_returns_voxel_center():
+    # The result must be an actual voxel center, not an interpolated point.
+    grid = load_potential_grid("deepfield")
+    minx, miny, minz, maxx, maxy, maxz = grid.bounds
+    nz, ny, nx = grid.shape
+    pt = find_deepest_void(DEEPFIELD_SEARCH_R, scale="deepfield")
+
+    def _is_center(v, lo, hi, n):
+        # v == lo + (i + 0.5) * (hi - lo) / n for some integer i in [0, n).
+        i = (v - lo) / (hi - lo) * n - 0.5
+        return abs(i - round(i)) < 1e-6 and 0 <= round(i) < n
+
+    assert _is_center(pt["x"], minx, maxx, nx)
+    assert _is_center(pt["y"], miny, maxy, ny)
+    assert _is_center(pt["z"], minz, maxz, nz)
+
+
+def test_find_best_spot_deepfield_finite_positive_net():
+    # At cosmic distances round-trip light latency is enormous (~10^15 s even
+    # for the nearest voxel), so the task must be large enough to clear the
+    # latency breakeven before any net gain appears.
+    huge_task = 1e19  # seconds
+    pt = find_best_spot(huge_task, DEEPFIELD_SEARCH_R, scale="deepfield")
+    assert np.isfinite(pt["x"]) and np.isfinite(pt["y"]) and np.isfinite(pt["z"])
+    r = _r_max()
+    assert -r <= pt["x"] <= r and -r <= pt["y"] <= r and -r <= pt["z"] <= r
+
+    # Net gain at the chosen spot is positive for a huge task.
+    from app.services.physics import C, MPC_KM, compute_efficiency
+
+    f_earth = earth_dilation_factor("deepfield")
+    f_server = server_dilation_factor(pt["x"], pt["y"], pt["z"], "deepfield")
+    d = (pt["x"] ** 2 + pt["y"] ** 2 + pt["z"] ** 2) ** 0.5
+    latency = (2 * d * MPC_KM) / C
+    eff = compute_efficiency(huge_task, f_earth, f_server, latency)
+    assert eff["net_gain"] > 0
+
+
+def test_find_best_spot_deepfield_deterministic():
+    huge_task = 1e19
+    a = find_best_spot(huge_task, DEEPFIELD_SEARCH_R, scale="deepfield")
+    b = find_best_spot(huge_task, DEEPFIELD_SEARCH_R, scale="deepfield")
+    assert a == b
+
+
+def _nearest_voxel_center_to_origin():
+    """The voxel center closest to the origin (the empty-ball fallback target)."""
+    grid = load_potential_grid("deepfield")
+    minx, miny, minz, maxx, maxy, maxz = grid.bounds
+    nz, ny, nx = grid.shape
+
+    def centers(lo, hi, n):
+        return lo + (np.arange(n) + 0.5) * (hi - lo) / n
+
+    cx, cy, cz = centers(minx, maxx, nx), centers(miny, maxy, ny), centers(minz, maxz, nz)
+    zz, yy, xx = np.meshgrid(cz, cy, cx, indexing="ij")
+    pts = np.column_stack([xx.ravel(), yy.ravel(), zz.ravel()])
+    return pts[int(np.argmin((pts ** 2).sum(axis=1)))]
+
+
+def test_find_deepest_void_deepfield_empty_ball_falls_back_to_nearest():
+    # radius 0 -> no voxel center is within the ball; must fall back to the
+    # nearest voxel center to origin (finite, real voxel), not crash/return empty.
+    pt = find_deepest_void(0.0, scale="deepfield")
+    assert np.isfinite(pt["x"]) and np.isfinite(pt["y"]) and np.isfinite(pt["z"])
+    nearest = _nearest_voxel_center_to_origin()
+    assert (pt["x"], pt["y"], pt["z"]) == (nearest[0], nearest[1], nearest[2])
+
+
+def test_find_best_spot_deepfield_empty_ball_falls_back_to_nearest():
+    pt = find_best_spot(1e19, 0.0, scale="deepfield")
+    assert np.isfinite(pt["x"]) and np.isfinite(pt["y"]) and np.isfinite(pt["z"])
+    nearest = _nearest_voxel_center_to_origin()
+    assert (pt["x"], pt["y"], pt["z"]) == (nearest[0], nearest[1], nearest[2])
+
+
+# --- Regression: solar + cosmic paths unchanged ----------------------------
+# Known values captured BEFORE the 2C.3 change. A deepfield change must not
+# alter the catalog-based searches.
+
+_SOLAR_VOID = {"x": -66.66666666666669, "y": 33.33333333333326, "z": 66.66666666666657}
+_COSMIC_VOID = {"x": 39.66666666666657, "y": -85.33333333333334, "z": 33.83333333333326}
+_BEST_ORIGIN = {
+    "x": -5.684341886080802e-14,
+    "y": -5.684341886080802e-14,
+    "z": -5.684341886080802e-14,
+}
+
+
+@pytest.mark.parametrize(
+    "scale, expected_void, expected_best",
+    [
+        ("solar", _SOLAR_VOID, _BEST_ORIGIN),
+        ("cosmic", _COSMIC_VOID, _BEST_ORIGIN),
+    ],
+)
+def test_catalog_searches_unchanged(scale, expected_void, expected_best):
+    assert find_deepest_void(100.0, scale=scale) == expected_void
+    assert find_best_spot(1e9, 100.0, scale=scale) == expected_best
