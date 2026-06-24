@@ -7,6 +7,7 @@ cheap and safe to run alongside the production build.
 """
 import contextlib
 import io
+import os
 import sys
 from pathlib import Path
 
@@ -93,3 +94,28 @@ def test_parallel_matches_serial():
     a = build_grid.build_grid(xyz, mass, jobs=1, **kw)
     b = build_grid.build_grid(xyz, mass, jobs=4, **kw)
     assert np.array_equal(a, b)
+
+
+def test_matches_committed_sample_grid():
+    """Regression gate: the optimized builder must reproduce the shipped grid.
+
+    Rebuilds the grid from the committed sample inputs at the exact resolution
+    and parameters used to produce the committed grid.npy, then asserts strict
+    byte-identity. This justifies that no GCS re-upload is needed after the
+    Phase C optimization.
+    """
+    xyz, mass = _sample_inputs()
+    rebuilt = build_grid.build_grid(
+        xyz,
+        mass,
+        r_max=500.0,
+        n=48,
+        softening_mpc=0.5,
+        exaggeration=1.0,
+        jobs=os.cpu_count() or 1,
+    )
+    committed = np.load(
+        BACKEND_DIR / "data" / "samples" / "deepfield" / "grid" / "grid.npy"
+    )
+    assert rebuilt.shape == committed.shape
+    assert np.array_equal(rebuilt, committed)
