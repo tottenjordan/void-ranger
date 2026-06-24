@@ -79,3 +79,17 @@ def test_progress_emitted():
     with contextlib.redirect_stderr(buf2):
         build_grid.build_grid(xyz, mass, progress=False, **kw)
     assert buf2.getvalue() == ""
+
+
+def test_parallel_matches_serial():
+    """The parallel (jobs>1) path must be byte-identical to the serial one.
+
+    Parallelism splits WHICH voxels each worker computes; each voxel still
+    reduces over the same galaxy array in the same order, so the reassembled
+    grid must equal the serial result exactly (no ULP drift).
+    """
+    xyz, mass = _sample_inputs()
+    kw = dict(r_max=500.0, n=16, softening_mpc=0.5, exaggeration=1.0)
+    a = build_grid.build_grid(xyz, mass, jobs=1, **kw)
+    b = build_grid.build_grid(xyz, mass, jobs=4, **kw)
+    assert np.array_equal(a, b)
