@@ -219,7 +219,7 @@ Idempotently remove (with a confirmation prompt) the Cloud Run service, LB/CDN/b
 ## Notes / risks
 
 - **Backward compatibility:** solar + cosmic must be byte-for-byte unchanged — keep them as the regression guard (existing tests stay green).
-- **Calibration:** the deepfield exaggeration must be re-tuned against the GLADE+ grid (different density/masses than 2MRS); assert the deepest-void advantage band in tests.
+- **Calibration:** **Resolved (auto-calibration).** ~~the deepfield exaggeration must be re-tuned against the GLADE+ grid (different density/masses than 2MRS); assert the deepest-void advantage band in tests.~~ The exaggeration is now **auto-derived per grid** (closed form targeting advantage ≈ 1.06 for the deepest void within the calibration radius), so no manual re-tune is needed for the GLADE+/full grid; the advantage band is asserted in tests, including a grid-independence/no-saturation regression.
 - **Volume bound (±500 Mpc):** state it in the UI/docs; it's a tractability + completeness choice, not physics.
 - **GLADE+ distance completeness:** most rows lack distances — report the kept count; don't imply full coverage.
 - **Binary endianness/dtype:** Float32 little-endian must match between the Python writer and the JS `Float32Array` reader — add a tiny round-trip assertion in the tile builder.

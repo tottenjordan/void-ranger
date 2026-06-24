@@ -245,10 +245,28 @@ Pick a mode (default `public`):
   backend/`. There is no `--dockerfile` flag, so the script temporarily stages
   this dir's `Dockerfile` at the backend root for the build and removes it after.
   Only needed if you serve the grid/API from the backend rather than static GCS.
-  - **Tip:** to keep the source upload small, add a `.gcloudignore` at the
-    `backend/` root excluding `.venv/`, `__pycache__/`, `.pytest_cache/`, and
-    `tests/` before deploying (the Dockerfile only needs `pyproject.toml`,
-    `uv.lock`, `app/`, and `data/`).
+  - **Deepfield physics from the full-catalog grid.** In `run` mode the backend
+    serves deepfield physics from the **full-catalog** potential grid: the script
+    fetches `gs://$BUCKET/$ASSET_PREFIX/grid/{grid.npy,grid.json}` (staging it
+    into `data/deepfield_prod/grid` so it rides into the image via the Dockerfile's
+    `COPY data ./data`) and sets `DEEPFIELD_GRID_DIR=/app/data/deepfield_prod/grid`
+    on the Cloud Run service. This is the consumer that makes the uploaded
+    `grid.npy` a **live asset** — previously the bucket grid was an orphan (only
+    the tiles were consumed, by the frontend).
+  - **Fallback to the in-image sample.** The committed N=48 **sample** grid stays
+    the in-image default, so the container boots even if `DEEPFIELD_GRID_DIR` is
+    unset or the full grid hasn't been published yet. If the grid isn't in the
+    bucket, the script warns and deploys without the env var (run
+    `./20_build_assets.sh` first to publish the full grid).
+  - **No manual tuning.** The deepfield exaggeration is **auto-derived per grid**
+    (closed-form, targeting clock advantage ≈ 1.06), so the full grid
+    self-calibrates to the teaching band with no manual re-tuning when you switch
+    from the sample to the full catalog.
+  - **Lean upload.** A `backend/.gcloudignore` (denylist) keeps the `--source`
+    build context small — it excludes `.git/`, `__pycache__/`, `.pytest_cache/`,
+    `.venv/`, `tests/`, and the multi-GB local `data/deepfield_build/`, while
+    `app/`, `data/samples/`, the staged `data/deepfield_prod/grid`,
+    `pyproject.toml`, and `uv.lock` all ride along.
 
 ### Build the production frontend
 

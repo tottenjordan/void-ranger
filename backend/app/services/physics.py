@@ -42,16 +42,26 @@ MAX_WELL_DEPTH = 0.7     # cap so the dilation factor stays real and sane
 # collapses to ~1.0, so the value must stay in this lower window.
 COSMIC_EXAGGERATION = 1.0e5
 
-# Deepfield exaggeration, calibrated (Task 2D.1) so the deepest void within
-# 300 Mpc of the committed N=48 sample grid gives a clock_advantage of ~1.060
-# over Earth (a visible but modest edge, in the target 1.05-1.10 band). The
-# deepfield scale reads a precomputed potential grid (RAW J/kg) rather than a
-# catalog, so its potentials live on a different magnitude than cosmic's catalog
-# sums and need their own factor. Calibration sweep
-# (find_deepest_void(300, scale="deepfield")):
-#   exa=5e5 -> adv 1.035,  exa=7e5 -> adv 1.051,  exa=8e5 -> adv 1.060,
-#   exa=1.0e6 -> adv 1.079,  exa=1.2e6 -> adv 1.100.
-DEEPFIELD_EXAGGERATION = 8.0e5
+# Deepfield exaggeration is AUTO-DERIVED per grid (see _deepfield_exaggeration_for)
+# rather than hardcoded, because the deepfield scale reads RAW potential (J/kg)
+# from a precomputed grid whose magnitude scales with catalog density. A single
+# constant calibrated on one grid saturates max_well_depth on a denser grid and
+# the advantage collapses to ~1.0. Instead we expose an intuitive TARGET advantage
+# and solve for the exaggeration that puts the deepest void within CALIB_RADIUS at
+# exactly that advantage, for ANY grid.
+#
+# exaggeration is a LABELED TEACHING DEVICE: real cosmic dilation is ~1 part in
+# 10^13 (invisible). It multiplies 2Φ/c² so the void-vs-dense contrast becomes a
+# visible few percent. It does NOT move the void (that's the raw-potential argmin,
+# exaggeration-independent) — only the reported advantage and find_best_spot's
+# trade-off. Implications of the value:
+#   too low  -> advantage ≈ 1.000 (effect invisible, no teaching signal)
+#   in band  -> advantage ~1.05-1.10 (visible, modest, honest about contrast)
+#   too high -> 2Φ/c²·ex exceeds max_well_depth at BOTH Earth and void -> both
+#               saturate at √0.3 -> advantage collapses back to 1.0
+DEEPFIELD_TARGET_ADVANTAGE = 1.06   # teaching-band center; the tunable knob
+DEEPFIELD_CALIB_RADIUS = 300.0      # Mpc; matches the UI/search radius so calib
+                                    # uses the same deepest void the app surfaces
 
 
 @dataclass(frozen=True)
@@ -61,13 +71,17 @@ class ScaleConfig:
     length_m / length_km convert catalog coordinates (parsecs for solar,
     megaparsecs for cosmic) to meters / km. softening_m keeps the potential
     finite. exaggeration / max_well_depth shape the (teaching) dilation spread.
+    exaggeration is None for grid-backed scales (deepfield), which auto-derive
+    it per grid via _effective_exaggeration / _deepfield_exaggeration_for.
     load() returns (xs, ys, zs, masses_kg) for the scale's catalog.
     """
 
     length_m: float
     length_km: float
     softening_m: float
-    exaggeration: float
+    # Teaching exaggeration factor; None = auto-derived per grid for grid-backed
+    # scales (deepfield). Use _effective_exaggeration(scale) to resolve it.
+    exaggeration: float | None
     max_well_depth: float
     # Catalog loader -> (xs, ys, zs, masses_kg). None for grid-backed scales
     # (deepfield), which read a precomputed potential grid instead of a catalog.
@@ -97,7 +111,7 @@ SCALES: dict[str, ScaleConfig] = {
         length_m=MPC_M,
         length_km=MPC_KM,
         softening_m=0.5 * MPC_M,
-        exaggeration=DEEPFIELD_EXAGGERATION,
+        exaggeration=None,  # auto-derived per grid (see _effective_exaggeration)
         max_well_depth=MAX_WELL_DEPTH,
         load=None,
     ),
@@ -159,18 +173,33 @@ def gravitational_dilation(potential: float, scale: str = "solar") -> float:
     deeper in the gravitational field.
     """
     cfg = _scale(scale)
-    depth = min(cfg.exaggeration * 2 * potential / C_M_S ** 2, cfg.max_well_depth)
+    ex = _effective_exaggeration(scale)
+    depth = min(ex * 2 * potential / C_M_S ** 2, cfg.max_well_depth)
     return math.sqrt(1 - depth)
 
 
 @lru_cache(maxsize=None)
+def _catalog_earth_factor(scale: str) -> float:
+    return gravitational_dilation(local_potential(0.0, 0.0, 0.0, scale), scale)
+
+
+@lru_cache(maxsize=4)
+def _deepfield_earth_factor(grid_dir) -> float:
+    return gravitational_dilation(local_potential(0.0, 0.0, 0.0, "deepfield"), "deepfield")
+
+
 def earth_dilation_factor(scale: str = "solar") -> float:
     """Earth's clock factor: it sits at the origin, deep in the dense
     neighborhood, so its clock runs slow relative to a distant void.
 
-    Cached per scale (the cache key includes the scale argument).
+    Cached per scale for catalog scales; for the grid-backed deepfield scale the
+    cache is keyed on the resolved grid directory so a DEEPFIELD_GRID_DIR
+    override (e.g. swapping to the full-catalog grid) recomputes rather than
+    serving the first grid's stale Earth factor.
     """
-    return gravitational_dilation(local_potential(0.0, 0.0, 0.0, scale), scale)
+    if _scale(scale).load is None:
+        return _deepfield_earth_factor(_deepfield_grid_dir())
+    return _catalog_earth_factor(scale)
 
 
 def server_dilation_factor(x: float, y: float, z: float, scale: str = "solar") -> float:
@@ -336,6 +365,44 @@ def _voxel_centers_for(grid_dir) -> tuple[np.ndarray, np.ndarray]:
     return centers, values
 
 
+@lru_cache(maxsize=4)
+def _deepfield_exaggeration_for(grid_dir) -> float:
+    """Auto-derived deepfield exaggeration for the grid in a resolved directory.
+
+    Closed form: with f = √(1 − ex·k·Φ), k = 2/c², solving
+    A = f_void/f_earth for ex gives ex = (A²−1)/(k·(A²·Φ_earth − Φ_void)).
+    Φ_earth is the interpolated potential at the origin; Φ_void is the minimum
+    voxel potential within DEEPFIELD_CALIB_RADIUS. By construction the deepest
+    void within that radius has clock advantage DEEPFIELD_TARGET_ADVANTAGE for
+    ANY grid, with no max_well_depth saturation. Keyed on grid_dir (mirroring
+    _voxel_centers_for / catalog._load_grid) so a DEEPFIELD_GRID_DIR override
+    derives fresh.
+    """
+    centers, values = _voxel_centers_for(grid_dir)
+    k = 2.0 / C_M_S ** 2
+    phi_earth = float(_grid_potential_at(np.array([[0.0, 0.0, 0.0]]), "deepfield")[0])
+    d2 = (centers ** 2).sum(axis=1)
+    in_ball = d2 <= DEEPFIELD_CALIB_RADIUS ** 2
+    phi_void = float(values[in_ball].min()) if in_ball.any() else float(values.min())
+    a2 = DEEPFIELD_TARGET_ADVANTAGE ** 2
+    denom = k * (a2 * phi_earth - phi_void)
+    ex = (a2 - 1.0) / denom if denom > 0 else 0.0
+    # Guard the degenerate "no real void" grid: keep Earth's own depth
+    # (ex·k·Φ_earth) under the max_well_depth clamp so Earth never saturates.
+    cap = (0.9 * MAX_WELL_DEPTH) / (k * phi_earth) if phi_earth > 0 else ex
+    return min(ex, cap)
+
+
+def _effective_exaggeration(scale: str) -> float:
+    """The exaggeration to use for a scale: the configured constant for catalog
+    scales, or the grid-auto-derived value for grid-backed deepfield (sentinel
+    exaggeration=None)."""
+    cfg = _scale(scale)
+    if cfg.exaggeration is not None:
+        return cfg.exaggeration
+    return _deepfield_exaggeration_for(_deepfield_grid_dir())
+
+
 def _grid_voxel_centers(scale: str = "deepfield") -> tuple[np.ndarray, np.ndarray]:
     """(centers, values) for a grid scale, flattened over voxels.
 
@@ -352,7 +419,8 @@ def _grid_voxel_centers(scale: str = "deepfield") -> tuple[np.ndarray, np.ndarra
 def _dilation_array(potential: np.ndarray, scale: str = "solar") -> np.ndarray:
     """Vectorized clock factor for an array of potential magnitudes."""
     cfg = _scale(scale)
-    depth = np.minimum(cfg.exaggeration * 2 * potential / C_M_S ** 2, cfg.max_well_depth)
+    ex = _effective_exaggeration(scale)
+    depth = np.minimum(ex * 2 * potential / C_M_S ** 2, cfg.max_well_depth)
     return np.sqrt(1 - depth)
 
 

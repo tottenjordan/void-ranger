@@ -168,7 +168,7 @@ catalog sum replaced by the grid lookup. Per the `SCALES` registry in
 | Length unit | megaparsec | megaparsec |
 | Softening `ε` | 0.5 Mpc | 0.5 Mpc |
 | Potential source | catalog sum over 2MRS (`O(grid × N)`) | **precomputed grid** (trilinear, `O(voxels)`) |
-| Exaggeration | `1.0e5` | **`8.0e5`** (`DEEPFIELD_EXAGGERATION`) |
+| Exaggeration | `1.0e5` (fixed) | **auto-derived per grid** (target advantage `1.06`) |
 
 The clock factor is `f = √(1 + 2Φ/c²)` with the softened potential
 `Φ = −Σ G·Mᵢ/√(r²+ε²)`; Earth (our vantage point) sits at the origin;
@@ -178,15 +178,37 @@ The clock factor is `f = √(1 + 2Φ/c²)` with the softened potential
 (`earth_compute_time = task · f_earth/f_server`).
 
 **The exaggeration lives once.** The grid stores the **raw** potential (J/kg);
-the `8.0e5` deepfield exaggeration is applied **uniformly in
-`gravitational_dilation`**, not baked into the grid. Keeping it out of the grid
-avoids double-exaggeration — the grid builder's `--exaggeration` flag therefore
-defaults to `1.0` for the committed asset.
+the deepfield exaggeration is applied **uniformly in `gravitational_dilation`**,
+not baked into the grid. Keeping it out of the grid avoids double-exaggeration —
+the grid builder's `--exaggeration` flag therefore defaults to `1.0` for the
+committed asset.
 
-**Calibration.** `DEEPFIELD_EXAGGERATION = 8.0e5` is tuned so the *deepest void*
-within 300 Mpc of the sample grid lands a clock advantage of ≈ **1.060** — a
-visible but modest edge, inside the documented **1.05–1.10** teaching band. As
-with the solar and cosmic scales, the exaggeration is a **labeled teaching
+**Calibration (auto-derived per grid).** The exaggeration is **not a hardcoded
+constant**; it is **auto-derived from the loaded grid** so the *deepest void*
+within `DEEPFIELD_CALIB_RADIUS` (300 Mpc) lands a clock advantage of
+`DEEPFIELD_TARGET_ADVANTAGE` (≈ **1.06**) for **any** grid — the committed ~20 k
+sample *and* the 3.5 M full-catalog grid alike. Because the raw potential Φ scales
+with catalog density, a single fixed factor that calibrated the sample saturated
+the `max_well_depth = 0.7` clamp on a denser grid (both Earth and the void hit
+`√0.3`), collapsing the advantage to 1.0. The auto-derivation eliminates that: it
+solves the closed form
+
+```
+ex = (A² − 1) / (k · (A² · Φ_earth − Φ_void))
+```
+
+(with `k = 2/c²`, `A` = target advantage, `Φ_earth` = interpolated potential at
+the origin, `Φ_void` = the minimum voxel potential within the calibration radius)
+so the deepest void hits the target band with **no saturation**, on either grid.
+The tunable knob is now the **intuitive target advantage**, not an opaque
+magnitude. Intuition for the value: too low → advantage ≈ 1.0 (invisible);
+in band → 1.05–1.10 (visible but modest); too high → both Earth and the void
+saturate `√0.3` and the contrast again collapses to 1.0. On the committed sample
+this auto-derives to ≈ **799,270** (reproducing the previous hand-tuned constant
+to ~0.1 %); on a ~100× denser grid it scales itself down (≈ **7,100**) with Earth
+not saturated.
+
+As with the solar and cosmic scales, the exaggeration is a **labeled teaching
 device**: time dilation is **void-favoring** (a server in a deep void runs faster
 than Earth, advantage > 1; placed near catalog mass it runs slower, advantage
 < 1), the *relative* contrast between voids and dense regions is faithful, but the
@@ -259,9 +281,10 @@ above a point-count threshold so dense buffers don't stutter.
    independence.
 3. **Bounded volume.** The ±500 Mpc cube is a tractability/completeness choice,
    not a physical edge (see [The ±500 Mpc bound](#the-500-mpc-bound)).
-4. **Still a teaching exaggeration.** The `8.0e5` factor scales the dilation for
-   visibility (deepest-void advantage ≈ 1.060, in the 1.05–1.10 band); the
-   trade-off structure is faithful, the absolute percentages are not.
+4. **Still a teaching exaggeration.** An **auto-derived** exaggeration scales the
+   dilation for visibility (deepest-void advantage ≈ 1.06, in the 1.05–1.10 band,
+   on any grid); the trade-off structure is faithful, the absolute percentages are
+   not.
 5. **"Earth" = our vantage point.** As at the Cosmic Web scale, the origin marker
    labeled "Earth" really means the Milky Way / Local Group; we keep the "Earth"
    noun for consistency with the metric cards.

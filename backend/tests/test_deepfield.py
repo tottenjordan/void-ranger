@@ -8,6 +8,7 @@ Convention (authoritative: backend/scripts/glade/build_grid.py docstring):
 - Axis order: pts[:,0]=x->ix, pts[:,1]=y->iy, pts[:,2]=z->iz.
 """
 import json
+import math
 
 import numpy as np
 import pytest
@@ -17,6 +18,8 @@ from app.services.catalog import (
     load_potential_grid,
 )
 from app.services.physics import (
+    DEEPFIELD_CALIB_RADIUS,
+    MAX_WELL_DEPTH,
     _grid_potential_at,
     earth_dilation_factor,
     find_best_spot,
@@ -27,6 +30,98 @@ from app.services.physics import (
 
 def _center(lo: float, hi: float, n: int, i: int) -> float:
     return lo + (i + 0.5) * (hi - lo) / n
+
+
+# --- Auto-derived deepfield exaggeration (Task 1) ---------------------------
+
+def test_deepfield_exaggeration_auto_derived_hits_target(tmp_path, monkeypatch):
+    from app.services.catalog import DEEPFIELD_GRID_DIR_ENV, _deepfield_grid_dir
+    from app.services.physics import (
+        DEEPFIELD_TARGET_ADVANTAGE,
+        C_M_S,
+        _deepfield_exaggeration_for,
+        _grid_potential_at,
+        gravitational_dilation,
+    )
+
+    # 4x4x4 grid spanning +/-100 Mpc (well inside CALIB_RADIUS=300). Uniform high
+    # background potential with one clearly-deepest interior void voxel so the
+    # origin interpolation (Phi_earth) stays well above Phi_void and Earth is far
+    # from max_well_depth saturation (cap guard does not trigger).
+    n = 4
+    vals = np.full((n, n, n), 5.0e9, dtype=np.float32)
+    vals[2, 2, 2] = 1.0e9  # the void (smallest potential), within 300 Mpc
+    np.save(tmp_path / "grid.npy", vals)
+    (tmp_path / "grid.json").write_text(json.dumps({
+        "bounds": [-100.0, -100.0, -100.0, 100.0, 100.0, 100.0],
+        "shape": [n, n, n],
+        "unit": "Mpc",
+    }))
+    monkeypatch.setenv(DEEPFIELD_GRID_DIR_ENV, str(tmp_path))
+
+    # Independent closed-form expectation, computed exactly as the helper does:
+    # Phi_earth = interpolated potential at origin; Phi_void = min within ball.
+    k = 2.0 / C_M_S ** 2
+    phi_earth = float(_grid_potential_at(np.array([[0.0, 0.0, 0.0]]), "deepfield")[0])
+    phi_void = float(vals.min())  # whole grid is within 300 Mpc -> global min
+    a2 = DEEPFIELD_TARGET_ADVANTAGE ** 2
+    expected_ex = (a2 - 1.0) / (k * (a2 * phi_earth - phi_void))
+
+    # Sanity: Earth must be well under the saturation cap so the guard is inert.
+    assert expected_ex * k * phi_earth < 0.9 * 0.7
+
+    ex = _deepfield_exaggeration_for(_deepfield_grid_dir())
+    assert ex == pytest.approx(expected_ex, rel=1e-6)
+
+    # Feeding the void's Phi through dilation reproduces the target advantage.
+    f_void = gravitational_dilation(phi_void, "deepfield")
+    f_earth = gravitational_dilation(phi_earth, "deepfield")
+    assert f_void / f_earth == pytest.approx(DEEPFIELD_TARGET_ADVANTAGE, rel=1e-3)
+
+
+def test_deepfield_advantage_grid_independent_no_saturation(tmp_path, monkeypatch):
+    # Regression for the original production bug: pointing the backend at a
+    # DENSER grid (potentials ~100x the committed sample's, mimicking the full
+    # catalog) used to saturate max_well_depth=0.7 at BOTH Earth and the void
+    # with the old hardcoded DEEPFIELD_EXAGGERATION=8e5 -> both factors pinned at
+    # sqrt(0.3) and clock_advantage collapsed to ~1.0. Tasks 1-2 (auto-derived
+    # per-grid exaggeration + grid-dir-keyed Earth-factor cache) self-calibrate
+    # any grid to the teaching band with Earth NOT saturated.
+    #
+    # On main (8e5 * k * Phi with Phi~1e12 => ex*2Phi/c^2 >> 0.7) BOTH Earth and
+    # void clamp to sqrt(1-0.7)=sqrt(0.3)~0.5477 and adv ~= 1.0 < 1.05: this test
+    # would FAIL there. Tasks 1-2 make it pass.
+    #
+    # Geometry: 8x8x8 cube spanning +-500 Mpc (real bounds). Uniformly high
+    # background (~100x the sample, so Earth at the origin interpolates to a large
+    # Phi and stays dense) with one clearly-deepest interior void voxel inside the
+    # 300 Mpc calibration ball. Voxel center along [-500, 500] with 8 voxels:
+    # center(i) = -500 + (i + 0.5) * 1000 / 8. center(4) = 62.5, so voxel
+    # [4, 4, 4] sits at (62.5, 62.5, 62.5), |r| ~= 108 Mpc -- inside the calib ball
+    # and away from the origin (origin's x-bracket is ix in {3, 4}).
+    n = 8
+    vals = np.full((n, n, n), 8.0e11, dtype=np.float32)  # dense background (~100x)
+    vals[4, 4, 4] = 5.0e9  # the void: clear interior minimum, within 300 Mpc
+    np.save(tmp_path / "grid.npy", vals)
+    (tmp_path / "grid.json").write_text(json.dumps({
+        "bounds": [-500.0, -500.0, -500.0, 500.0, 500.0, 500.0],
+        "shape": [n, n, n],
+        "unit": "Mpc",
+    }))
+    monkeypatch.setenv(DEEPFIELD_GRID_DIR_ENV, str(tmp_path))
+
+    # The deepest-void advantage self-calibrates to the teaching band (~1.06).
+    pt = find_deepest_void(DEEPFIELD_CALIB_RADIUS, scale="deepfield")
+    adv = (
+        server_dilation_factor(pt["x"], pt["y"], pt["z"], "deepfield")
+        / earth_dilation_factor("deepfield")
+    )
+    assert 1.05 <= adv <= 1.10
+
+    # The crux: Earth must NOT be saturated at the max_well_depth floor. This is
+    # exactly what the bug violated (both factors pinned at sqrt(0.3)).
+    floor = math.sqrt(1 - MAX_WELL_DEPTH)  # sqrt(0.3) ~= 0.5477
+    assert earth_dilation_factor("deepfield") > floor + 1e-3
 
 
 # --- Loader -----------------------------------------------------------------
