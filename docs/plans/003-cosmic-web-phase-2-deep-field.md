@@ -1,6 +1,6 @@
 # 003 — Cosmic Web Phase 2: Deep Field (GLADE+ big-data on GCP)
 
-**Status:** ✅ **Implemented** — all tasks 2A–2G complete on branch `feat/deepfield-phase2` (not yet pushed). Remaining: the end-to-end Playwright smoke (Verification §4) and opening the PR. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
+**Status:** ✅ **Implemented & verified** — all tasks 2A–2G complete on branch `feat/deepfield-phase2`; end-to-end Playwright smoke (Verification §4) **passed 6/6** (tiles stream, deepest-void advantage 1.060 > 1, cosmic toggle unchanged, 0 console errors). PR open. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `executing-plans` skill to implement this plan task-by-task.
 
@@ -22,9 +22,9 @@ Executed subagent-driven (each task: implementer → spec review → code-qualit
 - **2F.1** — Docs: new `docs/deep-field.md`; README "three scales" + Deep Field subsection + static-assets architecture + Physics note; `docs/scaling-the-universe.md` (Phase 2 shipped); `docs/cosmic-web.md` + `docs/GLOSSARY.md` (three scales + Deep Field terms); plans 002/README status. _(`33aef4d`)_
 - **2G** — Reproducible GCP provisioning suite `backend/scripts/glade/gcp/` (`_lib.sh`, `config.env.example`, `cors.json`, `00_setup.sh`, `10_load_bigquery.sh`, `20_build_assets.sh`, `30_serve.sh`+`Dockerfile`, `99_teardown.sh`, `DEPLOY.md`); idempotent, `bash -n`-clean, parameterized by `config.env`; user-run, not CI. BigQuery→builders path **materializes `glade_usable` to CSV.gz and feeds `--in`** (no `google-cloud-bigquery` dep → no `uv.lock` churn). _(`8120e54`)_
 
-**📋 Remaining:**
-- **End-to-end Playwright smoke** (Verification §4): toggle to Deep Field → tiles stream → place a node → grid-backed metrics populate → toggle back unchanged → screenshot. Not yet run.
-- **Open the PR** for `feat/deepfield-phase2`.
+**✅ Verification complete:**
+- **End-to-end Playwright smoke** (Verification §4) **passed 6/6** (headless chromium + SwiftShader): Deep Field toggle streams `manifest.json` + root/child `.bin` tiles (no `/api` catalog fetch); "Find a Spot → deepest void" places a grid-backed server with `clock_advantage = 1.060 > 1`; toggle back to Cosmic Web re-fetches `/api/galaxies` unchanged; zero console errors; canvas renders dark.
+- Backend `73 passed`; `npx vite build` clean; GCP suite `bash -n`-clean.
 
 **Key locked decisions (carry forward):**
 - Grid stores **raw** potential (J/kg); the deepfield **exaggeration lives in `SCALES`** and is applied once in `gravitational_dilation` (uniform with solar/cosmic) — avoids double-exaggeration. `build_grid.py --exaggeration` defaults to 1.0.
