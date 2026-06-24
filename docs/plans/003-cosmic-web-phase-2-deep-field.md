@@ -1,8 +1,34 @@
 # 003 — Cosmic Web Phase 2: Deep Field (GLADE+ big-data on GCP)
 
-**Status:** 📋 **Planned, approved** (not started). Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
+**Status:** 🚧 **In progress** — backend + pipeline (Phases 2A–2D) **complete**; frontend (2E), docs (2F), GCP suite (2G) **remaining**. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `executing-plans` skill to implement this plan task-by-task.
+
+## Execution status (as of 2026-06-24)
+
+Executed subagent-driven (each task: implementer → spec review → code-quality review → fix loop) on branch `feat/deepfield-phase2`. Not pushed. Full backend suite: **73 passing**.
+
+**✅ Completed (committed):**
+- **2A.1** — GLADE+ schema doc + deterministic sampler (`backend/scripts/glade/{README.md,sample_glade.py}` + committed `glade_sample.csv.gz`). _(commit `5c5d8c5`, pre-session)_
+- **2B.1** — Octree LOD tile builder `backend/scripts/glade/build_tiles.py` + `test_tiles.py` (per-axis exact partition; endianness round-trip). _(`05c6750`)_
+- **2B.2** — Sample tileset committed to `frontend/public/deepfield/tiles/` (root + 2 levels, 408 KB). _(`7fe9699`)_
+- **2C.1** — Potential-grid builder `backend/scripts/glade/build_grid.py` + committed sample grid (N=48, raw J/kg). _(`91bcc65`, `e7cd533`)_
+- **2C.2** — Grid loader `load_potential_grid` + trilinear `_grid_potential_at` + tests (env-override-safe, dir-keyed cache). _(`90279e1`)_
+- **2C.3** — Grid-based `find_deepest_void`/`find_best_spot` deepfield branches + `SCALES["deepfield"]` (grid-backed `local_potential`) + tests. _(`3d3ea4b`)_
+- **2D.1** — API: `scale` Literal adds `"deepfield"` (3 request models); router already generic; calibration finalized (`DEEPFIELD_EXAGGERATION=8.0e5` → deepest-void advantage **1.060**, in the 1.05–1.10 band); TestClient `/efficiency` + `/best-void` + `/best-spot` deepfield tests. _(`f321cc2`)_
+
+**📋 Remaining:**
+- **2E.1** — Frontend: `deepfield` entry in `SCALE_UI` + per-scale scene constants + `assetBase` (`VITE_ASSET_BASE_URL`) + 3-way scale toggle (`FarFutureView.jsx`, `vite.config.js`).
+- **2E.2** — Octree LOD streaming renderer (`DeepField.jsx` + `GalaxyMap.jsx` dispatch): stream `manifest.json` + `.bin` tiles into `<points>`, frustum/zoom load + evict + point cap; reuse Earth/Comm/Distance/Server markers.
+- **2F.1** — Docs: `docs/deep-field.md`, README "three scales" + Deep Field subsection, `docs/scaling-the-universe.md` (Phase 2 done), plans 002/README status.
+- **2G** — Reproducible GCP provisioning suite `backend/scripts/glade/gcp/` (`config.env.example`, `cors.json`, `00_setup.sh`, `10_load_bigquery.sh`, `20_build_assets.sh`, `30_serve.sh`+`Dockerfile`, `99_teardown.sh`, `DEPLOY.md`); idempotent, `bash -n`-clean; user-run, not CI.
+
+**Key locked decisions (carry forward):**
+- Grid stores **raw** potential (J/kg); the deepfield **exaggeration lives in `SCALES`** and is applied once in `gravitational_dilation` (uniform with solar/cosmic) — avoids double-exaggeration. `build_grid.py --exaggeration` defaults to 1.0.
+- Grid convention (consumed by interp + search): `grid.npy` float32 `(nz,ny,nx)` indexed `[iz,iy,ix]`; `grid.json` `bounds`=cube faces; voxel **center** `center(i)=lo+(i+0.5)*(hi-lo)/n`. Override dir via env `DEEPFIELD_GRID_DIR`.
+- Frontend default `assetBase` = `/deepfield` (served from `frontend/public/deepfield/`); tiles at `/deepfield/tiles/`.
+- Backend tests run with `PYTHONPATH=. uv run pytest -q` from `backend/` (plain `uv run pytest` may hit a corp mirror in this env).
+- 2D.1 received a lightweight orchestrator verification (not the full two-stage subagent review) at the user's stop request — consider a fuller review on resume if desired.
 
 **Goal:** Add a third scale, **Deep Field**, that visualizes the GLADE+ galaxy catalog (~22.5 M galaxies) by streaming precomputed level-of-detail (LOD) tiles, and searches it in O(1) via a precomputed gravitational-potential grid — a real big-data visualization built GCP-ready but runnable locally from committed sample assets.
 
