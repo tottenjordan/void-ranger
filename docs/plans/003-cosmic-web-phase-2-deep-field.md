@@ -1,6 +1,6 @@
 # 003 — Cosmic Web Phase 2: Deep Field (GLADE+ big-data on GCP)
 
-**Status:** 🚧 **In progress** — backend + pipeline (Phases 2A–2D) **complete**; frontend (2E), docs (2F), GCP suite (2G) **remaining**. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
+**Status:** 🚧 **In progress** — backend + pipeline (2A–2D) **and** frontend (2E) **complete**; docs (2F), GCP suite (2G) **remaining**. Expands [002](002-cosmic-web-phase-2-glade-gcp.md) into an executable, task-by-task plan. Builds on [001](001-cosmic-web-option-c.md) (Phase 1, shipped).
 
 > **For Claude:** REQUIRED SUB-SKILL: Use `executing-plans` skill to implement this plan task-by-task.
 
@@ -16,10 +16,10 @@ Executed subagent-driven (each task: implementer → spec review → code-qualit
 - **2C.2** — Grid loader `load_potential_grid` + trilinear `_grid_potential_at` + tests (env-override-safe, dir-keyed cache). _(`90279e1`)_
 - **2C.3** — Grid-based `find_deepest_void`/`find_best_spot` deepfield branches + `SCALES["deepfield"]` (grid-backed `local_potential`) + tests. _(`3d3ea4b`)_
 - **2D.1** — API: `scale` Literal adds `"deepfield"` (3 request models); router already generic; calibration finalized (`DEEPFIELD_EXAGGERATION=8.0e5` → deepest-void advantage **1.060**, in the 1.05–1.10 band); TestClient `/efficiency` + `/best-void` + `/best-spot` deepfield tests. _(`f321cc2`)_
+- **2E.1** — Frontend: `deepfield` entry in `SCALE_UI` + per-scale `scene` constants (single source `SHARED_SCENE`, consumed by `GalaxyMap`) + `assetBase` (`VITE_ASSET_BASE_URL ?? '/deepfield'`) + 3-way toggle; catalog fetch skipped for deepfield. _(`dd7135d`)_
+- **2E.2** — Octree LOD streaming renderer `DeepField.jsx` + `GalaxyMap` scale dispatch: streams `manifest.json` + LE-Float32 `.bin` tiles into `<points>`, throttled (4 Hz) bounding-sphere frustum/zoom walk with refine/coarsen **hysteresis**, 300 k point cap (warn on drop), AbortController/mounted-ref cleanup, decode cache + in-flight de-dupe, lightweight Mpc hover; solar/cosmic `StarField` path untouched. _(`3f2499b`)_
 
 **📋 Remaining:**
-- **2E.1** — Frontend: `deepfield` entry in `SCALE_UI` + per-scale scene constants + `assetBase` (`VITE_ASSET_BASE_URL`) + 3-way scale toggle (`FarFutureView.jsx`, `vite.config.js`).
-- **2E.2** — Octree LOD streaming renderer (`DeepField.jsx` + `GalaxyMap.jsx` dispatch): stream `manifest.json` + `.bin` tiles into `<points>`, frustum/zoom load + evict + point cap; reuse Earth/Comm/Distance/Server markers.
 - **2F.1** — Docs: `docs/deep-field.md`, README "three scales" + Deep Field subsection, `docs/scaling-the-universe.md` (Phase 2 done), plans 002/README status.
 - **2G** — Reproducible GCP provisioning suite `backend/scripts/glade/gcp/` (`config.env.example`, `cors.json`, `00_setup.sh`, `10_load_bigquery.sh`, `20_build_assets.sh`, `30_serve.sh`+`Dockerfile`, `99_teardown.sh`, `DEPLOY.md`); idempotent, `bash -n`-clean; user-run, not CI.
 
