@@ -54,7 +54,9 @@ mkdir -p "${WORK_DIR}"
 info "snapshotting ${VIEW} -> ${BQ_DATASET}.${SNAP_TABLE}"
 bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" query \
   --use_legacy_sql=false \
-  "CREATE OR REPLACE TABLE \`${PROJECT_ID}.${BQ_DATASET}.${SNAP_TABLE}\` AS
+  "CREATE OR REPLACE TABLE \`${PROJECT_ID}.${BQ_DATASET}.${SNAP_TABLE}\`
+   OPTIONS(${LABEL_DDL})
+   AS
    SELECT * FROM \`${PROJECT_ID}.${BQ_DATASET}.${VIEW}\`"
 
 # --- 2. extract -> GZIP CSV in GCS, then copy local -------------------------

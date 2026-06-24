@@ -66,6 +66,10 @@ bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" load \
   "${GS_RAW}" \
   'line:STRING'
 
+# `bq load` has no label flag; tag the raw table after load (idempotent).
+bq --project_id="${PROJECT_ID}" update --set_label "${LABEL_COLON}" \
+  "${BQ_DATASET}.${RAW_TABLE}" >/dev/null
+
 # --- 3. parse fixed-width byte ranges into a typed table --------------------
 # Byte offsets are 1-based inclusive from the VizieR VII/291 ReadMe, identical to
 # sample_glade.py DAT_FIELDS. SUBSTR(line, start, len): len = end - start + 1.
@@ -76,7 +80,9 @@ bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" load \
 info "creating typed table ${BQ_DATASET}.${PARSED_TABLE} (CREATE OR REPLACE)"
 bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" query \
   --use_legacy_sql=false \
-  "CREATE OR REPLACE TABLE \`${PROJECT_ID}.${BQ_DATASET}.${PARSED_TABLE}\` AS
+  "CREATE OR REPLACE TABLE \`${PROJECT_ID}.${BQ_DATASET}.${PARSED_TABLE}\`
+   OPTIONS(${LABEL_DDL})
+   AS
    SELECT
      SAFE_CAST(TRIM(SUBSTR(line, 135, 21))  AS FLOAT64) AS ra,
      SAFE_CAST(TRIM(SUBSTR(line, 157, 23))  AS FLOAT64) AS dec,
@@ -96,7 +102,9 @@ bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" query \
 info "creating view ${BQ_DATASET}.${VIEW} (usable, d_L <= ${R_MAX_MPC} Mpc)"
 bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" query \
   --use_legacy_sql=false \
-  "CREATE OR REPLACE VIEW \`${PROJECT_ID}.${BQ_DATASET}.${VIEW}\` AS
+  "CREATE OR REPLACE VIEW \`${PROJECT_ID}.${BQ_DATASET}.${VIEW}\`
+   OPTIONS(${LABEL_DDL})
+   AS
    SELECT
      ra,
      dec,

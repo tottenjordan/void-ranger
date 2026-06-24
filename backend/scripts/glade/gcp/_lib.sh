@@ -46,6 +46,17 @@ load_config() {
   : "${ASSET_PREFIX:=deepfield}"
   : "${ASSET_CACHE_CONTROL:=public, max-age=31536000, immutable}"
   : "${GLADE_DAT:=./gladep.dat}"
+
+  # Resource label applied to every GCP asset the suite creates whose type
+  # supports labels (GCS bucket, BigQuery dataset/tables/view, Cloud Run service,
+  # compute global address + forwarding-rule). Single source of truth: override
+  # the value via SOLUTION_LABEL in config.env. Some resources have NO labels API
+  # (compute backend-bucket, url-map, ssl-certificate, target-https-proxy, and
+  # service accounts) and are left untagged — noted where they're created.
+  : "${SOLUTION_LABEL:=void-ranger}"
+  LABEL_EQ="solution=${SOLUTION_LABEL}"                      # gcloud --labels / --update-labels
+  LABEL_COLON="solution:${SOLUTION_LABEL}"                   # bq --label/--set_label, gsutil label ch -l
+  LABEL_DDL="labels=[(\"solution\",\"${SOLUTION_LABEL}\")]"  # BigQuery DDL OPTIONS()
 }
 
 # require_vars VAR1 VAR2 ... — die if any named var is empty/unset.

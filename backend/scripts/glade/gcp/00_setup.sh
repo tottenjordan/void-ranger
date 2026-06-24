@@ -31,6 +31,7 @@ cat <<EOF
     4. apply bucket CORS           -> allow ${APP_ORIGIN} (GET, HEAD)
     5. create BigQuery dataset     -> ${PROJECT_ID}:${BQ_DATASET} (loc ${BQ_LOCATION})
     6. create service account      -> ${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com
+    7. label resources             -> ${LABEL_EQ} (bucket + dataset; SA has no labels API)
 EOF
 
 # --- 1. active project ------------------------------------------------------
@@ -55,6 +56,11 @@ else
   gsutil mb -p "${PROJECT_ID}" -l "${REGION}" "gs://${BUCKET}"
 fi
 
+# `gsutil mb` has no label flag, so set/merge the solution label after create.
+# Idempotent and also tags a pre-existing bucket.
+info "labeling bucket gs://${BUCKET} (${LABEL_EQ})"
+gsutil label ch -l "${LABEL_COLON}" "gs://${BUCKET}"
+
 # --- 4. CORS ----------------------------------------------------------------
 # cors.json is a template with ${APP_ORIGIN}; inject the real origin into a temp
 # file so the committed template never carries a project-specific value.
@@ -72,11 +78,19 @@ else
   info "creating dataset ${PROJECT_ID}:${BQ_DATASET} in ${BQ_LOCATION}"
   bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" mk \
     --dataset \
+    --label "${LABEL_COLON}" \
     --description "Void Ranger Deep Field — GLADE+ catalog" \
     "${PROJECT_ID}:${BQ_DATASET}"
 fi
 
+# Ensure the solution label is present even if the dataset pre-existed (idempotent).
+info "labeling dataset ${PROJECT_ID}:${BQ_DATASET} (${LABEL_COLON})"
+bq --project_id="${PROJECT_ID}" update --set_label "${LABEL_COLON}" \
+  "${PROJECT_ID}:${BQ_DATASET}" >/dev/null
+
 # --- 6. least-privilege service account ------------------------------------
+# NOTE: service accounts have no labels API (no --labels on create/update), so
+# the SA below is intentionally left untagged.
 sa_email="${SERVICE_ACCOUNT}@${PROJECT_ID}.iam.gserviceaccount.com"
 if gcloud iam service-accounts describe "${sa_email}" --project "${PROJECT_ID}" >/dev/null 2>&1; then
   info "service account ${sa_email} already exists — skipping create"

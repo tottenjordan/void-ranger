@@ -66,6 +66,11 @@ serve_cdn() {
   require_vars LB_DOMAIN
   banner "30_serve (cdn) — external HTTPS LB + Cloud CDN over the bucket"
 
+  # NOTE on labels: only the global address (1) and forwarding-rule (6) below
+  # support labels (applied post-create). The backend-bucket, url-map,
+  # ssl-certificate, and target-https-proxy have no labels API, so they are
+  # created untagged.
+
   # Assets must be publicly readable for the backend-bucket to serve them.
   info "granting public read on gs://${BUCKET} objects"
   gsutil iam ch allUsers:objectViewer "gs://${BUCKET}"
@@ -79,6 +84,9 @@ serve_cdn() {
   fi
   lb_ip="$(gcloud compute addresses describe "${IP_NAME}" --global \
     --project "${PROJECT_ID}" --format='value(address)')"
+  # addresses support labels only post-create (no --labels at create); idempotent.
+  gcloud compute addresses update "${IP_NAME}" --global \
+    --project "${PROJECT_ID}" --update-labels="${LABEL_EQ}" >/dev/null
 
   # 2) backend bucket with CDN enabled
   if gcloud compute backend-buckets describe "${BACKEND_BUCKET}" --project "${PROJECT_ID}" >/dev/null 2>&1; then
@@ -129,6 +137,9 @@ serve_cdn() {
       --target-https-proxy="${HTTPS_PROXY}" --ports=443 \
       --project "${PROJECT_ID}"
   fi
+  # forwarding-rules support labels only post-create (no --labels at create); idempotent.
+  gcloud compute forwarding-rules update "${FWD_RULE}" --global \
+    --project "${PROJECT_ID}" --update-labels="${LABEL_EQ}" >/dev/null
 
   asset_base_url="https://${LB_DOMAIN}/${ASSET_PREFIX}"
   banner "30_serve (cdn) — DONE"
@@ -174,6 +185,7 @@ serve_run() {
     --region "${REGION}" \
     --source "${BACKEND_DIR}" \
     --allow-unauthenticated \
+    --labels "${LABEL_EQ}" \
     --set-env-vars "APP_ORIGIN=${APP_ORIGIN}"
   # Note: the container listens on Cloud Run's injected $PORT (Dockerfile CMD),
   # so we don't pass --port; Cloud Run defaults to 8080, which the image honors.

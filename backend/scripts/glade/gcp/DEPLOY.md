@@ -65,10 +65,28 @@ $EDITOR config.env          # fill in PROJECT_ID, BUCKET (globally unique), etc.
 
 Required keys: `PROJECT_ID`, `REGION`, `BQ_LOCATION`, `BUCKET`, `BQ_DATASET`,
 `APP_ORIGIN`, `SERVICE_NAME`, `R_MAX_MPC`. Optional keys (have defaults):
-`GLADE_DAT`, `SERVICE_ACCOUNT`, `ASSET_PREFIX`, `ASSET_CACHE_CONTROL`.
+`GLADE_DAT`, `SERVICE_ACCOUNT`, `ASSET_PREFIX`, `ASSET_CACHE_CONTROL`,
+`SOLUTION_LABEL`.
 
 `config.env` is git-ignored — it carries your project-specific values. Nothing is
 hardcoded in the scripts; change everything from this one file.
+
+### Resource labels
+
+Every GCP resource the suite creates whose type supports labels is tagged
+**`solution=void-ranger`** (override the value via `SOLUTION_LABEL` in
+`config.env`) so you can find, group, and break down billing for all Void Ranger
+assets. Labeled: the GCS bucket, the BigQuery dataset + `glade_raw_line` /
+`glade_plus` tables + `glade_usable` view + `glade_usable_snapshot`, the Cloud Run
+service, and the CDN path's global address + forwarding-rule. Not labeled (no
+labels API in GCP): compute backend-bucket, url-map, ssl-certificate,
+target-https-proxy, and the service account. Find everything later with, e.g.:
+
+```bash
+gcloud compute addresses list --filter="labels.solution=void-ranger"
+bq ls --filter "labels.solution:void-ranger" "${PROJECT_ID}:${BQ_DATASET}"
+gcloud storage buckets describe gs://$BUCKET --format='value(labels)'
+```
 
 ---
 
