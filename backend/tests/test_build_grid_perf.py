@@ -96,6 +96,27 @@ def test_parallel_matches_serial():
     assert np.array_equal(a, b)
 
 
+def test_parallel_progress_streams_multiple_updates():
+    """Parallel --progress must emit MANY updates (not just one per worker), so a
+    long build shows a live ETA. With jobs=2 the build is split into
+    2 * RANGES_PER_JOB ranges, so we expect well more than 2 progress lines."""
+    xyz, mass = _sample_inputs()
+    buf = io.StringIO()
+    with contextlib.redirect_stderr(buf):
+        grid = build_grid.build_grid(
+            xyz, mass, r_max=500.0, n=8, softening_mpc=0.5,
+            exaggeration=1.0, jobs=2, progress=True,
+        )
+    lines = [ln for ln in buf.getvalue().splitlines() if "[build_grid]" in ln]
+    assert len(lines) > 2  # more than `jobs` updates → progress streams throughout
+    # And it must still be byte-identical to the serial build.
+    serial = build_grid.build_grid(
+        xyz, mass, r_max=500.0, n=8, softening_mpc=0.5,
+        exaggeration=1.0, jobs=1, progress=False,
+    )
+    assert np.array_equal(grid, serial)
+
+
 def test_matches_committed_sample_grid():
     """Regression gate: the optimized builder must reproduce the shipped grid.
 

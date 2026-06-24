@@ -79,6 +79,14 @@ EXAGGERATION_DEFAULT = 1.0   # RAW grid; deepfield exaggeration lives in SCALES 
 # numpy batch cache/RAM-friendly regardless of catalog size.
 ELEMENT_BUDGET = 8_000_000
 
+# Parallel builds split the voxel range into RANGES_PER_JOB × jobs contiguous
+# ranges (not just `jobs`). max_workers stays `jobs`; the extra ranges let
+# as_completed() report progress THROUGHOUT the build (live rate/ETA) instead of
+# only when each worker's single range finishes. More ranges NEVER change the
+# output — each range is a contiguous voxel slice reassembled by index, so the
+# grid stays byte-identical regardless of RANGES_PER_JOB or jobs.
+RANGES_PER_JOB = 16
+
 # Physics constants — reuse the exact values from app/services/physics.py.
 G = 6.674e-11        # gravitational constant (m^3 kg^-1 s^-2)
 MPC_M = 3.086e22     # m per megaparsec
@@ -218,12 +226,19 @@ def _build_grid_parallel(pts, sx, sy, sz, masses_kg, soft_sq, chunk, total,
     stop) ranges are sent across the boundary. Each range's result is placed at
     ``out[start:stop]`` in INDEX ORDER, so the result is byte-identical to the
     serial reduction regardless of completion order.
+
+    The voxel range is split into ``jobs × RANGES_PER_JOB`` contiguous ranges
+    (more than ``jobs``) while ``max_workers`` stays ``jobs``: the pool reuses
+    its workers across the extra ranges so ``as_completed`` fires many times,
+    streaming live rate/ETA progress THROUGHOUT the build. The extra ranges
+    never change the output — each is a contiguous voxel slice reassembled by
+    index, so the grid is byte-identical regardless of how many ranges there are.
     """
     global _WORKER_PTS, _WORKER_SX, _WORKER_SY, _WORKER_SZ
     global _WORKER_MASSES_KG, _WORKER_SOFT_SQ, _WORKER_CHUNK
 
     out = np.empty(total, dtype=np.float64)
-    ranges = _contiguous_ranges(total, jobs)
+    ranges = _contiguous_ranges(total, jobs * RANGES_PER_JOB)
 
     _WORKER_PTS = pts
     _WORKER_SX = sx
@@ -242,14 +257,19 @@ def _build_grid_parallel(pts, sx, sy, sz, masses_kg, soft_sq, chunk, total,
                 for (start, stop) in ranges
             }
             done = 0
+            pstart = time.monotonic()
             for fut in concurrent.futures.as_completed(futures):
                 start, stop = futures[fut]
                 out[start:stop] = fut.result()  # placed by INDEX, not completion
                 if progress:
                     done += stop - start
+                    elapsed = time.monotonic() - pstart
+                    rate = done / elapsed if elapsed > 0 else 0.0
+                    remaining = (total - done) / rate if rate > 0 else 0.0
                     print(
-                        f"[build_grid] range [{start},{stop}) done "
-                        f"({done}/{total} voxels, {100.0 * done / total:.1f}%)",
+                        f"[build_grid] {done}/{total} voxels "
+                        f"({100.0 * done / total:.1f}%) … "
+                        f"{rate:.0f} vox/s ETA {remaining:.0f}s",
                         file=sys.stderr,
                     )
     finally:
