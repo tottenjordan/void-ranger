@@ -5,7 +5,11 @@ from typing import Callable
 
 import numpy as np
 
-from app.services.catalog import load_galaxy_arrays, load_star_arrays
+from app.services.catalog import (
+    load_galaxy_arrays,
+    load_potential_grid,
+    load_star_arrays,
+)
 
 C = 299_792.458          # speed of light in km/s
 C_M_S = C * 1000         # speed of light in m/s
@@ -211,6 +215,71 @@ def _potential_at(pts: np.ndarray, scale: str = "solar") -> np.ndarray:
         r = np.sqrt(dx * dx + dy * dy + dz * dz + cfg.softening_m ** 2)
         out[i:i + len(c)] = np.sum(G * masses_kg[None, :] / r, axis=1)
     return out
+
+
+def _grid_potential_at(pts: np.ndarray, scale: str = "deepfield") -> np.ndarray:
+    """Trilinearly-interpolated potential (J/kg) at each point, from the grid.
+
+    pts is (N, 3) in Mpc (a single (3,) is accepted too): pts[:,0]=x->ix,
+    pts[:,1]=y->iy, pts[:,2]=z->iz, indexing grid[iz, iy, ix]. Each coordinate
+    maps to a fractional VOXEL-CENTER index along its axis,
+
+        center(i) = lo + (i + 0.5) * (hi - lo) / n
+        => frac    = (coord - lo) / (hi - lo) * n - 0.5
+
+    and we interpolate among the 8 surrounding voxel centers. The fractional
+    index is clamped to [0, n-1], so points outside the cube (or in the
+    half-voxel margin past the outermost centers) take the nearest edge voxel
+    value — no extrapolation, no NaN. Replaces the catalog-sum potential for the
+    deepfield scale.
+    """
+    grid = load_potential_grid(scale)
+    values = grid.values
+    minx, miny, minz, maxx, maxy, maxz = grid.bounds
+    nz, ny, nx = grid.shape
+
+    pts = np.atleast_2d(np.asarray(pts, dtype=np.float64))
+
+    def _frac_index(coord: np.ndarray, lo: float, hi: float, n: int) -> np.ndarray:
+        f = (coord - lo) / (hi - lo) * n - 0.5
+        return np.clip(f, 0.0, n - 1)
+
+    fx = _frac_index(pts[:, 0], minx, maxx, nx)
+    fy = _frac_index(pts[:, 1], miny, maxy, ny)
+    fz = _frac_index(pts[:, 2], minz, maxz, nz)
+
+    ix0 = np.clip(np.floor(fx).astype(int), 0, nx - 1)
+    iy0 = np.clip(np.floor(fy).astype(int), 0, ny - 1)
+    iz0 = np.clip(np.floor(fz).astype(int), 0, nz - 1)
+    ix1 = np.minimum(ix0 + 1, nx - 1)
+    iy1 = np.minimum(iy0 + 1, ny - 1)
+    iz1 = np.minimum(iz0 + 1, nz - 1)
+
+    tx = fx - ix0
+    ty = fy - iy0
+    tz = fz - iz0
+
+    vals = values.astype(np.float64)
+
+    # Trilinear blend over the 8 corners (grid indexed [iz, iy, ix]).
+    c000 = vals[iz0, iy0, ix0]
+    c001 = vals[iz0, iy0, ix1]
+    c010 = vals[iz0, iy1, ix0]
+    c011 = vals[iz0, iy1, ix1]
+    c100 = vals[iz1, iy0, ix0]
+    c101 = vals[iz1, iy0, ix1]
+    c110 = vals[iz1, iy1, ix0]
+    c111 = vals[iz1, iy1, ix1]
+
+    c00 = c000 * (1 - tx) + c001 * tx
+    c01 = c010 * (1 - tx) + c011 * tx
+    c10 = c100 * (1 - tx) + c101 * tx
+    c11 = c110 * (1 - tx) + c111 * tx
+
+    c0 = c00 * (1 - ty) + c01 * ty
+    c1 = c10 * (1 - ty) + c11 * ty
+
+    return c0 * (1 - tz) + c1 * tz
 
 
 def _dilation_array(potential: np.ndarray, scale: str = "solar") -> np.ndarray:
