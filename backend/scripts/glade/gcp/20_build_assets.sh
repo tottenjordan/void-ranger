@@ -119,11 +119,16 @@ info "building octree tiles (build_tiles.py --in ${LOCAL_CSV})"
     --out "${TILES_DIR}" \
     --r-max "${R_MAX_MPC}" )
 
-info "building potential grid (build_grid.py --in ${LOCAL_CSV})"
+info "building potential grid (build_grid.py --in ${LOCAL_CSV}, n=${GRID_N}, jobs=${GRID_JOBS:-auto})"
+grid_jobs_arg=()
+[[ -n "${GRID_JOBS}" ]] && grid_jobs_arg=(--jobs "${GRID_JOBS}")
 ( cd "${BACKEND_DIR}" && uv run python scripts/glade/build_grid.py \
     --in "${LOCAL_CSV}" \
     --out "${GRID_DIR}" \
-    --r-max "${R_MAX_MPC}" )
+    --r-max "${R_MAX_MPC}" \
+    --n "${GRID_N}" \
+    "${grid_jobs_arg[@]}" \
+    --progress )
 
 # --- 5. upload assets with long Cache-Control -------------------------------
 # -d makes rsync delete remote files no longer present locally (true mirror), so

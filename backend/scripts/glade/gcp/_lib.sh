@@ -47,6 +47,12 @@ load_config() {
   : "${ASSET_CACHE_CONTROL:=public, max-age=31536000, immutable}"
   : "${GLADE_DAT:=./gladep.dat}"
 
+  # Deep Field grid build tuning (optional). GRID_N = voxels per axis (cost ∝ N³;
+  # must match the committed grid's 48 to stay byte-identical). GRID_JOBS = worker
+  # processes for the parallel build; empty lets build_grid.py auto-pick os.cpu_count().
+  : "${GRID_N:=48}"
+  : "${GRID_JOBS:=}"
+
   # Resource label applied to every GCP asset the suite creates whose type
   # supports labels (GCS bucket, BigQuery dataset/tables/view, Cloud Run service,
   # compute global address + forwarding-rule). Single source of truth: override

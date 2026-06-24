@@ -66,7 +66,7 @@ $EDITOR config.env          # fill in PROJECT_ID, BUCKET (globally unique), etc.
 Required keys: `PROJECT_ID`, `REGION`, `BQ_LOCATION`, `BUCKET`, `BQ_DATASET`,
 `APP_ORIGIN`, `SERVICE_NAME`, `R_MAX_MPC`. Optional keys (have defaults):
 `GLADE_DAT`, `SERVICE_ACCOUNT`, `ASSET_PREFIX`, `ASSET_CACHE_CONTROL`,
-`SOLUTION_LABEL`.
+`SOLUTION_LABEL`, `GRID_N`, `GRID_JOBS`.
 
 `config.env` is git-ignored — it carries your project-specific values. Nothing is
 hardcoded in the scripts; change everything from this one file.
