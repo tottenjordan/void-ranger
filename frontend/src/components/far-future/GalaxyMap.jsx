@@ -4,6 +4,7 @@ import { OrbitControls, Stars, PointMaterial, Float, Sparkles, Grid, Html, Line 
 import * as THREE from 'three'
 import { humanDuration } from '../../utils/format'
 import { SHARED_SCENE } from './FarFutureView'
+import DeepField from './DeepField'
 
 const PARSEC_KM = 3.086e13
 const C_KM_S = 299792.458
@@ -417,10 +418,9 @@ const CLICK_DRAG_THRESHOLD_PX = 5
 
 // `scene` defaults to SHARED_SCENE (the solar/cosmic constants, single source of
 // truth in FarFutureView) so any caller that omits it renders identically.
-// `scale` and `assetBase` are accepted now (threaded from FarFutureView) but
-// only consumed by the Deep Field tile streamer added in 2E.2; they are inert
-// at solar/cosmic scale.
-export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit = 'pc', originLabel = 'Earth', scene = SHARED_SCENE, scale = 'solar', assetBase }) { // eslint-disable-line no-unused-vars
+// `scale` selects the point-cloud renderer: 'deepfield' streams LOD tiles via
+// <DeepField> from `assetBase`; solar/cosmic render the catalog <StarField>.
+export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit = 'pc', originLabel = 'Earth', scene = SHARED_SCENE, scale = 'solar', assetBase }) {
   const pointerDown = useRef(null)
 
   const handlePointerDown = (e) => {
@@ -468,7 +468,9 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit =
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 100, 0]} intensity={0.2} color="#1e3a5f" />
         <Stars radius={scene.starsRadius} depth={scene.starsDepth} count={3000} factor={2} fade speed={0.3} saturation={0.1} />
-        <StarField stars={stars} unit={unit} />
+        {scale === 'deepfield'
+          ? <DeepField assetBase={assetBase} unit={unit} />
+          : <StarField stars={stars} unit={unit} />}
         <GravityWell />
         <EarthMarker originLabel={originLabel} />
         <CommLine serverPosition={serverPosition} />
