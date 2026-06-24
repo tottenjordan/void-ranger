@@ -49,10 +49,29 @@ EXTENTS (faces at ±R_MAX), NOT voxel-center extremes.
 Output is DETERMINISTIC: no RNG, fixed float32 dtype, fixed voxel-center grid —
 same input → byte-identical ``grid.npy``. See
 ``docs/plans/003-cosmic-web-phase-2-deep-field.md``.
+
+Parallelism & determinism — why optimizing this never invalidates a shipped grid.
+The voxel loop is embarrassingly parallel: each voxel's value is an independent
+sum ``Σ_i G·M_i / sqrt(r_i² + softening²)`` over the SAME galaxy array. ``--jobs``
+splits only WHICH voxels each worker computes (contiguous index ranges, written
+back in index order); ``--chunk`` (and ``RANGES_PER_JOB``) set only how many
+voxels a batch/range holds. Neither changes the per-voxel galaxy summation order,
+the reduction stays float64, and the cast to float32 happens exactly once at the
+end. So ``grid.npy`` is BYTE-IDENTICAL across every ``--jobs`` / ``--chunk`` /
+``--progress`` / range-count combination — serial and 12-way parallel emit the
+same bytes. Practical consequence: speeding up the builder does NOT require
+re-uploading any existing grid (the asset bytes are stable). This is enforced by
+``tests/test_build_grid_perf.py::test_matches_committed_sample_grid``, which
+rebuilds the committed N=48 sample in parallel and asserts strict
+``np.array_equal`` against the shipped ``grid.npy``.
 """
 import argparse
+import concurrent.futures
 import json
+import multiprocessing
+import os
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -69,6 +88,19 @@ R_MAX_DEFAULT = 500.0        # Mpc — Deep Field cube bound (±R_MAX)
 N_DEFAULT = 48
 SOFTENING_MPC_DEFAULT = 0.5  # matches cosmic scale's 0.5 * MPC_M in physics.py
 EXAGGERATION_DEFAULT = 1.0   # RAW grid; deepfield exaggeration lives in SCALES (2D.1)
+
+# Target float64 elements per chunk temporary (~64 MB). The per-batch arrays are
+# (chunk × n_galaxies), so AUTO chunk = ELEMENT_BUDGET // n_galaxies keeps each
+# numpy batch cache/RAM-friendly regardless of catalog size.
+ELEMENT_BUDGET = 8_000_000
+
+# Parallel builds split the voxel range into RANGES_PER_JOB × jobs contiguous
+# ranges (not just `jobs`). max_workers stays `jobs`; the extra ranges let
+# as_completed() report progress THROUGHOUT the build (live rate/ETA) instead of
+# only when each worker's single range finishes. More ranges NEVER change the
+# output — each range is a contiguous voxel slice reassembled by index, so the
+# grid stays byte-identical regardless of RANGES_PER_JOB or jobs.
+RANGES_PER_JOB = 16
 
 # Physics constants — reuse the exact values from app/services/physics.py.
 G = 6.674e-11        # gravitational constant (m^3 kg^-1 s^-2)
@@ -136,14 +168,167 @@ def voxel_centers(r_max: float, n: int) -> np.ndarray:
     return -r_max + (np.arange(n, dtype=np.float64) + 0.5) * width
 
 
+def _potential_for_points(pts_m, sx, sy, sz, masses_kg, soft_sq, chunk):
+    """Sum the softened Newtonian potential at each point (row of pts_m).
+
+    Pure, serial reduction over ALL galaxies in array order. Returns a
+    float64 ndarray of length len(pts_m). Math is identical to the original
+    in-line loop; this is a structural extraction only.
+    """
+    out = np.empty(len(pts_m), dtype=np.float64)
+    for i in range(0, len(pts_m), chunk):
+        c = pts_m[i:i + chunk]
+        dx = c[:, 0:1] - sx[None, :]
+        dy = c[:, 1:2] - sy[None, :]
+        dz = c[:, 2:3] - sz[None, :]
+        r = np.sqrt(dx * dx + dy * dy + dz * dz + soft_sq)
+        out[i:i + len(c)] = np.sum(G * masses_kg[None, :] / r, axis=1)
+    return out
+
+
+# --- Parallel worker plumbing (jobs > 1) -----------------------------------
+# When build_grid() forks a ProcessPoolExecutor, the large read-only galaxy
+# arrays + voxel points are inherited copy-on-write via these module globals,
+# so only small (start, stop) index ranges cross the process boundary (no big
+# arrays are pickled). These are set before the pool is created and cleared in a
+# finally; they are None outside a parallel build_grid() call.
+_WORKER_PTS = None
+_WORKER_SX = None
+_WORKER_SY = None
+_WORKER_SZ = None
+_WORKER_MASSES_KG = None
+_WORKER_SOFT_SQ = None
+_WORKER_CHUNK = None
+
+
+def _worker_potential_range(start: int, stop: int):
+    """Compute the potential for the voxel index range [start, stop).
+
+    Module-level (picklable by reference) so ProcessPoolExecutor can dispatch
+    it. Reads the forked read-only globals and returns a float64 ndarray of
+    length (stop - start). Math is identical to the serial reduction — only the
+    subset of voxels differs.
+    """
+    return _potential_for_points(
+        _WORKER_PTS[start:stop],
+        _WORKER_SX, _WORKER_SY, _WORKER_SZ,
+        _WORKER_MASSES_KG, _WORKER_SOFT_SQ, _WORKER_CHUNK,
+    )
+
+
+def _contiguous_ranges(total: int, jobs: int):
+    """Split [0, total) into ``jobs`` contiguous (start, stop) ranges, as even
+    as possible. Empty ranges are omitted."""
+    base, extra = divmod(total, jobs)
+    ranges = []
+    start = 0
+    for j in range(jobs):
+        length = base + (1 if j < extra else 0)
+        if length == 0:
+            continue
+        ranges.append((start, start + length))
+        start += length
+    return ranges
+
+
+def _build_grid_parallel(pts, sx, sy, sz, masses_kg, soft_sq, chunk, total,
+                         jobs, progress):
+    """Compute the per-voxel potential for all of ``pts`` across ``jobs``
+    forked worker processes, returning the full float64 ``out`` array.
+
+    The big read-only arrays are published to module globals BEFORE the pool is
+    created so forked workers inherit them copy-on-write; only small (start,
+    stop) ranges are sent across the boundary. Each range's result is placed at
+    ``out[start:stop]`` in INDEX ORDER, so the result is byte-identical to the
+    serial reduction regardless of completion order.
+
+    The voxel range is split into ``jobs × RANGES_PER_JOB`` contiguous ranges
+    (more than ``jobs``) while ``max_workers`` stays ``jobs``: the pool reuses
+    its workers across the extra ranges so ``as_completed`` fires many times,
+    streaming live rate/ETA progress THROUGHOUT the build. The extra ranges
+    never change the output — each is a contiguous voxel slice reassembled by
+    index, so the grid is byte-identical regardless of how many ranges there are.
+    """
+    global _WORKER_PTS, _WORKER_SX, _WORKER_SY, _WORKER_SZ
+    global _WORKER_MASSES_KG, _WORKER_SOFT_SQ, _WORKER_CHUNK
+
+    out = np.empty(total, dtype=np.float64)
+    ranges = _contiguous_ranges(total, jobs * RANGES_PER_JOB)
+
+    _WORKER_PTS = pts
+    _WORKER_SX = sx
+    _WORKER_SY = sy
+    _WORKER_SZ = sz
+    _WORKER_MASSES_KG = masses_kg
+    _WORKER_SOFT_SQ = soft_sq
+    _WORKER_CHUNK = chunk
+    try:
+        ctx = multiprocessing.get_context("fork")
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=jobs, mp_context=ctx
+        ) as pool:
+            futures = {
+                pool.submit(_worker_potential_range, start, stop): (start, stop)
+                for (start, stop) in ranges
+            }
+            done = 0
+            pstart = time.monotonic()
+            for fut in concurrent.futures.as_completed(futures):
+                start, stop = futures[fut]
+                out[start:stop] = fut.result()  # placed by INDEX, not completion
+                if progress:
+                    done += stop - start
+                    elapsed = time.monotonic() - pstart
+                    rate = done / elapsed if elapsed > 0 else 0.0
+                    remaining = (total - done) / rate if rate > 0 else 0.0
+                    print(
+                        f"[build_grid] {done}/{total} voxels "
+                        f"({100.0 * done / total:.1f}%) … "
+                        f"{rate:.0f} vox/s ETA {remaining:.0f}s",
+                        file=sys.stderr,
+                    )
+    finally:
+        _WORKER_PTS = None
+        _WORKER_SX = None
+        _WORKER_SY = None
+        _WORKER_SZ = None
+        _WORKER_MASSES_KG = None
+        _WORKER_SOFT_SQ = None
+        _WORKER_CHUNK = None
+    return out
+
+
 def build_grid(xyz_mpc: np.ndarray, mass_msun: np.ndarray, r_max: float,
-               n: int, softening_mpc: float, exaggeration: float) -> np.ndarray:
+               n: int, softening_mpc: float, exaggeration: float,
+               chunk: int = 0, progress: bool = False,
+               jobs: int = 1) -> np.ndarray:
     """Voxelize the cube and sum the softened galaxy potential per voxel center.
 
     Returns a float32 array shape (n, n, n) indexed [iz, iy, ix], potential
     magnitude (J/kg, positive), multiplied by ``exaggeration``. Coordinates are
     converted Mpc→m and masses Msun→kg before summation, mirroring physics.py.
     Chunked over voxels to bound peak memory (~chunk × n_galaxies).
+
+    ``chunk`` is the number of voxels processed per numpy batch:
+
+    * ``chunk == 0`` (default) → AUTO: ``max(1, ELEMENT_BUDGET // n_galaxies)``,
+      so each (chunk × n_galaxies) temporary stays near ELEMENT_BUDGET elements.
+    * ``chunk > 0`` → used as-is.
+
+    ``chunk`` NEVER affects the output: each voxel still reduces over the same
+    galaxy array in the same order. Larger/smaller chunks only change how many
+    voxels are processed per numpy batch → byte-identical ``grid.npy``.
+
+    When ``progress=True``, periodic progress (voxels done/total, %, rate, ETA)
+    is written to ``sys.stderr`` (never stdout). It is purely runtime logging and
+    does not affect the output.
+
+    ``jobs`` is the number of worker processes (default 1 = serial). When
+    ``jobs > 1`` the flattened voxel range ``[0, n^3)`` is split into ``jobs``
+    contiguous ranges computed in parallel via a forked
+    ``ProcessPoolExecutor``; the read-only galaxy arrays are inherited
+    copy-on-write (no large-array pickling) and each range's result is written
+    back at its index slot, so the assembled grid is BYTE-IDENTICAL to serial.
     """
     centers_m = voxel_centers(r_max, n) * MPC_M
     sx = xyz_mpc[:, 0] * MPC_M
@@ -157,15 +342,37 @@ def build_grid(xyz_mpc: np.ndarray, mass_msun: np.ndarray, r_max: float,
     gz, gy, gx = np.meshgrid(centers_m, centers_m, centers_m, indexing="ij")
     pts = np.column_stack([gx.ravel(), gy.ravel(), gz.ravel()])  # (n^3, 3) m, x/y/z
 
-    out = np.empty(len(pts), dtype=np.float64)
-    CHUNK = 256
-    for i in range(0, len(pts), CHUNK):
-        c = pts[i:i + CHUNK]
-        dx = c[:, 0:1] - sx[None, :]
-        dy = c[:, 1:2] - sy[None, :]
-        dz = c[:, 2:3] - sz[None, :]
-        r = np.sqrt(dx * dx + dy * dy + dz * dz + soft_sq)
-        out[i:i + len(c)] = np.sum(G * masses_kg[None, :] / r, axis=1)
+    n_galaxies = len(masses_kg)
+    if chunk <= 0:  # AUTO
+        chunk = max(1, ELEMENT_BUDGET // max(1, n_galaxies))
+
+    total = len(pts)
+    if jobs > 1:
+        out = _build_grid_parallel(
+            pts, sx, sy, sz, masses_kg, soft_sq, chunk, total, jobs, progress
+        )
+    elif not progress:
+        out = _potential_for_points(pts, sx, sy, sz, masses_kg, soft_sq, chunk)
+    else:
+        # Inline the same chunked loop so we can report after every batch. The
+        # math/order is identical to _potential_for_points; only logging differs.
+        out = np.empty(total, dtype=np.float64)
+        start = time.monotonic()
+        for i in range(0, total, chunk):
+            sub = pts[i:i + chunk]
+            out[i:i + len(sub)] = _potential_for_points(
+                sub, sx, sy, sz, masses_kg, soft_sq, len(sub)
+            )
+            done = i + len(sub)
+            elapsed = time.monotonic() - start
+            rate = done / elapsed if elapsed > 0 else 0.0
+            remaining = (total - done) / rate if rate > 0 else 0.0
+            print(
+                f"[build_grid] {done}/{total} voxels "
+                f"({100.0 * done / total:.1f}%) … "
+                f"{rate:.0f} vox/s ETA {remaining:.0f}s",
+                file=sys.stderr,
+            )
 
     out *= exaggeration
     return out.reshape(n, n, n).astype(np.float32)  # [iz, iy, ix]
@@ -254,6 +461,18 @@ def main(argv=None) -> int:
     p.add_argument("--exaggeration", type=float, default=EXAGGERATION_DEFAULT,
                    help="multiply stored potential (default 1.0 = RAW; keep 1.0 "
                         "for the committed grid — exaggeration lives in SCALES).")
+    p.add_argument("--chunk", type=int, default=0,
+                   help="voxels per batch; 0 = auto from ELEMENT_BUDGET.")
+    p.add_argument("--jobs", type=int, default=(os.cpu_count() or 1),
+                   help="worker processes for the voxel reduction (default: all "
+                        "CPUs; 1 = serial). Output is byte-identical regardless. "
+                        "Cost is memory-bandwidth-bound, so speedup is sublinear.")
+    prog = p.add_mutually_exclusive_group()
+    prog.add_argument("--progress", dest="progress", action="store_true",
+                      help="emit periodic progress to stderr.")
+    prog.add_argument("--quiet", dest="progress", action="store_false",
+                      help="suppress progress output (default).")
+    p.set_defaults(progress=False)
     args = p.parse_args(argv)
 
     out = Path(args.out)
@@ -265,7 +484,8 @@ def main(argv=None) -> int:
 
     xyz, mass = prepare_galaxies(df, args.r_max)
     grid = build_grid(xyz, mass, args.r_max, args.n, args.softening_mpc,
-                      args.exaggeration)
+                      args.exaggeration, chunk=args.chunk, progress=args.progress,
+                      jobs=args.jobs)
     npy_path, json_path = write_grid(grid, args.r_max, out)
     stats = verify(grid, args.r_max, args.n)
 

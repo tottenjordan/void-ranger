@@ -66,7 +66,7 @@ $EDITOR config.env          # fill in PROJECT_ID, BUCKET (globally unique), etc.
 Required keys: `PROJECT_ID`, `REGION`, `BQ_LOCATION`, `BUCKET`, `BQ_DATASET`,
 `APP_ORIGIN`, `SERVICE_NAME`, `R_MAX_MPC`. Optional keys (have defaults):
 `GLADE_DAT`, `SERVICE_ACCOUNT`, `ASSET_PREFIX`, `ASSET_CACHE_CONTROL`,
-`SOLUTION_LABEL`.
+`SOLUTION_LABEL`, `GRID_N`, `GRID_JOBS`.
 
 `config.env` is git-ignored — it carries your project-specific values. Nothing is
 hardcoded in the scripts; change everything from this one file.
@@ -170,14 +170,24 @@ After assembly, the script asserts the CSV header equals
 `ra,dec,dist_mpc,b_mag,k_mag,w1_mag,mass_msun,zcmb` — a hard guard that the view
 matches what the builders read.
 
-> **Build time & resolution.** `build_tiles.py` is fast (seconds), but
-> `build_grid.py` is **single-core and memory-bandwidth-bound**: the full-catalog
-> potential grid (3.5 M galaxies, default resolution N=48) takes *tens of
-> minutes* with no progress output. For a quick end-to-end check, build at a
-> lower resolution (e.g. `build_grid.py --n 32`, ~3.4× faster — cost scales as
-> N³). See **[`../README.md`](../README.md)** → *Grid resolution* and
-> *Build performance & optimization opportunities* for the full trade-off table
-> and the faster-rebuild options.
+> **Build time, resolution & parallelism.** `build_tiles.py` is fast (seconds).
+> `build_grid.py` is the slow step but is now **multi-core with live progress**:
+> it splits the voxel loop across `GRID_JOBS` worker processes (blank = all
+> cores) and streams a rate/ETA to stderr (this script always passes
+> `--progress`). On a 16-core box the full-catalog grid (3.5 M galaxies, default
+> N=48) builds in roughly an hour — about **8–10× faster** than the old
+> single-core path (~8–9 h). Tune resolution with `GRID_N` (cost scales as N³;
+> e.g. `GRID_N=32` is ~3.4× cheaper for a quick end-to-end check). See
+> **[`../README.md`](../README.md)** → *Grid resolution* and *Build performance*
+> for the full trade-off table.
+>
+> **Rebuilds are bit-identical → no re-upload.** `grid.npy` is byte-identical
+> regardless of `GRID_JOBS` / `--chunk` / `--progress`: the parallel path only
+> splits *which* voxels each core computes, the per-voxel galaxy sum is unchanged,
+> and the float32 cast happens once at the end (proven by
+> `build_grid.py` and `tests/test_build_grid_perf.py::test_matches_committed_sample_grid`).
+> So regenerating a grid from the same catalog produces the same bytes and
+> **never requires a new upload** — `gsutil -m rsync` sees no change.
 
 **Expected output (tail):**
 ```
