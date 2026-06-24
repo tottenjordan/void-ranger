@@ -28,6 +28,14 @@ const COARSEN_SCREEN_SIZE = REFINE_SCREEN_SIZE * 0.8
 // Small/sample buffers keep hover.
 const HOVER_RAYCAST_MAX = 60_000
 
+// R3F/three.js disables per-object picking when `raycast` is a no-op FUNCTION.
+// Passing `null` instead leaves `object.raycast === null`, so the raycaster calls
+// `null(...)` on every pointermove → "object.raycast is not a function" once a
+// dense tile set pushes the active point count past HOVER_RAYCAST_MAX (never hit
+// by the tiny sample, but real with the full catalog). A no-op keeps hover off
+// cheaply without throwing.
+const NO_RAYCAST = () => null
+
 // LOD recompute cadence — frustum/zoom walks at ~4 Hz, not every frame (mirrors
 // StarLabels' 0.25s throttle).
 const LOD_INTERVAL_S = 0.25
@@ -279,7 +287,7 @@ export default function DeepField({ assetBase, unit = 'Mpc' }) {
         <points
           onPointerMove={handlePointerMove}
           onPointerOut={handlePointerOut}
-          raycast={count > HOVER_RAYCAST_MAX ? null : undefined}
+          raycast={count > HOVER_RAYCAST_MAX ? NO_RAYCAST : undefined}
         >
           {/* key on the active-set version so R3F disposes the old geometry on rebuild */}
           <bufferGeometry key={activeVersion.current}>
