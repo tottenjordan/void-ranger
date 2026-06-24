@@ -7,5 +7,8 @@ __pycache__/
 backend/data/hygdata_v41.csv
 backend/data/hyg_v42.csv.gz
 backend/data/deepfield_build/
+# Staged SPA build copy: 30_serve.sh `run` stages frontend/dist here, then the
+# Dockerfile bakes it in. Throwaway artifact — never commit it.
+backend/web/
 .env
 .env.local
