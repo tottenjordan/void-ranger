@@ -59,47 +59,56 @@ bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" query \
    AS
    SELECT * FROM \`${PROJECT_ID}.${BQ_DATASET}.${VIEW}\`"
 
-# --- 2. extract -> GZIP CSV in GCS, then copy local -------------------------
-# Column header order is preserved from the table, which matches the builder CSV
-# contract. GZIP keeps the transfer + local file small; pandas reads .gz directly.
+# --- 2. extract -> GZIP CSV shards in GCS, then assemble one local CSV.gz ----
+# BigQuery PARALLELIZES an extract into MULTIPLE gzip shards as soon as the output
+# is non-trivial (observed: ~7 shards for the 3.5M-row 500-Mpc subset) — it does
+# NOT only shard above 1 GB. The builders read a single --in file, so we extract
+# WITHOUT per-shard headers, download every shard, and assemble ONE clean
+# single-member gzip with the known header line prepended. Row order across shards
+# is irrelevant: build_tiles orders points by brightness and build_grid sums
+# contributions order-independently.
+expected_header="ra,dec,dist_mpc,b_mag,k_mag,w1_mag,mass_msun,zcmb"
+LOCAL_SHARD_DIR="${WORK_DIR}/extract_shards"
+rm -rf "${LOCAL_SHARD_DIR}"; mkdir -p "${LOCAL_SHARD_DIR}"
+
 # Clear any stale shards from a previous run first (idempotent).
 gsutil -m rm -f "${GS_CSV_PATTERN}" >/dev/null 2>&1 || true
-info "extracting ${SNAP_TABLE} -> ${GS_CSV_PATTERN}"
+info "extracting ${SNAP_TABLE} -> ${GS_CSV_PATTERN} (headerless shards)"
 bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" extract \
   --destination_format=CSV \
   --compression=GZIP \
-  --print_header=true \
+  --print_header=false \
   "${PROJECT_ID}:${BQ_DATASET}.${SNAP_TABLE}" \
   "${GS_CSV_PATTERN}"
 
-# Assert a single shard. The builders take ONE --in file; BQ only shards when the
-# output would exceed ~1 GB/file (not expected for the 500-Mpc subset). If it
-# sharded, lower R_MAX_MPC or extend this script to concatenate shards.
 # `|| true` so a zero-object extract (gsutil ls exits non-zero) reaches the
 # friendly die below instead of aborting under pipefail with an opaque error.
 shard_count="$( { gsutil ls "${GS_CSV_PATTERN}" 2>/dev/null || true; } | wc -l | tr -d ' ')"
 [[ "${shard_count}" -ge 1 ]] || die "extract produced no shards at ${GS_CSV_PATTERN}"
-[[ "${shard_count}" -eq 1 ]] || die "extract sharded into ${shard_count} files \
-(>1 GB). The builders read a single --in file. Lower R_MAX_MPC, or concatenate \
-the shards (stripping repeated headers) before building."
-gs_shard="$(gsutil ls "${GS_CSV_PATTERN}")"
-info "copying ${gs_shard} -> ${LOCAL_CSV}"
-gsutil cp "${gs_shard}" "${LOCAL_CSV}"
+info "downloading ${shard_count} shard(s) -> ${LOCAL_SHARD_DIR}"
+gsutil -m cp "${GS_CSV_PATTERN}" "${LOCAL_SHARD_DIR}/"
 
-# Sanity: the header must match the builder CSV contract exactly.
+# Assemble ONE single-member gzip: known header line, then every shard body
+# (decompressed and recompressed together). A single member is maximally
+# compatible with pandas read_csv across all shard counts.
+info "assembling ${shard_count} shard(s) -> ${LOCAL_CSV}"
+{
+  printf '%s\n' "${expected_header}"
+  for s in "${LOCAL_SHARD_DIR}"/*.csv.gz; do gzip -dc "${s}"; done
+} | gzip -c > "${LOCAL_CSV}"
+
+# Sanity: the first decompressed line must be the builder CSV contract.
 # Read just the first line via process substitution so `gzip -dc` isn't killed by
-# a `head` SIGPIPE (which under pipefail+set -e would abort the whole script
-# before the builders run). Strip a trailing CR if present.
-expected_header="ra,dec,dist_mpc,b_mag,k_mag,w1_mag,mass_msun,zcmb"
+# a `head` SIGPIPE (which under pipefail+set -e would abort the whole script).
 IFS= read -r actual_header < <(gzip -dc "${LOCAL_CSV}")
 actual_header="${actual_header%$'\r'}"
 if [[ "${actual_header}" != "${expected_header}" ]]; then
-  die "CSV header mismatch.
+  die "assembled CSV header mismatch.
   expected: ${expected_header}
   actual:   ${actual_header}
   The glade_usable view SELECT must emit exactly these columns in this order."
 fi
-info "OK CSV header matches builder contract: ${actual_header}"
+info "OK assembled CSV header matches builder contract: ${actual_header}"
 
 # --- 3 & 4. run the builders against the extracted CSV via --in -------------
 # Run from backend/ so `uv run` resolves the project env. The builders default to

@@ -5,7 +5,7 @@ columns the later tile/grid builders need. Two sources:
 
 * ``--source vizier`` (DEFAULT): pull a bounded GLADE+ slice from VizieR via
   astroquery. Server-side filters keep only rows with a usable luminosity
-  distance (``f_dL > 0``) within ``R_MAX`` Mpc. No download of the full 6 GB
+  distance (``f_dL > 0``) within ``R_MAX`` Mpc. No download of the full ~14 GB
   catalog and no GCP creds — the committed sample makes the repo build offline.
 * ``--in <gladep.dat>`` (or ``GLADE_DAT`` env): read the real fixed-width
   ``gladep.dat`` (VizieR VII/291). We don't have this file locally, so this path

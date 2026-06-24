@@ -47,20 +47,22 @@ if gsutil -q stat "${GS_RAW}" 2>/dev/null; then
   info "raw catalog already at ${GS_RAW} — skipping upload (delete it to force re-upload)"
 else
   [[ -f "${GLADE_DAT}" ]] || die "GLADE_DAT not found: ${GLADE_DAT}
-  Download the fixed-width VizieR VII/291 gladep.dat (~6 GB) and set GLADE_DAT in config.env."
-  info "uploading ${GLADE_DAT} -> ${GS_RAW} (this is ~6 GB; may take a while)"
+  Download the fixed-width VizieR VII/291 gladep.dat (~14 GB) and set GLADE_DAT in config.env."
+  info "uploading ${GLADE_DAT} -> ${GS_RAW} (this is ~14 GB; may take a while)"
   gsutil -o "GSUtil:parallel_composite_upload_threshold=150M" cp "${GLADE_DAT}" "${GS_RAW}"
 fi
 
 # --- 2. load fixed-width records as one STRING column -----------------------
-# A field delimiter that does not occur in the data ("\b" backspace) makes
-# `bq load` treat each whole line as a single column. --replace makes re-runs
-# idempotent (the table is rebuilt from the same source).
+# A field delimiter that does not occur in the data (a backspace byte, 0x08)
+# makes `bq load` treat each whole line as a single column. We use bash's $'\b'
+# so the ACTUAL backspace byte is passed; bq requires a single character and does
+# NOT interpret a literal '\b' escape (it errors "must be a single character").
+# --replace makes re-runs idempotent (the table is rebuilt from the same source).
 info "loading raw lines -> ${BQ_DATASET}.${RAW_TABLE} (idempotent --replace)"
 bq --project_id="${PROJECT_ID}" --location="${BQ_LOCATION}" load \
   --replace \
   --source_format=CSV \
-  --field_delimiter='\b' \
+  --field_delimiter=$'\b' \
   --quote='' \
   "${BQ_DATASET}.${RAW_TABLE}" \
   "${GS_RAW}" \

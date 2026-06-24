@@ -49,7 +49,7 @@ Dockerfile          optional Cloud Run image for the FastAPI backend
    - For `30_serve.sh run`: `roles/run.admin` and `roles/cloudbuild.builds.editor`
    (`roles/owner` covers all of these if you're the project owner.)
 5. **The GLADE+ catalog** — download the fixed-width `gladep.dat` (VizieR
-   `VII/291`, ~23.2M rows, ~6 GB). This is **not committed**. Point `GLADE_DAT`
+   `VII/291`, ~23.2M rows, ~14 GB). This is **not committed**. Point `GLADE_DAT`
    in `config.env` at it. (Local/CI builds use the committed
    `backend/data/samples/glade_sample.csv.gz` instead and do not need this.)
 
@@ -158,13 +158,26 @@ You should see numeric `ra, dec, dist_mpc, b_mag, k_mag, w1_mag, mass_msun, zcmb
 ```
 
 Snapshots the view to a table, `bq extract`s it to `gs://$BUCKET/glade/extract/`
-as a **GZIP CSV**, copies it local, runs `build_tiles.py` and `build_grid.py`
-against it via `--in`, then `gsutil -m rsync`es the full `tiles/` + `grid/` to
-`gs://$BUCKET/$ASSET_PREFIX/` with a long `Cache-Control`.
+as **GZIP CSV shards**, downloads them, and **assembles one clean single-member
+gzip** locally (BigQuery parallelizes the extract into multiple shards — ~7 for
+the 3.5 M-row 500 Mpc subset — so the script extracts them *headerless* and
+prepends the known header; row order across shards is irrelevant). It then runs
+`build_tiles.py` and `build_grid.py` against that CSV via `--in` and
+`gsutil -m rsync`es the full `tiles/` + `grid/` to `gs://$BUCKET/$ASSET_PREFIX/`
+with a long `Cache-Control`.
 
-Before building, the script asserts the extracted CSV header equals
+After assembly, the script asserts the CSV header equals
 `ra,dec,dist_mpc,b_mag,k_mag,w1_mag,mass_msun,zcmb` — a hard guard that the view
 matches what the builders read.
+
+> **Build time & resolution.** `build_tiles.py` is fast (seconds), but
+> `build_grid.py` is **single-core and memory-bandwidth-bound**: the full-catalog
+> potential grid (3.5 M galaxies, default resolution N=48) takes *tens of
+> minutes* with no progress output. For a quick end-to-end check, build at a
+> lower resolution (e.g. `build_grid.py --n 32`, ~3.4× faster — cost scales as
+> N³). See **[`../README.md`](../README.md)** → *Grid resolution* and
+> *Build performance & optimization opportunities* for the full trade-off table
+> and the faster-rebuild options.
 
 **Expected output (tail):**
 ```
@@ -254,7 +267,7 @@ origin matches `APP_ORIGIN` in `config.env` (it drives the bucket CORS allow).
   bq rm -f -t <PROJECT_ID>:<BQ_DATASET>.glade_raw_line
   bq rm -f -t <PROJECT_ID>:<BQ_DATASET>.glade_usable_snapshot
   ```
-- **Cloud Storage** — ~6 GB raw `gladep.dat` + the built assets (tiles + grid are
+- **Cloud Storage** — ~14 GB raw `gladep.dat` + the built assets (tiles + grid are
   small, well under a few hundred MB). Standard storage in one region is a few
   cents/GB-month. Delete the raw object after the BigQuery load if you don't need
   to reload: `gsutil rm gs://<BUCKET>/glade/raw/gladep.dat`.
