@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Stars, PointMaterial, Float, Sparkles, Grid, Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import { humanDuration } from '../../utils/format'
+import { SHARED_SCENE } from './FarFutureView'
 
 const PARSEC_KM = 3.086e13
 const C_KM_S = 299792.458
@@ -345,7 +346,7 @@ function ServerMarker({ position }) {
   )
 }
 
-function BackgroundSphere() {
+function BackgroundSphere({ bgRadius }) {
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
       side: THREE.BackSide,
@@ -357,21 +358,23 @@ function BackgroundSphere() {
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
       `,
+      // The divisor MUST match the sphere radius so the gradient maps from
+      // center (0) to the sphere surface (1).
       fragmentShader: `
         varying vec3 vPosition;
         void main() {
-          float dist = length(vPosition) / 900.0;
+          float dist = length(vPosition) / ${bgRadius.toFixed(1)};
           vec3 center = vec3(0.02, 0.04, 0.08);
           vec3 edge = vec3(0.008, 0.012, 0.03);
           gl_FragColor = vec4(mix(center, edge, dist), 1.0);
         }
       `,
     })
-  }, [])
+  }, [bgRadius])
 
   return (
     <mesh material={material}>
-      <sphereGeometry args={[900, 32, 32]} />
+      <sphereGeometry args={[bgRadius, 32, 32]} />
     </mesh>
   )
 }
@@ -412,7 +415,12 @@ function webglAvailable() {
 
 const CLICK_DRAG_THRESHOLD_PX = 5
 
-export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit = 'pc', originLabel = 'Earth' }) {
+// `scene` defaults to SHARED_SCENE (the solar/cosmic constants, single source of
+// truth in FarFutureView) so any caller that omits it renders identically.
+// `scale` and `assetBase` are accepted now (threaded from FarFutureView) but
+// only consumed by the Deep Field tile streamer added in 2E.2; they are inert
+// at solar/cosmic scale.
+export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit = 'pc', originLabel = 'Earth', scene = SHARED_SCENE, scale = 'solar', assetBase }) { // eslint-disable-line no-unused-vars
   const pointerDown = useRef(null)
 
   const handlePointerDown = (e) => {
@@ -453,13 +461,13 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit =
         Click to place a server · drag to orbit · scroll to zoom
       </div>
       <Canvas
-        camera={{ position: [0, 200, 400], fov: 60 }}
+        camera={{ position: scene.cameraPosition, fov: 60 }}
         raycaster={{ params: { Points: { threshold: 1.5 } } }}
       >
-        <BackgroundSphere />
+        <BackgroundSphere bgRadius={scene.bgRadius} />
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 100, 0]} intensity={0.2} color="#1e3a5f" />
-        <Stars radius={800} depth={200} count={3000} factor={2} fade speed={0.3} saturation={0.1} />
+        <Stars radius={scene.starsRadius} depth={scene.starsDepth} count={3000} factor={2} fade speed={0.3} saturation={0.1} />
         <StarField stars={stars} unit={unit} />
         <GravityWell />
         <EarthMarker originLabel={originLabel} />
@@ -467,18 +475,18 @@ export default function GalaxyMap({ stars, serverPosition, onPlaceServer, unit =
         <DistanceLine serverPosition={serverPosition} unit={unit} />
         <ServerMarker position={serverPosition} />
         <Grid
-          cellSize={50}
-          sectionSize={200}
+          cellSize={scene.gridCellSize}
+          sectionSize={scene.gridSectionSize}
           cellColor="#1a2332"
           sectionColor="#0e4d6e"
-          fadeDistance={600}
+          fadeDistance={scene.gridFadeDistance}
           fadeStrength={1.5}
           infiniteGrid
           cellThickness={0.3}
           sectionThickness={0.6}
         />
         <mesh visible={false} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
-          <planeGeometry args={[2000, 2000]} />
+          <planeGeometry args={[scene.pickPlaneSize, scene.pickPlaneSize]} />
           <meshBasicMaterial side={THREE.DoubleSide} />
         </mesh>
         <CameraController serverPosition={serverPosition} />
