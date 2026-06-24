@@ -15,6 +15,7 @@ model and the on-screen terms.
 | [Void Finding](void-finding.md) | How the app auto-locates good placements: what "low gravity" really means (sum over all stars, not distance from Earth), the search methods, and what the **Find deepest void** / **Best spot** buttons do. |
 | [Scaling the Universe](scaling-the-universe.md) | Options for growing beyond the solar neighborhood — bigger star/galaxy catalogs (HYG, Gaia, GLADE+), the data/rendering/physics trade-offs, GCP fit, and the chosen cosmic-web direction. |
 | [Cosmic Web scale](cosmic-web.md) | The galaxy-scale mode (2MRS, megaparsecs): catalog, the scale-parameterized physics, real cosmic voids, latency in millions of years, and caveats. |
+| [Deep Field scale](deep-field.md) | The big-data galaxy mode (GLADE+, ~22.5 M, megaparsecs): the binary LOD tile + potential-grid formats, the O(voxels) void search, the ±500 Mpc bound, calibration, the GCP-ready/local-first pipeline, and how the frontend streams it. |
 
 ## How they fit together
 
