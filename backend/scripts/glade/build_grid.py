@@ -49,6 +49,21 @@ EXTENTS (faces at ±R_MAX), NOT voxel-center extremes.
 Output is DETERMINISTIC: no RNG, fixed float32 dtype, fixed voxel-center grid —
 same input → byte-identical ``grid.npy``. See
 ``docs/plans/003-cosmic-web-phase-2-deep-field.md``.
+
+Parallelism & determinism — why optimizing this never invalidates a shipped grid.
+The voxel loop is embarrassingly parallel: each voxel's value is an independent
+sum ``Σ_i G·M_i / sqrt(r_i² + softening²)`` over the SAME galaxy array. ``--jobs``
+splits only WHICH voxels each worker computes (contiguous index ranges, written
+back in index order); ``--chunk`` (and ``RANGES_PER_JOB``) set only how many
+voxels a batch/range holds. Neither changes the per-voxel galaxy summation order,
+the reduction stays float64, and the cast to float32 happens exactly once at the
+end. So ``grid.npy`` is BYTE-IDENTICAL across every ``--jobs`` / ``--chunk`` /
+``--progress`` / range-count combination — serial and 12-way parallel emit the
+same bytes. Practical consequence: speeding up the builder does NOT require
+re-uploading any existing grid (the asset bytes are stable). This is enforced by
+``tests/test_build_grid_perf.py::test_matches_committed_sample_grid``, which
+rebuilds the committed N=48 sample in parallel and asserts strict
+``np.array_equal`` against the shipped ``grid.npy``.
 """
 import argparse
 import concurrent.futures

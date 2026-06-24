@@ -126,7 +126,7 @@ uv run python scripts/glade/build_grid.py  --in <csv.gz> --out <dir> --r-max 500
 - **`build_grid.py`** → the precomputed **potential grid** (`grid.npy` +
   `grid.json`) the app samples to find the deepest void and the local clock
   advantage without re-summing millions of galaxies. This is the **slow** step
-  (see [Build performance](#build-performance--optimization-opportunities)).
+  (see [Build performance](#build-performance)).
 
 ### Grid resolution (`--n`)
 
@@ -159,41 +159,53 @@ the pipeline; use **N = 48 (or 64) for an asset you actually ship** so the field
 is smooth. The committed sample grid is N=48 deliberately (coarse but under the
 ~1 MB asset budget).
 
-### Build performance & optimization opportunities
+### Build performance
 
-`build_grid.py` is correct and dependency-free but **not optimized for the full
-catalog**. Characteristics observed on the real run (3,543,820 galaxies, N=48):
+`build_grid.py` is dependency-free (stdlib `multiprocessing` only — no new
+packages, no `uv.lock` churn) and **parallel, chunked, and progress-reporting**.
+The flags that control a build:
 
-- **Single-core.** The voxel loop runs on one CPU; the full-catalog grid takes
-  tens of minutes while 15 other cores sit idle.
-- **Oversized chunks → memory-bandwidth bound.** The inner loop processes
-  `CHUNK = 256` voxels at a time, forming `CHUNK × N_galaxies` float64
-  intermediates (`dx, dy, dz, r`). At 3.54 M galaxies that is ~7 GB *per array*,
-  several live at once → ~36 GB RSS, and the run moves on the order of ~15 TB
-  through memory across all chunks. The cost is dominated by allocating and
-  streaming these big temporaries, not by arithmetic.
-- **No progress signal.** Nothing is printed during the voxel loop and
-  `grid.npy` is written only at the very end, so there is no partial-file or ETA
-  signal while it runs.
+- **`--jobs N`** (default: all CPUs) — split the voxel loop across `N` worker
+  processes. It is embarrassingly parallel, so this is the big lever: the
+  full-catalog grid (~3.5 M galaxies, N=48) drops from **~8–9 h single-core to
+  ~1 h on 12 cores (~8–10×)**. Workers are forked, so the read-only galaxy arrays
+  are inherited copy-on-write (no large-array pickling); only integer voxel-index
+  ranges cross the process boundary.
+- **`--progress`** (off by default; `--quiet` is the explicit opposite) — stream
+  a live `done/total`, rate, and ETA to **stderr** throughout the build. The
+  parallel path is split into many small voxel ranges precisely so the ETA
+  updates continuously, not just once per worker at the end.
+- **`--chunk K`** (default `0` = auto) — voxels processed per batch. Auto picks
+  `max(1, ELEMENT_BUDGET // n_galaxies)` to keep each `chunk × n_galaxies`
+  float64 temporary cache/RAM-friendly. **`--chunk` is not a meaningful speed
+  lever** — the build is *compute-bound* on the per-pair `sqrt`+`divide`
+  (~12 M pairs/s/core), not memory-bandwidth-bound, so chunk 2/8/16/32 land
+  within ~±5% noise (and all byte-identical). Leave it on auto.
+- **`--n N`** — resolution; see [Grid resolution](#grid-resolution---n). N³
+  scaling makes this the biggest single lever for a quick dry run.
 
-For a **teaching asset built once**, this is tolerable — just start it and wait.
-If you will **rebuild often**, worthwhile improvements (roughly in order of
-effort vs. payoff):
+Through the GCP suite these are surfaced as `GRID_N` and `GRID_JOBS` in
+`config.env`; `20_build_assets.sh` always passes `--progress`.
 
-1. **Progress print** — log every K chunks with a running rate/ETA. Trivial, and
-   removes the "is it stuck?" uncertainty.
-2. **Smaller / adaptive `CHUNK`** — 256 maximizes per-chunk allocation. Pick
-   `CHUNK` so `CHUNK × N_galaxies` stays under a target element budget (e.g. a
-   few hundred MB). Smaller temporaries improve cache locality and cut RSS by
-   ~10×, often *speeding the run up* despite more Python iterations.
-3. **Parallelize the voxel loop** — it is embarrassingly parallel; split voxel
-   ranges across processes (`multiprocessing.Pool`) for a near-linear speedup on
-   a multi-core box. Using float32 throughout (not float64) halves memory
-   traffic for free.
-4. **Aggregate server-side** — the scalable path for frequent rebuilds is to sum
-   the potential in BigQuery (SQL) rather than pulling 13.9 GB and summing on one
-   core locally. This is the intent behind `build_grid.load_bq()` /
-   `--source bq` (currently a documented `NotImplementedError`; the Phase 2G
-   suite materializes the view to CSV and feeds `--in` instead).
-5. **Lower N for dry runs** — see [Grid resolution](#grid-resolution---n); N³
-   scaling makes this the biggest single lever for a quick pipeline check.
+**Output is byte-identical → no re-upload.** The grid is bit-for-bit identical
+across every `--jobs` / `--chunk` / `--progress` / range-count combination:
+parallelism only splits *which* voxels each core computes, the per-voxel galaxy
+sum is unchanged, the reduction stays float64, and the float32 cast happens once
+at the end. So optimizing or re-running the builder on the same catalog produces
+the same `grid.npy` bytes — the committed sample grid stays valid and a rebuilt
+production grid never needs re-uploading. This is enforced by
+`tests/test_build_grid_perf.py::test_matches_committed_sample_grid` (a parallel
+N=48 rebuild asserted `np.array_equal` against the committed `grid.npy`).
+
+**Observed timings** (16-core workstation, 3.5 M-galaxy full catalog, N=48):
+
+| build               | wall time      |
+|---------------------|----------------|
+| single-core (old)   | ~8–9 h         |
+| `--jobs 12`         | ~1 h (~8–10×)  |
+
+For a **scale-out** path (frequent rebuilds without pulling the full catalog to
+one box), aggregate the potential server-side in BigQuery rather than summing
+locally — the intent behind `build_grid.load_bq()` / `--source bq` (a documented
+`NotImplementedError`; the Phase 2G suite instead materializes the view to CSV
+and feeds `--in`).
