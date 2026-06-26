@@ -121,6 +121,10 @@ Option-C plan.
 
 ## Status
 
+![The same weak-field physics at three scales: Solar Neighborhood (8,920 stars, pc), Cosmic Web (43,510 galaxies, Mpc), and Deep Field (~22.5 M galaxies, Mpc)](images/scales-overview.png)
+
+<sub><i>The same weak-field physics at three scales — Solar Neighborhood (8,920 stars, pc), Cosmic Web (43,510 galaxies, Mpc), and Deep Field (~22.5 M galaxies, Mpc).</i></sub>
+
 - ✅ **Phase 1 — Cosmic-web MVP on 2MRS (shipped):** a Solar Neighborhood ↔
   Cosmic Web scale toggle backed by ~43,500 2MRS galaxies, scale-parameterized
   physics, and the void finder targeting real cosmic voids. See

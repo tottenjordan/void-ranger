@@ -70,6 +70,10 @@ percent). Pushing it much higher saturates the well-depth cap at both Earth and
 the void, collapsing the advantage back toward 1.0 — so it sits deliberately in
 the lower window.
 
+![Deepest-void clock advantage by scale: solar 1.058, cosmic 1.146, deep-field 1.060, all within the ~1.05–1.10 teaching band](images/plot-clock-advantage-per-scale.png)
+
+<sub><i>Deepest-void clock advantage (f_server / f_earth) by scale: solar 1.058, cosmic 1.146, deep-field 1.060 — within the documented ~1.05–1.10 teaching band.</i></sub>
+
 **Latency dominates at these distances.** Round-trip light time is `2d/c`: ~327
 **million** years at 50 Mpc, ~1.3 **billion** years at 200 Mpc. So the cosmic
 scale vividly shows the core trade-off — only an astronomically large job, placed

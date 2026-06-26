@@ -47,6 +47,10 @@ It runs at **three scales**, switched with a toggle in the top bar:
 
 Same physics at every scale, zoomed out by ~a million from stars to galaxies.
 
+![The same weak-field physics at three scales: Solar Neighborhood (8,920 stars, pc), Cosmic Web (43,510 galaxies, Mpc), and Deep Field (~22.5 M galaxies, Mpc)](docs/images/scales-overview.png)
+
+<sub><i>The same weak-field physics at three scales — Solar Neighborhood (8,920 stars, pc), Cosmic Web (43,510 galaxies, Mpc), and Deep Field (~22.5 M galaxies, Mpc).</i></sub>
+
 ## Architecture
 
 ```
@@ -67,6 +71,10 @@ React Frontend (Vite + Tailwind + Three.js) — Solar Neighborhood / Cosmic Web 
                           frontend/public/deepfield/ sample in dev
                           (base URL via VITE_ASSET_BASE_URL, default /deepfield)
 ```
+
+![System architecture: the React frontend calls the FastAPI backend over /api/*, catalogs are served as JSON, and Deep Field tiles plus the potential grid load as static assets](docs/images/arch-system.png)
+
+<sub><i>System architecture: the React frontend calls the FastAPI backend over /api/*; catalogs are served as JSON while Deep Field tiles + potential grid load as static assets.</i></sub>
 
 At the **Deep Field** scale the frontend streams GLADE+ tiles directly from a
 static asset base (no `/api/*` round-trip), and the backend's physics/void-search

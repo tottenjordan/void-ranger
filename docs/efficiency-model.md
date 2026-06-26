@@ -16,6 +16,10 @@ measured in *that machine's own clock*). You can run it locally on Earth, or shi
 it to a server sitting in a gravitational void where the clock ticks faster. Is
 the trip worth it? Three quantities answer that.
 
+![Conceptual trade-off: the void's clock-advantage saving grows linearly with task size while light latency is a fixed cost, with net gain as the difference](images/concept-tradeoff.png)
+
+<sub><i>The core trade-off: a void's clock advantage grows with task size while light latency is a fixed cost — net gain = t·(1 − f_earth/f_server) − 2d/c.</i></sub>
+
 ## 2. The three quantities
 
 From `compute_efficiency`:
@@ -93,6 +97,14 @@ The fixed-cost / linear-benefit structure is why **big jobs justify the trip and
 small ones don't**: the latency is a flat tax paid regardless of job size, while
 the dilation saving grows linearly with the job. Below breakeven the tax
 dominates; above it, the saving wins.
+
+![Net gain vs. distance at the solar scale for three task sizes: a 100,000-yr job stays positive, a 30,000-yr job hovers near break-even, a 10,000-yr job stays negative](images/plot-netgain-vs-distance.png)
+
+<sub><i>Net gain vs. distance at the solar scale (real model output): a 100,000-yr job stays net-positive and grows with void depth, a 30,000-yr job hovers near break-even, and a 10,000-yr job never pays off.</i></sub>
+
+![Break-even task size by scale on a log axis: ~10⁷ days at the solar scale, ~10¹²–10¹³ days at the cosmic and deep-field scales](images/plot-breakeven-vs-distance.png)
+
+<sub><i>Break-even task size by scale (log axis): the smallest job worth offloading is ~10⁷ days at the solar scale and ~10¹²–10¹³ days at the cosmic / deep-field scales.</i></sub>
 
 ## 4. Worked example
 
