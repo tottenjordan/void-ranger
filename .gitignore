@@ -11,5 +11,7 @@ backend/data/deepfield_build/
 # only the curated PNGs in docs/images/ are committed. Never commit these.
 outputs/
 backend/scripts/figures/_data/
+# Local project MCP config (paperbanana → Vertex/ADC). Machine-specific, not committed.
+.mcp.json
 .env
 .env.local
