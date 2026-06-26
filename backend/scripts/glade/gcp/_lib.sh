@@ -14,6 +14,10 @@
 GCP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # backend/ is three levels up: gcp/ -> glade/ -> scripts/ -> backend/
 BACKEND_DIR="$(cd "${GCP_DIR}/../../.." && pwd)"
+# Repo root is one level above backend/; the React app lives in frontend/.
+# 30_serve.sh `run` mode builds it and stages frontend/dist -> backend/web.
+REPO_ROOT="$(cd "${BACKEND_DIR}/.." && pwd)"
+FRONTEND_DIR="${REPO_ROOT}/frontend"
 
 # --- logging ---------------------------------------------------------------
 banner() {

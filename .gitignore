@@ -7,6 +7,9 @@ __pycache__/
 backend/data/hygdata_v41.csv
 backend/data/hyg_v42.csv.gz
 backend/data/deepfield_build/
+# Staged SPA build copy: 30_serve.sh `run` stages frontend/dist here, then the
+# Dockerfile bakes it in. Throwaway artifact — never commit it.
+backend/web/
 # PaperBanana working dir + generated plot-data JSON are throwaway scratch:
 # only the curated PNGs in docs/images/ are committed. Never commit these.
 outputs/

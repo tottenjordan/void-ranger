@@ -83,6 +83,11 @@ the API stays tiny. The tiles + grid are built by an offline, GCP-ready pipeline
 (GLADE+ → GCS → BigQuery → tiles/grid → GCS/Cloud CDN); see
 [The Deep Field scale](docs/deep-field.md).
 
+For hosting, `backend/scripts/glade/gcp/30_serve.sh run` builds the SPA and
+serves it together with the API from a **single Cloud Run service** (UI at `/`,
+API at `/api/*`) — one origin, no CORS; Deep Field tiles still load from GCS. See
+[the deploy guide](backend/scripts/glade/gcp/DEPLOY.md).
+
 ## Prerequisites
 
 - Python 3.11+

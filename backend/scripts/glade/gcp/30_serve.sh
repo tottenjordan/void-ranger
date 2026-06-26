@@ -157,9 +157,12 @@ EOF
 
 # ---------------------------------------------------------------------------
 serve_run() {
-  require_vars SERVICE_NAME APP_ORIGIN
-  require_cmd gcloud gsutil
-  banner "30_serve (run) — deploy FastAPI backend to Cloud Run"
+  # APP_ORIGIN is NOT required: this mode now bakes the SPA into the image and
+  # serves UI + API from one origin, so the API needs no CORS. APP_ORIGIN is
+  # only passed through (below) if set, for optional split hosting.
+  require_vars SERVICE_NAME
+  require_cmd gcloud gsutil npm
+  banner "30_serve (run) — deploy single-service app (SPA + API) to Cloud Run"
 
   dockerfile="${GCP_DIR}/Dockerfile"
   [[ -f "${dockerfile}" ]] || die "Dockerfile missing at ${dockerfile}"
@@ -174,6 +177,20 @@ serve_run() {
   Remove it or deploy manually with that one."
   fi
 
+  # The built SPA is staged here (frontend/dist -> backend/web) and baked into
+  # the image by the Dockerfile's `COPY web ./web`. Refuse to clobber a pre-
+  # existing web/ (it's a throwaway build artifact, git-ignored).
+  staged_web_dir="${BACKEND_DIR}/web"
+  if [[ -e "${staged_web_dir}" ]]; then
+    die "a web/ dir already exists at ${staged_web_dir}; refusing to overwrite.
+  It's a staged build artifact — remove it and re-run."
+  fi
+
+  # Public HTTPS base for the Deep Field tiles (same value serve_public prints).
+  # Baked into the SPA build so tiles load straight from GCS, not from the image.
+  # Publish the assets first with `./30_serve.sh public` (or `cdn`).
+  asset_base_url="$(gcs_public_base)/${ASSET_PREFIX}"
+
   # Stage the FULL-catalog potential grid from GCS so the backend serves
   # deepfield physics from it (DEEPFIELD_GRID_DIR below). It rides into the image
   # via the Dockerfile's `COPY data ./data`. If the grid isn't in the bucket yet
@@ -183,13 +200,22 @@ serve_run() {
   # full grid self-calibrates to the teaching band with no manual tuning.
   staged_grid_parent="${BACKEND_DIR}/data/deepfield_prod"
   staged_grid_dir="${staged_grid_parent}/grid"
-  deepfield_env=""
+  deepfield_grid_env=""
 
-  # Clean up both staged paths on exit (Dockerfile + full grid dir).
+  # Clean up all staged paths on exit (Dockerfile + full grid dir + staged SPA).
   # shellcheck disable=SC2064  # expand paths now, intentionally
-  trap "rm -f '${staged_dockerfile}'; rm -rf '${staged_grid_parent}'" EXIT
+  trap "rm -f '${staged_dockerfile}'; rm -rf '${staged_grid_parent}'; rm -rf '${staged_web_dir}'" EXIT
 
   cp "${dockerfile}" "${staged_dockerfile}"
+
+  # Build the production SPA and stage it into the backend build context. The
+  # relative /api/* calls resolve same-origin once FastAPI serves the SPA, so no
+  # API base URL is needed — only the GCS tiles base. Export the var so BOTH
+  # `npm ci` and `npm run build` (separate processes) see it.
+  info "building frontend (VITE_ASSET_BASE_URL=${asset_base_url})"
+  ( cd "${FRONTEND_DIR}" && export VITE_ASSET_BASE_URL="${asset_base_url}" && npm ci && npm run build )
+  info "staging built SPA -> ${staged_web_dir}"
+  cp -r "${FRONTEND_DIR}/dist" "${staged_web_dir}"
 
   rm -rf "${staged_grid_parent}"
   mkdir -p "${staged_grid_dir}"
@@ -198,16 +224,24 @@ serve_run() {
     info "staging full-catalog grid from ${GS_ASSET_BASE}/grid for the backend"
     gsutil -q cp "${GS_ASSET_BASE}/grid/grid.npy"  "${staged_grid_dir}/grid.npy"
     gsutil -q cp "${GS_ASSET_BASE}/grid/grid.json" "${staged_grid_dir}/grid.json"
-    deepfield_env=",DEEPFIELD_GRID_DIR=/app/data/deepfield_prod/grid"
+    deepfield_grid_env="DEEPFIELD_GRID_DIR=/app/data/deepfield_prod/grid"
   else
     warn "full grid not found at ${GS_ASSET_BASE}/grid — backend will use the committed sample grid (run ./20_build_assets.sh to publish the full grid)"
     rm -rf "${staged_grid_parent}"
   fi
 
-  # Deploy from backend/ source; Cloud Build builds the staged Dockerfile. CORS
-  # origin passed as an env var so the FastAPI app can allow the deployed frontend.
-  # When the full grid was staged, DEEPFIELD_GRID_DIR points the backend at it;
-  # otherwise it's unset and the backend loads the in-image committed sample grid.
+  # Deploy from backend/ source; Cloud Build builds the staged Dockerfile, which
+  # bakes in both the SPA (web/) and the data/grid. Assemble env vars: APP_ORIGIN
+  # only for optional split hosting (omitted when unset — same-origin needs no
+  # CORS); DEEPFIELD_GRID_DIR only when the full grid was staged above.
+  env_pairs=()
+  [[ -n "${APP_ORIGIN:-}" ]] && env_pairs+=("APP_ORIGIN=${APP_ORIGIN}")
+  [[ -n "${deepfield_grid_env}" ]] && env_pairs+=("${deepfield_grid_env}")
+  set_env_args=()
+  if (( ${#env_pairs[@]} > 0 )); then
+    set_env_args=(--set-env-vars "$(IFS=,; echo "${env_pairs[*]}")")
+  fi
+
   info "deploying ${SERVICE_NAME} to Cloud Run in ${REGION}"
   gcloud run deploy "${SERVICE_NAME}" \
     --project "${PROJECT_ID}" \
@@ -215,7 +249,7 @@ serve_run() {
     --source "${BACKEND_DIR}" \
     --allow-unauthenticated \
     --labels "${LABEL_EQ}" \
-    --set-env-vars "APP_ORIGIN=${APP_ORIGIN}${deepfield_env}"
+    ${set_env_args[@]+"${set_env_args[@]}"}
   # Note: the container listens on Cloud Run's injected $PORT (Dockerfile CMD),
   # so we don't pass --port; Cloud Run defaults to 8080, which the image honors.
 
@@ -224,9 +258,14 @@ serve_run() {
     --format='value(status.url)')"
   banner "30_serve (run) — DONE"
   cat <<EOF
-  Cloud Run service URL:  ${run_url}
-  Health check:           ${run_url}/api/stars   (or your API root)
-  Deepfield grid:         ${deepfield_env:+full catalog (DEEPFIELD_GRID_DIR set)}${deepfield_env:-committed sample (in-image default)}
+  Single Cloud Run service — UI + API on one origin:
+      App (SPA):  ${run_url}/
+      API:        ${run_url}/api/*
+      Health:     ${run_url}/healthz
+  Deep Field tiles load from GCS:  ${asset_base_url}
+      (publish them first with ./30_serve.sh public — or cdn)
+  Deepfield grid: ${deepfield_grid_env:+full catalog (DEEPFIELD_GRID_DIR set)}${deepfield_grid_env:-committed sample (in-image default)}
+  No separate static host needed for this path.
 EOF
 }
 

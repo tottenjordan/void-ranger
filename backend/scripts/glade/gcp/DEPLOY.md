@@ -16,12 +16,12 @@ All scripts live in `backend/scripts/glade/gcp/`. Run them from that directory.
 00_setup.sh         project + APIs + bucket + CORS + dataset + service account
 10_load_bigquery.sh upload gladep.dat, load it, create the glade_usable view
 20_build_assets.sh  materialize view -> CSV.gz -> build tiles+grid -> upload
-30_serve.sh         expose assets (public bucket | Cloud CDN | Cloud Run)
+30_serve.sh         publish tiles (public | cdn) and/or deploy app (run)
 99_teardown.sh      delete everything (confirmation prompt)
 _lib.sh             shared helpers (sourced, not run directly)
 config.env.example  copy to config.env and fill in
 cors.json           CORS template (origin injected from config.env)
-Dockerfile          optional Cloud Run image for the FastAPI backend
+Dockerfile          Cloud Run image: FastAPI API + baked-in SPA (run mode)
 ```
 
 ---
@@ -235,8 +235,13 @@ Pick a mode (default `public`):
 ```bash
 ./30_serve.sh public   # world-readable bucket + cache headers (simplest)
 ./30_serve.sh cdn      # external HTTPS load balancer + Cloud CDN (needs LB_DOMAIN)
-./30_serve.sh run      # also deploy the FastAPI backend to Cloud Run
+./30_serve.sh run      # build the SPA + deploy the whole app (UI + API) to Cloud Run
 ```
+
+> **`public`/`cdn` only publish the Deep Field *tiles*.** They are how the tiles
+> become reachable; the **`run`** mode below then serves the **app**. A typical
+> single-service deploy is therefore: `./30_serve.sh public` (publish tiles),
+> then `./30_serve.sh run` (build + deploy the SPA and API as one service).
 
 - **public** — `gsutil iam ch allUsers:objectViewer`. Assets served straight from
   GCS over HTTPS. `VITE_ASSET_BASE_URL = https://storage.googleapis.com/$BUCKET/$ASSET_PREFIX`.
@@ -245,10 +250,23 @@ Pick a mode (default `public`):
   (a domain you control); after the run, point an `A` record at the printed IP
   and wait for the managed cert to go `ACTIVE`.
   `VITE_ASSET_BASE_URL = https://$LB_DOMAIN/$ASSET_PREFIX`.
-- **run** — deploys the backend via `gcloud run deploy $SERVICE_NAME --source
-  backend/`. There is no `--dockerfile` flag, so the script temporarily stages
-  this dir's `Dockerfile` at the backend root for the build and removes it after.
-  Only needed if you serve the grid/API from the backend rather than static GCS.
+- **run** — deploys the **whole app as a single Cloud Run service**: it builds the
+  React SPA and bakes it into the image alongside the FastAPI API, so **one URL**
+  serves the UI at `/`, the API at `/api/*`, and a health check at `/healthz`.
+  Because the SPA's `/api/*` calls are relative, they resolve **same-origin** —
+  **no CORS and no separate static host** for this path. (`APP_ORIGIN` is no longer
+  required in `run` mode; it's passed through only if set, for optional split
+  hosting.) Requires `npm` on your machine.
+  - **How it's wired.** The script builds `frontend/` with
+    `VITE_ASSET_BASE_URL=https://storage.googleapis.com/$BUCKET/$ASSET_PREFIX`
+    (so Deep Field **tiles load from GCS**, not the image — publish them first with
+    `./30_serve.sh public` or `cdn`), stages `frontend/dist` → `backend/web`, and
+    deploys via `gcloud run deploy $SERVICE_NAME --source backend/`. The Dockerfile
+    bakes `web/` in via `COPY web ./web`; FastAPI serves it through `WEB_DIR`
+    (default `/app/web`). There is no `--dockerfile` flag, so the script temporarily
+    stages this dir's `Dockerfile` at the backend root for the build. Both the
+    staged `Dockerfile` and `backend/web/` are throwaway artifacts cleaned up on
+    exit (and `backend/web/` is git-ignored).
   - **Deepfield physics from the full-catalog grid.** In `run` mode the backend
     serves deepfield physics from the **full-catalog** potential grid: the script
     fetches `gs://$BUCKET/$ASSET_PREFIX/grid/{grid.npy,grid.json}` (staging it
@@ -274,7 +292,12 @@ Pick a mode (default `public`):
 
 ### Build the production frontend
 
-Use the asset base URL the chosen mode printed:
+**With `./30_serve.sh run` you don't do this manually** — `run` mode builds the
+SPA and bakes it into the Cloud Run image for you (one origin, no static host).
+
+The steps below are only for the **split-hosting** path (serving the SPA from a
+**separate** static host while the API lives elsewhere). Use the asset base URL
+the chosen mode printed:
 
 ```bash
 cd frontend
@@ -284,8 +307,10 @@ VITE_ASSET_BASE_URL=https://storage.googleapis.com/<BUCKET>/<ASSET_PREFIX> npm r
 VITE_ASSET_BASE_URL=https://<LB_DOMAIN>/<ASSET_PREFIX> npm run build
 ```
 
-Deploy the resulting `frontend/dist/` to your static host. Ensure that host's
-origin matches `APP_ORIGIN` in `config.env` (it drives the bucket CORS allow).
+Deploy the resulting `frontend/dist/` to your static host. Because the SPA's
+`/api/*` calls are relative, a split host must proxy `/api/*` to the API (or
+you must rebuild against an absolute API base); set `APP_ORIGIN` in `config.env`
+to that static host's origin so the API's CORS allows it.
 
 ---
 
