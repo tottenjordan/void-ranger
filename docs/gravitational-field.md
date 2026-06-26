@@ -55,6 +55,10 @@ penalty for placing a server near mass falls straight out of the physics.
 
 ## 3. From potential to clock rate
 
+![Two clocks compared: a server in a deep void with weak gravity ticking faster, and Earth deep in a gravity well ticking slower](images/concept-two-clocks.png)
+
+<sub><i>Weaker gravity runs a faster clock: a server in a deep void (cyan) ticks ahead of Earth, which sits deep in a gravity well (amber).</i></sub>
+
 The potential is converted to a clock-rate factor with the weak-field relation
 (`gravitational_dilation`):
 

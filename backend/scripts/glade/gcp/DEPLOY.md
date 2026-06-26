@@ -226,6 +226,10 @@ builders document this and point here.
 
 ## 5. `30_serve.sh` — expose the assets
 
+![Single-service Cloud Run deploy: one service serves the SPA at / and the API at /api/* on the same origin, with Deep Field tiles loading from a GCS bucket](../../../../docs/images/arch-single-service-cloudrun.png)
+
+<sub><i>Single-service deploy: one Cloud Run service serves the SPA at / and the API at /api/* (same origin, no CORS); Deep Field tiles load directly from a GCS bucket.</i></sub>
+
 Pick a mode (default `public`):
 
 ```bash

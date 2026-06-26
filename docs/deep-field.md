@@ -53,6 +53,10 @@ streams into the point cloud, and a **potential grid** the backend reads for
 physics and the void search. Both are deterministic — same input → byte-identical
 output (no RNG, fixed dtypes, stable sorts).
 
+![Two precomputed assets: brightness-ordered octree LOD tiles (any prefix is a valid downsample) and a voxel potential grid queried by trilinear interpolation](images/arch-tile-grid-streaming.png)
+
+<sub><i>Two precomputed assets keep 22.5 M galaxies fast: brightness-ordered octree LOD tiles (any prefix is a valid downsample) and a voxel potential grid queried by trilinear interpolation.</i></sub>
+
 ### Binary tile format (`tiles/<nodeId>.bin`)
 
 Each tile is a **headerless little-endian Float32** buffer of interleaved
@@ -215,6 +219,10 @@ than Earth, advantage > 1; placed near catalog mass it runs slower, advantage
 absolute magnitude is scaled for visibility. Real void-vs-cluster potential
 differences are minuscule.
 
+![Deepest-void clock advantage by scale: solar 1.058, cosmic 1.146, deep-field 1.060, all within the ~1.05–1.10 teaching band](images/plot-clock-advantage-per-scale.png)
+
+<sub><i>Deepest-void clock advantage (f_server / f_earth) by scale: solar 1.058, cosmic 1.146, deep-field 1.060 — within the documented ~1.05–1.10 teaching band.</i></sub>
+
 ## The pipeline & architecture
 
 The Deep Field is a **GCP-ready offline pipeline** feeding a **local-first**
@@ -231,6 +239,10 @@ GLADE+ (VII/291, ~22.5M)  ─>  GCS (raw)  ─>  BigQuery (filter / rank / spati
    Frontend streams coarse→fine tiles directly from the asset base (CDN in prod)
    Backend physics + void search read the small potential grid (no 22.5M sum)
 ```
+
+![Deep Field offline pipeline: GLADE+ to GCS to BigQuery to binary LOD tiles plus a precomputed potential grid, served from GCS/CDN; the frontend streams tiles and the backend reads the grid](images/arch-deepfield-pipeline.png)
+
+<sub><i>The offline Deep Field pipeline: GLADE+ → GCS → BigQuery → binary LOD tiles + a precomputed potential grid → GCS/CDN; the frontend streams tiles and the backend reads the grid.</i></sub>
 
 - **Offline pipeline** — GLADE+ → GCS → BigQuery → (octree LOD `.bin` tiles +
   3-D potential voxel grid) → GCS / Cloud CDN. A one-time aggregation; the

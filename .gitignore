@@ -10,5 +10,11 @@ backend/data/deepfield_build/
 # Staged SPA build copy: 30_serve.sh `run` stages frontend/dist here, then the
 # Dockerfile bakes it in. Throwaway artifact — never commit it.
 backend/web/
+# PaperBanana working dir + generated plot-data JSON are throwaway scratch:
+# only the curated PNGs in docs/images/ are committed. Never commit these.
+outputs/
+backend/scripts/figures/_data/
+# Local project MCP config (paperbanana → Vertex/ADC). Machine-specific, not committed.
+.mcp.json
 .env
 .env.local
