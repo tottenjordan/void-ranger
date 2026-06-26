@@ -37,6 +37,10 @@ where you place the server (x, y, z)
   the gravity (deepest void) or the net gain (best spot for a task).
 ```
 
+![Offload flow: local gravity sets the clock advantage and distance sets the round-trip latency, which together yield net gain; the Void Finder inverts the flow to search placements](images/concept-offload-flow.png)
+
+<sub><i>How a placement becomes a verdict: local gravity sets the clock advantage and distance sets the round-trip latency; together they yield net gain. The Void Finder inverts the flow to search placements.</i></sub>
+
 All the math lives in [`backend/app/services/physics.py`](../backend/app/services/physics.py);
 each deep dive ends with a "code map" pointing at the exact functions.
 
@@ -47,4 +51,10 @@ Numbered implementation plans (goals, tasks, status) live in
 
 ## Images
 
-[`images/`](images/) holds the README banner GIFs and dashboard screenshots.
+[`images/`](images/) holds the README banner GIFs and dashboard screenshots. It
+also holds the **explainer diagrams** (the two-clocks concept, the offload-flow,
+the latency/clock trade-off, the system + Deep Field pipeline architecture, and
+the three-scale overview) and a set of **real-physics plots** generated from the
+actual model output (net gain vs. distance, break-even task size by scale,
+round-trip latency by scale, and deepest-void clock advantage by scale) that are
+embedded throughout the README and these deep-dive docs.

@@ -10,6 +10,7 @@ header reflects what shipped.
 | [001](001-cosmic-web-option-c.md) | Cosmic Web (Option C) — reach beyond the solar neighborhood | ✅ **Phase 1 shipped** (PR #6); Phase 2 → see 003 |
 | [002](002-cosmic-web-phase-2-glade-gcp.md) | Cosmic Web Phase 2 — GLADE+ big-data (high-level sketch) | 📐 **Expanded → [003](003-cosmic-web-phase-2-deep-field.md)** |
 | [003](003-cosmic-web-phase-2-deep-field.md) | Cosmic Web Phase 2 — Deep Field (GLADE+ on GCP), task-by-task | 🚧 **Largely implemented** — Deep Field scale shipped (tiles + grid + O(voxels) search; see [deep-field.md](../deep-field.md)); GCP provisioning suite remaining |
+| [005](005-educational-visuals.md) | Educational visual aids — PaperBanana diagrams + real-physics plots, embedded across README + deep-dive docs | ✅ **Implemented** — 12 figures in `docs/images/`, embedded; docs-only |
 
 ## Conventions
 

@@ -60,6 +60,10 @@ round trip is ~6.52 years — matching the table. At 400 pc the round trip alone
 already **2,611 years**, which is why the deep-void examples need jobs measured in
 tens of thousands of years to come out ahead.
 
+![Round-trip light delay to each scale's deepest void on a log axis in years: ~2,000 yr at the solar scale vs. ~10⁹ yr at the cosmic and deep-field scales](images/plot-latency-vs-distance.png)
+
+<sub><i>Round-trip light delay to each scale's deepest void (log axis, years): ~2,000 yr at the solar scale vs. ~10⁹ yr at the cosmic and deep-field scales.</i></sub>
+
 Reproduce it (latency is independent of the task size you pass):
 
 ```bash
